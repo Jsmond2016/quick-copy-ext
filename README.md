@@ -1,181 +1,95 @@
-<div align="center">
-<img src="public/icon-128.png" alt="logo"/>
-<h1> Minimalist Chrome/Firefox Extension Boilerplate with<br/>React + Vite + TypeScript + TailwindCSS</h1>
+# Quick Copy Ext
 
-<h5>
-This template repository is a side product of my Chrome Extension <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">Supatabs</a>.
-<br />
-If you tend to have tons of tabs open, or are a OneTab user, make sure to check it out <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">here</a>!
-</h5>
+一个用于 Web 异常问题反馈的 Chrome 扩展。
 
-<h5>Supatabs is an example and showcase of what you can develop with this template. (anything you want, really 🚀)</h5>
+它可以采集当前页面的基础信息与接口请求记录，支持按接口前缀过滤、勾选目标请求，并一键复制标准化的异常反馈内容，减少前后端之间反复补充信息的沟通成本。
 
-</div>
+## 功能特性
 
-## Table of Contents
+- 自动读取当前页面 URL 与标题
+- 捕获当前页面接口请求记录
+- 支持按接口前缀过滤请求
+- 支持勾选一个或多个异常接口
+- 支持提取 `traceId`、状态码、请求时间、耗时、接口大小等信息
+- 支持自定义附加字段，例如“反馈人-张三”
+- 支持一键复制标准化反馈文本
+- 支持复制成功提示与设置保存提醒
 
-- [Intro](#intro)
-- [Features](#features)
-- [Usage](#usage)
-  - [Getting Started](#gettingStarted) 
-  - [Customization](#customization)
-  - [Publish](#publish)
-- [Tech Docs](#tech)
-- [Credit](#credit)
-- [Contributing](#contributing)
+## 技术栈
 
+- React
+- TypeScript
+- Vite
+- Chrome Extension Manifest V3
+- pnpm
 
-## Intro <a name="intro"></a>
-This boilerplate is meant to be a minimal quick start for creating chrome/firefox extensions using React, Typescript and Tailwind CSS.
+## 本地开发
 
-It includes all possible pages such as **new tab**, **dev panel**, **pop up**, etc., as well as corresponding manifest settings by default.
-You will likely have to customize/delete some of the pages (see docs below).
+### 安装依赖
 
-You can build dist files for both Chrome and Firefox with manifest v3.
-
-If you are looking for a React focused way to access the local storage, I also implemented a chrome local/sync storage hook. The hook works
-well with this template. [Check it out here](https://gist.github.com/JohnBra/c81451ea7bc9e77f8021beb4f198ab96).
-
-## Features <a name="features"></a>
-- [React 19](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [i18n (optional)](https://developer.chrome.com/docs/extensions/reference/api/i18n)
-- [Cross browser development with polyfill (optional)](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#basic-setup-with-module-bundlers)
-- [ESLint](https://eslint.org/)
-- [Chrome Extension Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Github Action](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml) to build and zip your extension (manual trigger)
-
-## Usage <a name="usage"></a>
-
-### Getting Started <a name="gettingStarted"></a>
-
-#### Developing and building
-This template comes with build configs for both Chrome and Firefox. Running
-`dev` or `build` commands without specifying the browser target will build
-for Chrome by default.
-
-1. Clone this repository or click "Use this template"
-2. Change `name` and `description` in `manifest.json`
-3. Run `yarn` or `npm i` (check your node version >= 16)
-4. Run `yarn dev[:chrome|:firefox]`, or `npm run dev[:chrome|:firefox]`
-
-Running a `dev` command will build your extension and watch for changes in the 
-source files. Changing the source files will refresh the corresponding 
-`dist_<chrome|firefox>` folder.
-
-To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
-`npm run build[:chrome|:firefox]`.
-
-#### Load your extension
-For Chrome
-1. Open - Chrome browser
-2. Access - [chrome://extensions](chrome://extensions)
-3. Tick - Developer mode
-4. Find - Load unpacked extension
-5. Select - `dist_chrome` folder in this project (after dev or build)
-
-For Firefox
-1. Open - Firefox browser
-2. Access - [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
-3. Click - Load temporary Add-on
-4. Select - any file in `dist_firefox` folder (i.e. `manifest.json`) in this project (after dev or build)
-
-### Customization <a name="customization"></a>
-
-#### Adding / removing pages
-The template includes source code for **all** of the extension pages (i.e. New Tab, Dev Tools, Popup, Side Panel
-etc.). You will likely have to customize it to fit your needs.
-
-E.g. you don't want the newtab page to activate whenever you open a new tab:
-1. remove the directory `newtab` and its contents in `src/pages`
-2. remove `chrome_url_overrides: { newtab: 'src/pages/newtab/index.html' },` in `manifest.json`
-
-Some pages like the "Side Panel" don't work the exact same in Chrome and Firefox. While this template includes
-the source code for the side panel, it won't automatically be included in the dist file to prevent cross browser
-build warnings.
-
-To include the side panel for Chrome add the following to the `manifest.json`:
-
-```typescript
-{
-  "manifest_version": 3,
-  // ...
-  "permissions": [
-    "activeTab",
-    "sidePanel" // <-- permission for sidepanel
-  ],
-  // ...
-  "side_panel": {
-    "default_path": "src/pages/panel/index.html" // <-- tell vite to include it in the build files
-  },
-  // ...
-}
+```bash
+pnpm install
 ```
 
-If you need to declare pages in addition to the manifest pages, e.g. a custom `app` page, create a 
-new folder in the `pages` directory and add the corresponding `.html`, `.tsx` and `.css` 
-files (see `options/*` for an example to copy). Then include the root html in the `vite.config.base.ts` 
-file under `build.rollupOptions.input` like so:
+### 启动开发构建
 
-```typescript
-// ...
-build: {
-   rollupOptions: {
-      input: {
-         app: resolve(pagesDir, "app", "index.html"),
-      },
-      output: {
-         entryFileNames: (chunk) => `src/pages/${chunk.name}/index.js`,
-      },
-   },
-}
-// ...
+```bash
+pnpm dev
 ```
 
-#### Styling
-CSS files in the `src/pages/*` directories are not necessary. They are left in there in case you want 
-to use it in combination with Tailwind CSS. **Feel free to delete them**.
+默认会构建 Chrome 版本并监听文件变化。
 
-Tailwind can be configured, themed and extended according to the [docs](https://tailwindcss.com/docs/theme).
+### 生产构建
 
-#### Internationalization (i18n)
-To enable internationalization set the `localize` flag in the `vite.config.base.ts` to `true`.
+```bash
+pnpm build
+```
 
-The template includes a directory `locales` with a basic setup for english i18n. Enabling i18n
-will pull the name and description for your extension from the english translation files instead
-of the manifest.
+构建产物输出到 `dist_chrome/` 目录。
 
-Follow the instructions in the [official docs](https://developer.chrome.com/docs/extensions/reference/api/i18n#description) 
-to add other translations and retrieve them in the extension.
+## 加载插件
 
-If you don't need i18n you can ignore the `locales` directory until you need it, as it won't
-be copied into the build folder unless the `localize` flag is set to `true`.
+1. 打开 Chrome 浏览器
+2. 访问 `chrome://extensions`
+3. 打开右上角“开发者模式”
+4. 点击“加载已解压的扩展程序”
+5. 选择项目中的 `dist_chrome/` 目录
 
-### Publish your extension to the CWS<a name="publish"></a>
-To upload an extension to the Chrome store you have to pack (zip) it and then upload it to your item 
-in the Chrome Web Store.
+## 项目结构
 
-This repo includes a Github Action Workflow to create a 
-[optimized prod build and the zip file](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml).
+```text
+src/
+  lib/              共享类型、格式化与配置逻辑
+  pages/
+    background/     请求记录采集
+    content/        内容脚本入口
+    popup/          插件弹窗 UI
+```
 
-To run the workflow do the following:
-1. Go to the **"Actions"** tab in your forked repository from this template
-2. In the left sidebar click on **"Build and Zip Chrome Extension"**
-3. Click on **"Run Workflow"** and select the main branch, then **"Run Workflow"**
-4. Refresh the page and click the most recent run
-5. In the summary page **"Artifacts"** section click on the generated **"vite-web-extension-chrome"**
-6. Upload this file to the Chrome Web Store as described [here](https://developer.chrome.com/docs/webstore/publish/)
+## 配置说明
 
-# Tech Docs <a name="tech"></a>
-- [Vite](https://vitejs.dev/)
-- [Vite Plugins](https://vitejs.dev/guide/api-plugin.html)
-- [Chrome Extension with manifest 3](https://developer.chrome.com/docs/extensions/mv3/)
-- [Chrome Extension i18n](https://developer.chrome.com/docs/extensions/reference/api/i18n#description)
-- [Cross browser development with webextension-polyfill](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#webextension-browser-api-polyfill)
-- [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Tailwind CSS 4](https://tailwindcss.com/docs/configuration)
+插件支持在 popup 右上角进入设置视图，当前支持以下配置项：
 
-# Contributing <a name="contributing"></a>
-Feel free to open PRs or raise issues!
+- 接口前缀过滤
+- 自定义字段
+
+保存配置后，需要刷新当前页面，新的过滤规则才会生效。
+
+## 复制内容说明
+
+复制后的反馈内容包含以下信息：
+
+- 页面 URL
+- 页面标题
+- 接口方法与路径
+- `traceId`
+- 状态码
+- 请求时间
+- 耗时
+- 接口大小
+- 自定义字段
+- 备注内容
+
+## 致谢
+
+本项目基于开源项目模板 [JohnBra/vite-web-extension](https://github.com/JohnBra/vite-web-extension) 进行开发，并在其基础上完成了与当前业务场景相关的定制化改造。
