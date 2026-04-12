@@ -53,8 +53,6 @@ jobs:
       - name: Setup pnpm
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.23.0
 
       - name: Setup Node.js environment
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
