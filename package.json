@@ -1,7 +1,7 @@
 {
-  "name": "vite-web-extension",
+  "name": "quick-copy-ext",
   "version": "1.4.0",
-  "description": "A simple chrome & firefox extension template with Vite, React, TypeScript and Tailwind CSS.",
+  "description": "A Chrome extension for capturing page and API request details for bug feedback.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -23,7 +23,6 @@
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.3",
-    "@tailwindcss/vite": "^4.1.11",
     "@types/chrome": "^0.1.11",
     "@types/node": "^24.9.1",
     "@types/react": "^19.1.8",
@@ -40,10 +39,10 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "fs-extra": "^11.3.2",
     "nodemon": "^3.1.10",
-    "tailwindcss": "^4.1.16",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
-  }
+  },
+  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b"
 }

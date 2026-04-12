@@ -1,41 +1,38 @@
 {
   "manifest_version": 3,
-  "name": "name in manifest.json",
-  "description": "description in manifest.json",
-  "options_ui": {
-    "page": "src/pages/options/index.html"
-  },
+  "name": "Quick Copy Ext",
+  "description": "快速整理当前页面异常接口信息，并一键复制反馈内容。",
   "action": {
     "default_popup": "src/pages/popup/index.html",
     "default_icon": {
       "32": "icon-32.png"
     }
   },
-  "chrome_url_overrides": {
-    "newtab": "src/pages/newtab/index.html"
-  },
   "icons": {
     "128": "icon-128.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "tabs",
+    "webRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "content_scripts": [
     {
       "matches": [
-        "http://*/*",
-        "https://*/*",
         "<all_urls>"
       ],
       "js": [
-        "src/pages/content/index.tsx"
+        "src/pages/content/index.ts"
       ],
       "css": [
         "contentStyle.css"
       ]
     }
   ],
-  "devtools_page": "src/pages/devtools/index.html",
   "web_accessible_resources": [
     {
       "resources": [
