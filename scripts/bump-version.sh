@@ -25,15 +25,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 EOF
 fi
 
-TEMP_FILE=$(mktemp)
-tail -n +8 CHANGELOG.md > "$TEMP_FILE" 2>/dev/null || true
+HEADER_FILE=$(mktemp)
+BODY_FILE=$(mktemp)
+NEW_ENTRY_FILE=$(mktemp)
 
-conventional-changelog -p angular -i CHANGELOG.md -s -r 1
+head -n 7 CHANGELOG.md > "$HEADER_FILE"
+tail -n +8 CHANGELOG.md > "$BODY_FILE" 2>/dev/null || true
 
-if [ -s "$TEMP_FILE" ]; then
-  cat "$TEMP_FILE" >> CHANGELOG.md
-fi
-rm -f "$TEMP_FILE"
+conventional-changelog -p angular -r 1 > "$NEW_ENTRY_FILE"
+
+{
+  cat "$HEADER_FILE"
+  echo
+  cat "$NEW_ENTRY_FILE"
+  cat "$BODY_FILE"
+} > CHANGELOG.md
+
+rm -f "$HEADER_FILE" "$BODY_FILE" "$NEW_ENTRY_FILE"
 
 git add package.json CHANGELOG.md
 git commit --no-verify -m "chore(release): $VERSION_NUMBER"
