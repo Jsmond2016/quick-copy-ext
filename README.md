@@ -47,6 +47,44 @@ pnpm build
 
 构建产物输出到 `dist_chrome/` 目录。
 
+## 版本与发布
+
+当前项目已经补充了基础的版本管理、changelog 与自动发布配置。
+
+### 常用命令
+
+```bash
+pnpm run changelog
+pnpm run version:patch
+pnpm run version:minor
+pnpm run version:major
+```
+
+### 自动发布约定
+
+当推送到 `main` 分支的最新提交信息符合以下格式时：
+
+```bash
+chore(release): x.y.z
+```
+
+GitHub Actions 会自动执行以下流程：
+
+- 安装依赖
+- 构建 Chrome / Firefox 扩展
+- 生成 ZIP 包
+- 创建 Git tag
+- 创建 GitHub Release
+
+### 相关文件
+
+- `CHANGELOG.md`
+- `scripts/bump-version.sh`
+- `scripts/generate-changelog.sh`
+- `scripts/release.sh`
+- `.github/workflows/ci.yml`
+- `.github/workflows/auto-release.yml`
+
 ## 加载插件
 
 1. 打开 Chrome 浏览器

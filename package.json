@@ -13,7 +13,16 @@
     "build:firefox": "vite build --config vite.config.firefox.ts",
     "dev": "nodemon --config nodemon.chrome.json",
     "dev:chrome": "nodemon --config nodemon.chrome.json",
-    "dev:firefox": "nodemon --config nodemon.firefox.json"
+    "dev:firefox": "nodemon --config nodemon.firefox.json",
+    "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "release": "bash scripts/release.sh",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "version:patch": "bash scripts/bump-version.sh patch",
+    "version:minor": "bash scripts/bump-version.sh minor",
+    "version:major": "bash scripts/bump-version.sh major",
+    "commit:check": "commitlint --from HEAD~1 --to HEAD --verbose"
   },
   "type": "module",
   "dependencies": {
@@ -22,6 +31,8 @@
     "webextension-polyfill": "^0.12.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.0.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@crxjs/vite-plugin": "^2.0.3",
     "@types/chrome": "^0.1.11",
     "@types/node": "^24.9.1",
@@ -31,6 +42,7 @@
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.7.0",
+    "conventional-changelog-cli": "^5.0.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -44,5 +56,10 @@
     "vite": "^6.3.5",
     "vite-tsconfig-paths": "^5.1.4"
   },
-  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b"
+  "packageManager": "pnpm@10.23.0+sha512.21c4e5698002ade97e4efe8b8b4a89a8de3c85a37919f957e7a0f30f38fbc5bbdd05980ffe29179b2fb6e6e691242e098d945d1601772cad0fef5fb6411e2a4b",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
 }

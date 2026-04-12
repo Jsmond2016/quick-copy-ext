@@ -1,0 +1,137 @@
+name: Auto Release on Commit
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - '需求文档.md'
+      - '需求变更文档.md'
+      - 'test-text.md'
+
+jobs:
+  auto-release:
+    name: Auto Release
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit message format
+        id: check_commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Latest commit message: $COMMIT_MSG"
+
+          if [[ $COMMIT_MSG =~ ^chore\(release\):\ ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?)$ ]]; then
+            VERSION=${BASH_REMATCH[1]}
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if tag already exists
+        if: steps.check_commit.outputs.should_release == 'true'
+        id: check_tag
+        run: |
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.23.0
+
+      - name: Setup Node.js environment
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Chrome Extension
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm run build:chrome
+
+      - name: Build Firefox Extension
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm run build:firefox
+
+      - name: Read Changelog from CHANGELOG.md
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.check_commit.outputs.version }}"
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          SERVER="${{ github.server_url }}"
+
+          CHANGELOG_CONTENT=$(awk "/^## \[v?${VERSION}/,/^## \[/ {print}" CHANGELOG.md | head -n -1)
+
+          if [ -z "$(echo "$CHANGELOG_CONTENT" | tr -d '[:space:]')" ]; then
+            CHANGELOG_CONTENT=$'### Changes\n\n- General improvements and bug fixes\n- See [CHANGELOG.md](https://github.com/'"$REPO"'/blob/main/CHANGELOG.md)'
+          fi
+
+          {
+            echo "## Quick Copy Ext $VERSION"
+            echo ""
+            echo "### Downloads"
+            echo "- Chrome Extension: [quick-copy-ext_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/quick-copy-ext_$VERSION.zip)"
+            echo "- Firefox Extension: [quick-copy-ext_firefox_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/quick-copy-ext_firefox_$VERSION.zip)"
+            echo ""
+            echo "### What's Changed"
+            echo ""
+            echo "$CHANGELOG_CONTENT"
+          } > release-body.md
+
+      - name: Create Chrome ZIP
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          cd dist_chrome
+          zip -r "../quick-copy-ext_${{ steps.check_commit.outputs.version }}.zip" .
+
+      - name: Create Firefox ZIP
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          cd dist_firefox
+          zip -r "../quick-copy-ext_firefox_${{ steps.check_commit.outputs.version }}.zip" .
+
+      - name: Create Git Tag
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          VERSION="${{ steps.check_commit.outputs.version }}"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "$TAG_NAME" -m "Release $VERSION"
+          git push origin "$TAG_NAME"
+
+      - name: Create Release
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.check_commit.outputs.tag_name }}
+          name: v${{ steps.check_commit.outputs.version }}
+          body_path: release-body.md
+          files: |
+            quick-copy-ext_${{ steps.check_commit.outputs.version }}.zip
+            quick-copy-ext_firefox_${{ steps.check_commit.outputs.version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
