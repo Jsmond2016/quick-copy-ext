@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.5](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.4...v1.4.5) (2026-04-13)
+
+
+### Features
+
+* optimize popup request summary layout ([cccc8df](https://github.com/Jsmond2016/quick-copy-ext/commit/cccc8dff59107d0d925d849f8faa1a55d0928109))
+* 当字段没有值，不写入复制内容 ([5998c93](https://github.com/Jsmond2016/quick-copy-ext/commit/5998c93f9359b00c9a46fcdc819e89029608446a))
+
 ## [1.4.4](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.0...v1.4.4) (2026-04-12)
 
 
