@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.6](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.5...v1.4.6) (2026-04-13)
+
+
+### Bug Fixes
+
+* **ci:** correct workflow condition syntax ([3037f94](https://github.com/Jsmond2016/quick-copy-ext/commit/3037f9476eb235f0ddb9a3a01dbd62d21ba12283))
+* **copy:** trim request urls in feedback ([3b82f67](https://github.com/Jsmond2016/quick-copy-ext/commit/3b82f67592bd64f5adaf452135398dc74b468e5a))
+
+
+### Features
+
+* support apifox mapping config ([a8d6934](https://github.com/Jsmond2016/quick-copy-ext/commit/a8d6934016ebe4b96a44b291c3a6e406f1258768))
+
 ## [1.4.5](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.4...v1.4.5) (2026-04-13)
 
 
