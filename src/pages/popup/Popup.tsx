@@ -11,6 +11,7 @@ import {
   getDisplayPath,
   getUrlPath,
   loadSettings,
+  matchesMonitoredOrigins,
   matchesApiPrefixes,
   NetworkRequestRecord,
   PageSummary,
@@ -228,6 +229,7 @@ export default function Popup() {
     null,
   );
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
+  const [originInput, setOriginInput] = useState(stringifyLines(getDefaultSettings().monitoredOrigins));
   const [prefixInput, setPrefixInput] = useState(stringifyLines(getDefaultSettings().apiPrefixes));
   const [customFieldsInput, setCustomFieldsInput] = useState(
     stringifyLines(getDefaultSettings().customFields),
@@ -250,8 +252,12 @@ export default function Popup() {
     () => filteredRequests.filter((request) => selectedIds.includes(request.id)),
     [filteredRequests, selectedIds],
   );
+  const pageMonitoringEnabled = useMemo(
+    () => matchesMonitoredOrigins(page.url, settings.monitoredOrigins),
+    [page.url, settings.monitoredOrigins],
+  );
 
-  async function loadData() {
+  async function loadData(currentSettings = settings) {
     setLoading(true);
     setErrorText('');
     setStatusText('正在读取当前页面请求记录...');
@@ -274,10 +280,14 @@ export default function Popup() {
       setSelectedIds((current) =>
         current.filter((id) => nextRequests.some((request) => request.id === id)),
       );
+      const nextPageUrl = tab.url ?? '';
+      const isMonitoredPage = matchesMonitoredOrigins(nextPageUrl, currentSettings.monitoredOrigins);
       setStatusText(
         nextRequests.length > 0
           ? `已加载 ${nextRequests.length} 条接口记录，可勾选后复制。`
-          : '暂未捕获到接口请求，请先在页面上执行相关操作后再刷新。',
+          : isMonitoredPage
+            ? '暂未捕获到接口请求，请先在页面上执行相关操作后再刷新。'
+            : '当前页面不在监听 Origin 范围内，插件不会记录这里的接口请求。',
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : '读取请求记录失败。';
@@ -341,11 +351,12 @@ export default function Popup() {
     void (async () => {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
+      setOriginInput(stringifyLines(loadedSettings.monitoredOrigins));
       setPrefixInput(stringifyLines(loadedSettings.apiPrefixes));
       setCustomFieldsInput(stringifyLines(loadedSettings.customFields));
       setApifoxExportUrlInput(loadedSettings.apifoxExportUrl);
       await syncApifoxStatus(loadedSettings.apifoxExportUrl, { silent: true });
-      await loadData();
+      await loadData(loadedSettings);
     })();
   }, []);
 
@@ -454,6 +465,7 @@ export default function Popup() {
 
     try {
       const nextSettings: QuickCopySettings = {
+        monitoredOrigins: parseLines(originInput),
         apiPrefixes: parseLines(prefixInput),
         customFields: parseLines(customFieldsInput),
         apifoxExportUrl: apifoxExportUrlInput.trim(),
@@ -474,14 +486,15 @@ export default function Popup() {
 
       await saveSettings(nextSettings);
       setSettings(nextSettings);
-      setStatusText('配置已保存，新的过滤规则与 Apifox 设置已生效。');
+      setStatusText('配置已保存，新的监听范围、过滤规则与 Apifox 设置已生效。');
       setToast({
         type: 'info',
         text: nextSettings.apifoxExportUrl
-          ? '配置已保存，Apifox 接口信息已准备完成。'
-          : '配置已保存，已清空 Apifox 缓存。',
+          ? '配置已保存，监听范围与 Apifox 接口信息已更新。'
+          : '配置已保存，监听范围已更新，且已清空 Apifox 缓存。',
       });
       setShowSettings(false);
+      await loadData(nextSettings);
     } catch (error) {
       const message = error instanceof Error ? error.message : '保存配置失败。';
       setErrorText(message);
@@ -588,6 +601,18 @@ export default function Popup() {
 
           <div className="config-grid">
             <label className="field-block">
+              <span>监听页面 Origin</span>
+              <textarea
+                className="note-input"
+                onChange={(event) => setOriginInput(event.target.value)}
+                placeholder={'localhost\n127.0.0.1\nhttp://localhost:3000'}
+                rows={3}
+                value={originInput}
+              />
+              <small>每行一个页面来源，支持 `host`、`host:port` 或完整 origin。仅命中这些页面时才会记录接口请求。</small>
+            </label>
+
+            <label className="field-block">
               <span>接口前缀过滤</span>
               <textarea
                 className="note-input"
@@ -664,6 +689,10 @@ export default function Popup() {
               <div>
                 <dt>URL</dt>
                 <dd title={page.url}>{getDisplayPath(page.url) || 'N/A'}</dd>
+              </div>
+              <div>
+                <dt>监听页面</dt>
+                <dd>{page.url ? (pageMonitoringEnabled ? '是，当前页面会记录接口请求' : '否，当前页面不在监听 Origin 范围内') : 'N/A'}</dd>
               </div>
             </dl>
           </section>

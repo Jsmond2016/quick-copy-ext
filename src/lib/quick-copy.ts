@@ -38,6 +38,7 @@ export interface CopyPayload extends PopupPayload {
 }
 
 export interface QuickCopySettings {
+  monitoredOrigins: string[];
   apiPrefixes: string[];
   customFields: string[];
   apifoxExportUrl: string;
@@ -185,6 +186,7 @@ export function stringifyLines(values: string[]): string {
 
 export function getDefaultSettings(): QuickCopySettings {
   return {
+    monitoredOrigins: ['localhost', '127.0.0.1'],
     apiPrefixes: ['/api/saas/'],
     customFields: [],
     apifoxExportUrl: '',
@@ -197,6 +199,9 @@ export async function loadSettings(): Promise<QuickCopySettings> {
   const defaults = getDefaultSettings();
 
   return {
+    monitoredOrigins: Array.isArray(current?.monitoredOrigins)
+      ? current.monitoredOrigins.filter(Boolean)
+      : defaults.monitoredOrigins,
     apiPrefixes: Array.isArray(current?.apiPrefixes) ? current.apiPrefixes.filter(Boolean) : defaults.apiPrefixes,
     customFields: Array.isArray(current?.customFields) ? current.customFields.filter(Boolean) : defaults.customFields,
     apifoxExportUrl:
@@ -233,6 +238,46 @@ export function matchesApiPrefixes(url: string, prefixes: string[]): boolean {
   return normalizedPrefixes.some(
     (prefix) => pathAndSearch.startsWith(prefix) || url.startsWith(prefix),
   );
+}
+
+function normalizeOriginRule(rule: string): string {
+  const trimmedRule = rule.trim().toLowerCase();
+
+  if (!trimmedRule) {
+    return '';
+  }
+
+  try {
+    return new URL(trimmedRule).origin.toLowerCase();
+  } catch {
+    return trimmedRule.replace(/\/+$/, '');
+  }
+}
+
+export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): boolean {
+  const normalizedRules = originRules.map(normalizeOriginRule).filter(Boolean);
+  if (normalizedRules.length === 0) {
+    return true;
+  }
+
+  let currentUrl: URL;
+  try {
+    currentUrl = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+
+  const currentOrigin = currentUrl.origin.toLowerCase();
+  const currentHost = currentUrl.hostname.toLowerCase();
+  const currentHostWithPort = currentUrl.host.toLowerCase();
+
+  return normalizedRules.some((rule) => {
+    if (rule.includes('://')) {
+      return currentOrigin === rule;
+    }
+
+    return currentHost === rule || currentHostWithPort === rule;
+  });
 }
 
 export function buildFeedbackText(payload: CopyPayload): string {

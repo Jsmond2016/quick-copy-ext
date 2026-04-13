@@ -3,15 +3,20 @@ import {
   extractApifoxEndpoints,
   getApifoxLookupKey,
   getUrlPath,
+  loadSettings,
   MAX_REQUESTS_PER_TAB,
+  matchesMonitoredOrigins,
   NetworkRequestRecord,
+  QuickCopySettings,
   RuntimeRequestMessage,
   RuntimeResponseMessage,
+  SETTINGS_STORAGE_KEY,
   normalizeHeaders,
 } from '@src/lib/quick-copy';
 
 const requestsByTab = new Map<number, NetworkRequestRecord[]>();
 const requestIndex = new Map<string, NetworkRequestRecord>();
+const tabUrlMap = new Map<number, string>();
 const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest']);
 const apifoxEndpointMap = new Map<string, string>();
 const apifoxPathMap = new Map<string, string>();
@@ -22,6 +27,7 @@ const defaultApifoxStatus: ApifoxCacheStatus = {
 };
 
 let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
+let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
 
 function upsertRequest(record: NetworkRequestRecord) {
   const existing = requestsByTab.get(record.tabId) ?? [];
@@ -45,6 +51,56 @@ function updateRequest(
 
   requestsByTab.set(current.tabId, updated);
   requestIndex.set(requestId, next);
+}
+
+function clearTabRequests(tabId: number) {
+  const records = requestsByTab.get(tabId) ?? [];
+  records.forEach((record) => {
+    requestIndex.delete(record.requestId);
+  });
+  requestsByTab.delete(tabId);
+}
+
+function shouldTrackTabUrl(tabUrl: string | undefined): boolean {
+  if (!tabUrl) {
+    return false;
+  }
+
+  return matchesMonitoredOrigins(tabUrl, monitoredOrigins);
+}
+
+function setTabUrl(tabId: number, tabUrl: string | undefined) {
+  if (!tabUrl) {
+    tabUrlMap.delete(tabId);
+    clearTabRequests(tabId);
+    return;
+  }
+
+  tabUrlMap.set(tabId, tabUrl);
+
+  if (!shouldTrackTabUrl(tabUrl)) {
+    clearTabRequests(tabId);
+  }
+}
+
+async function refreshMonitoredOrigins() {
+  const settings = await loadSettings();
+  monitoredOrigins = settings.monitoredOrigins;
+
+  tabUrlMap.forEach((tabUrl, tabId) => {
+    if (!shouldTrackTabUrl(tabUrl)) {
+      clearTabRequests(tabId);
+    }
+  });
+}
+
+async function bootstrapTabs() {
+  const tabs = await chrome.tabs.query({});
+  tabs.forEach((tab) => {
+    if (typeof tab.id === 'number') {
+      setTabUrl(tab.id, tab.url);
+    }
+  });
 }
 
 function resetApifoxCache(sourceUrl = '') {
@@ -126,6 +182,11 @@ chrome.webRequest.onBeforeRequest.addListener(
       return undefined;
     }
 
+    const tabUrl = tabUrlMap.get(details.tabId);
+    if (!shouldTrackTabUrl(tabUrl)) {
+      return undefined;
+    }
+
     upsertRequest({
       id: `${details.requestId}-${details.timeStamp}`,
       requestId: details.requestId,
@@ -149,6 +210,11 @@ chrome.webRequest.onCompleted.addListener(
       return;
     }
 
+    const tabUrl = tabUrlMap.get(details.tabId);
+    if (!shouldTrackTabUrl(tabUrl)) {
+      return;
+    }
+
     updateRequest(details.requestId, (record) => ({
       ...record,
       statusCode: details.statusCode,
@@ -166,6 +232,11 @@ chrome.webRequest.onErrorOccurred.addListener(
       return;
     }
 
+    const tabUrl = tabUrlMap.get(details.tabId);
+    if (!shouldTrackTabUrl(tabUrl)) {
+      return;
+    }
+
     updateRequest(details.requestId, (record) => ({
       ...record,
       completedAt: Math.round(details.timeStamp),
@@ -176,8 +247,34 @@ chrome.webRequest.onErrorOccurred.addListener(
 );
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  requestsByTab.delete(tabId);
+  tabUrlMap.delete(tabId);
+  clearTabRequests(tabId);
 });
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    setTabUrl(tabId, changeInfo.url);
+    return;
+  }
+
+  if (changeInfo.status === 'complete' && tab.url) {
+    setTabUrl(tabId, tab.url);
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== 'sync' || !changes[SETTINGS_STORAGE_KEY]) {
+    return;
+  }
+
+  void refreshMonitoredOrigins();
+});
+
+void refreshMonitoredOrigins()
+  .then(() => bootstrapTabs())
+  .catch(() => {
+    monitoredOrigins = [];
+  });
 
 chrome.runtime.onMessage.addListener(
   (
@@ -192,7 +289,7 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === 'quick-copy/clear-tab-requests') {
-      requestsByTab.delete(message.tabId);
+      clearTabRequests(message.tabId);
       sendResponse({ ok: true, data: [] });
       return false;
     }
