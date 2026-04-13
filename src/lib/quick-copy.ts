@@ -115,6 +115,15 @@ export function getDisplayPath(rawUrl: string): string {
   }
 }
 
+export function getUrlAfterOrigin(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    return `${url.pathname || '/'}${url.search}${url.hash}`;
+  } catch {
+    return rawUrl;
+  }
+}
+
 export function formatTime(timestamp: number): string {
   return new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
@@ -206,7 +215,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
     sections.push('- 未选择异常接口');
   } else {
     payload.requests.forEach((request, index) => {
-      sections.push(`- ${request.method.toUpperCase()} ${request.url}`);
+      sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
@@ -224,13 +233,11 @@ export function buildFeedbackText(payload: CopyPayload): string {
   // sections.push(`- ${payload.screenshotLabel}`);
   // sections.push('');
   if (payload.customFields.length !== 0) {
-    sections.push('自定义字段：');
+    sections.push('---');
     sections.push('');
     payload.customFields.forEach((field) => {
       sections.push(`- ${field}`);
     });
-  } else {
-    // sections.push('- 无');
   }
 
   if ((payload.note.trim()) !== "") {
