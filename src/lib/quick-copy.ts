@@ -189,23 +189,27 @@ export function buildFeedbackText(payload: CopyPayload): string {
   }
 
   sections.push('');
-  sections.push('截图信息：');
-  sections.push('');
-  sections.push(`- ${payload.screenshotLabel}`);
-  sections.push('');
-  sections.push('自定义字段：');
-  sections.push('');
-  if (payload.customFields.length === 0) {
-    sections.push('- 无');
-  } else {
+  // sections.push('截图信息：');
+  // sections.push('');
+  // sections.push(`- ${payload.screenshotLabel}`);
+  // sections.push('');
+  if (payload.customFields.length !== 0) {
+    sections.push('自定义字段：');
+    sections.push('');
     payload.customFields.forEach((field) => {
       sections.push(`- ${field}`);
     });
+  } else {
+    // sections.push('- 无');
   }
-  sections.push('');
-  sections.push('其他备注说明：');
-  sections.push('');
-  sections.push(payload.note.trim() || '无');
+
+  if ((payload.note.trim()) !== "") {
+    sections.push('');
+    sections.push('其他备注说明：');
+    sections.push('');
+    sections.push(payload.note)
+    // sections.push(payload.note.trim() || '无');
+  }
   sections.push('');
   sections.push('=== From Quick Copy Ext');
 
