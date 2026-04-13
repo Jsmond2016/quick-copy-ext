@@ -308,6 +308,16 @@ export function getApifoxLookupKey(path: string, method: string): string {
   return `${normalizeApifoxMethod(method)} ${path}`;
 }
 
+export function normalizeApifoxUrl(rawUrl: string): string {
+  const trimmedUrl = rawUrl.trim();
+
+  if (!trimmedUrl) {
+    return '';
+  }
+
+  return trimmedUrl.replace(/-run(?=[?#]|$)/, '');
+}
+
 export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
   if (!schema || typeof schema !== 'object') {
     throw new Error('Apifox 导出内容格式不正确。');
@@ -330,15 +340,20 @@ export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
         return;
       }
 
-      const apifoxUrl = (operation as { 'x-run-in-apifox'?: unknown })['x-run-in-apifox'];
-      if (typeof apifoxUrl !== 'string' || !apifoxUrl.trim()) {
+      const rawApifoxUrl = (operation as { 'x-run-in-apifox'?: unknown })['x-run-in-apifox'];
+      if (typeof rawApifoxUrl !== 'string') {
+        return;
+      }
+
+      const apifoxUrl = normalizeApifoxUrl(rawApifoxUrl);
+      if (!apifoxUrl) {
         return;
       }
 
       endpoints.push({
         path,
         method: normalizeApifoxMethod(method),
-        apifoxUrl: apifoxUrl.trim(),
+        apifoxUrl,
       });
     });
   });
