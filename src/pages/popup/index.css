@@ -121,6 +121,12 @@ input {
   gap: 12px;
 }
 
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .hero-card h1,
 .panel-head h2 {
   margin: 4px 0 0;
@@ -136,6 +142,13 @@ input {
 
 .hero-card p {
   margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.hero-subline {
+  margin-top: 10px;
   font-size: 12px;
   line-height: 1.5;
   color: var(--muted);
@@ -216,6 +229,15 @@ input {
   background: rgba(184, 79, 44, 0.18);
 }
 
+.icon-only {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .full-width {
   width: 100%;
   margin-top: 12px;
@@ -281,6 +303,40 @@ input {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.62);
   color: var(--muted);
+}
+
+.apifox-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 37, 32, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.apifox-badge.ready {
+  color: #1f7a52;
+  border-color: rgba(31, 122, 82, 0.22);
+  background: rgba(221, 247, 233, 0.9);
+}
+
+.apifox-badge.idle {
+  color: var(--muted);
+}
+
+.apifox-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #b8b2aa;
+}
+
+.apifox-badge.ready .apifox-badge-dot {
+  background: #2f8a5f;
+  box-shadow: 0 0 0 4px rgba(47, 138, 95, 0.14);
 }
 
 .status-row p {

@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ApifoxCacheStatus,
+  ApifoxMatchesResponse,
+  ApifoxRefreshResponse,
+  ApifoxStatusResponse,
   buildFeedbackText,
+  extractApifoxEndpoints,
+  getApifoxLookupKey,
   getDefaultSettings,
   getDisplayPath,
+  getUrlPath,
   loadSettings,
   matchesApiPrefixes,
   NetworkRequestRecord,
@@ -18,6 +25,89 @@ const DEFAULT_PAGE: PageSummary = {
   title: '',
   url: '',
 };
+
+const localApifoxCache = {
+  status: {
+    ready: false,
+    sourceUrl: '',
+    endpointCount: 0,
+  } as ApifoxCacheStatus,
+  endpointMap: new Map<string, string>(),
+  pathMap: new Map<string, string>(),
+};
+
+function isUnknownMessageTypeError(error: unknown): boolean {
+  return error instanceof Error && error.message === 'Unknown message type.';
+}
+
+async function refreshApifoxLocally(exportUrl: string): Promise<ApifoxCacheStatus> {
+  const normalizedUrl = exportUrl.trim();
+  if (!normalizedUrl) {
+    localApifoxCache.status = {
+      ready: false,
+      sourceUrl: '',
+      endpointCount: 0,
+    };
+    localApifoxCache.endpointMap.clear();
+    localApifoxCache.pathMap.clear();
+    return localApifoxCache.status;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(normalizedUrl, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+  } catch {
+    throw new Error('未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。');
+  }
+
+  if (!response.ok) {
+    throw new Error(`Apifox 导出地址请求失败：HTTP ${response.status}`);
+  }
+
+  const schema = (await response.json()) as unknown;
+  const endpoints = extractApifoxEndpoints(schema);
+
+  localApifoxCache.endpointMap.clear();
+  localApifoxCache.pathMap.clear();
+  endpoints.forEach((endpoint) => {
+    localApifoxCache.endpointMap.set(
+      getApifoxLookupKey(endpoint.path, endpoint.method),
+      endpoint.apifoxUrl,
+    );
+    if (!localApifoxCache.pathMap.has(endpoint.path)) {
+      localApifoxCache.pathMap.set(endpoint.path, endpoint.apifoxUrl);
+    }
+  });
+
+  localApifoxCache.status = {
+    ready: true,
+    sourceUrl: normalizedUrl,
+    endpointCount: endpoints.length,
+    updatedAt: Date.now(),
+  };
+
+  return localApifoxCache.status;
+}
+
+function getLocalApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>[]) {
+  const result: Record<string, string> = {};
+
+  requests.forEach((request) => {
+    const path = getUrlPath(request.url);
+    const matchedUrl =
+      localApifoxCache.endpointMap.get(getApifoxLookupKey(path, request.method)) ??
+      localApifoxCache.pathMap.get(path);
+
+    if (matchedUrl) {
+      result[`${request.method.toUpperCase()} ${request.url}`] = matchedUrl;
+    }
+  });
+
+  return result;
+}
 
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -37,6 +127,90 @@ async function getTabRequests(tabId: number): Promise<NetworkRequestRecord[]> {
   return response.data;
 }
 
+async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
+  try {
+    const response = (await chrome.runtime.sendMessage({
+      type: 'quick-copy/get-apifox-status',
+    })) as ApifoxStatusResponse;
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+
+    return response.data;
+  } catch (error) {
+    if (!isUnknownMessageTypeError(error)) {
+      throw error;
+    }
+
+    return localApifoxCache.status;
+  }
+}
+
+async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> {
+  try {
+    const response = (await chrome.runtime.sendMessage({
+      type: 'quick-copy/refresh-apifox-data',
+      exportUrl,
+    })) as ApifoxRefreshResponse;
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+
+    return response.data;
+  } catch (error) {
+    if (!isUnknownMessageTypeError(error)) {
+      throw error;
+    }
+
+    return refreshApifoxLocally(exportUrl);
+  }
+}
+
+async function clearApifoxData(): Promise<void> {
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'quick-copy/clear-apifox-data',
+    });
+  } catch (error) {
+    if (!isUnknownMessageTypeError(error)) {
+      throw error;
+    }
+
+    localApifoxCache.status = {
+      ready: false,
+      sourceUrl: '',
+      endpointCount: 0,
+    };
+    localApifoxCache.endpointMap.clear();
+    localApifoxCache.pathMap.clear();
+  }
+}
+
+async function getApifoxMatches(
+  requests: Pick<NetworkRequestRecord, 'url' | 'method'>[],
+): Promise<Record<string, string>> {
+  try {
+    const response = (await chrome.runtime.sendMessage({
+      type: 'quick-copy/get-apifox-matches',
+      requests,
+    })) as ApifoxMatchesResponse;
+
+    if (!response.ok) {
+      throw new Error(response.error);
+    }
+
+    return response.data;
+  } catch (error) {
+    if (!isUnknownMessageTypeError(error)) {
+      throw error;
+    }
+
+    return getLocalApifoxMatches(requests);
+  }
+}
+
 export default function Popup() {
   const [page, setPage] = useState<PageSummary>(DEFAULT_PAGE);
   const [requests, setRequests] = useState<NetworkRequestRecord[]>([]);
@@ -46,6 +220,7 @@ export default function Popup() {
   const [loading, setLoading] = useState(true);
   const [copying, setCopying] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [refreshingApifox, setRefreshingApifox] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [statusText, setStatusText] = useState('正在读取当前页面请求记录...');
   const [errorText, setErrorText] = useState('');
@@ -57,6 +232,14 @@ export default function Popup() {
   const [customFieldsInput, setCustomFieldsInput] = useState(
     stringifyLines(getDefaultSettings().customFields),
   );
+  const [apifoxExportUrlInput, setApifoxExportUrlInput] = useState(
+    getDefaultSettings().apifoxExportUrl,
+  );
+  const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>({
+    ready: false,
+    sourceUrl: '',
+    endpointCount: 0,
+  });
 
   const filteredRequests = useMemo(
     () => requests.filter((request) => matchesApiPrefixes(request.url, settings.apiPrefixes)),
@@ -107,12 +290,61 @@ export default function Popup() {
     }
   }
 
+  async function syncApifoxStatus(exportUrl: string, options?: { forceRefresh?: boolean; silent?: boolean }) {
+    const normalizedUrl = exportUrl.trim();
+
+    if (!normalizedUrl) {
+      setApifoxStatus({
+        ready: false,
+        sourceUrl: '',
+        endpointCount: 0,
+      });
+      return;
+    }
+
+    if (!options?.silent) {
+      setRefreshingApifox(true);
+    }
+
+    try {
+      const currentStatus = await getApifoxStatus();
+      const needsRefresh =
+        options?.forceRefresh ||
+        !currentStatus.ready ||
+        currentStatus.sourceUrl !== normalizedUrl ||
+        currentStatus.endpointCount === 0;
+
+      const nextStatus = needsRefresh ? await refreshApifoxData(normalizedUrl) : currentStatus;
+      setApifoxStatus(nextStatus);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Apifox 数据准备失败。';
+      setApifoxStatus({
+        ready: false,
+        sourceUrl: normalizedUrl,
+        endpointCount: 0,
+        error: message,
+      });
+
+      if (!options?.silent) {
+        setErrorText(message);
+        setStatusText(message);
+        setToast({ type: 'error', text: message });
+      }
+    } finally {
+      if (!options?.silent) {
+        setRefreshingApifox(false);
+      }
+    }
+  }
+
   useEffect(() => {
     void (async () => {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
       setPrefixInput(stringifyLines(loadedSettings.apiPrefixes));
       setCustomFieldsInput(stringifyLines(loadedSettings.customFields));
+      setApifoxExportUrlInput(loadedSettings.apifoxExportUrl);
+      await syncApifoxStatus(loadedSettings.apifoxExportUrl, { silent: true });
       await loadData();
     })();
   }, []);
@@ -183,9 +415,18 @@ export default function Popup() {
     setErrorText('');
 
     try {
+      const apifoxMatches =
+        apifoxStatus.ready && selectedRequests.length > 0
+          ? await getApifoxMatches(selectedRequests.map(({ url, method }) => ({ url, method })))
+          : {};
+      const requestsWithApifox = selectedRequests.map((request) => ({
+        ...request,
+        apifoxUrl: apifoxMatches[`${request.method.toUpperCase()} ${request.url}`],
+      }));
+
       const text = buildFeedbackText({
         page,
-        requests: selectedRequests,
+        requests: requestsWithApifox,
         note,
         screenshotLabel: 'N/A（当前版本暂未启用自动截图）',
         customFields: settings.customFields,
@@ -215,14 +456,30 @@ export default function Popup() {
       const nextSettings: QuickCopySettings = {
         apiPrefixes: parseLines(prefixInput),
         customFields: parseLines(customFieldsInput),
+        apifoxExportUrl: apifoxExportUrlInput.trim(),
       };
+
+      if (nextSettings.apifoxExportUrl) {
+        setRefreshingApifox(true);
+        const nextStatus = await refreshApifoxData(nextSettings.apifoxExportUrl);
+        setApifoxStatus(nextStatus);
+      } else {
+        await clearApifoxData();
+        setApifoxStatus({
+          ready: false,
+          sourceUrl: '',
+          endpointCount: 0,
+        });
+      }
 
       await saveSettings(nextSettings);
       setSettings(nextSettings);
-      setStatusText('配置已保存，请刷新页面后再使用新配置。');
+      setStatusText('配置已保存，新的过滤规则与 Apifox 设置已生效。');
       setToast({
         type: 'info',
-        text: '配置已保存，请刷新当前页面以应用新设置。',
+        text: nextSettings.apifoxExportUrl
+          ? '配置已保存，Apifox 接口信息已准备完成。'
+          : '配置已保存，已清空 Apifox 缓存。',
       });
       setShowSettings(false);
     } catch (error) {
@@ -232,6 +489,44 @@ export default function Popup() {
       setToast({ type: 'error', text: message });
     } finally {
       setSavingSettings(false);
+      setRefreshingApifox(false);
+    }
+  }
+
+  async function handleRefreshApifox() {
+    if (!settings.apifoxExportUrl) {
+      setToast({
+        type: 'info',
+        text: '请先在设置中填写本地 Apifox 导出地址。',
+      });
+      setShowSettings(true);
+      return;
+    }
+
+    setErrorText('');
+    setStatusText('正在刷新 Apifox 接口信息...');
+    setRefreshingApifox(true);
+
+    try {
+      const nextStatus = await refreshApifoxData(settings.apifoxExportUrl);
+      setApifoxStatus(nextStatus);
+      setStatusText(`Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`);
+      setToast({
+        type: 'success',
+        text: `Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '刷新 Apifox 数据失败。';
+      setApifoxStatus((current) => ({
+        ...current,
+        ready: false,
+        error: message,
+      }));
+      setErrorText(message);
+      setStatusText(message);
+      setToast({ type: 'error', text: message });
+    } finally {
+      setRefreshingApifox(false);
     }
   }
 
@@ -249,15 +544,37 @@ export default function Popup() {
             <div className="hero-label">Quick Copy Ext</div>
             <h1>异常反馈一键复制</h1>
           </div>
-          <button
-            className={`icon-button ${showSettings ? 'active' : ''}`}
-            onClick={() => setShowSettings((current) => !current)}
-            type="button"
-          >
-            {showSettings ? '关闭设置' : '设置'}
-          </button>
+          <div className="hero-actions">
+            <div className={`apifox-badge ${apifoxStatus.ready ? 'ready' : 'idle'}`}>
+              <span className="apifox-badge-dot" />
+              <span>Apifox</span>
+            </div>
+            <button
+              aria-label="刷新 Apifox 接口信息"
+              className="icon-button icon-only"
+              disabled={refreshingApifox || !settings.apifoxExportUrl}
+              onClick={() => void handleRefreshApifox()}
+              type="button"
+            >
+              {refreshingApifox ? '...' : '↻'}
+            </button>
+            <button
+              className={`icon-button ${showSettings ? 'active' : ''}`}
+              onClick={() => setShowSettings((current) => !current)}
+              type="button"
+            >
+              {showSettings ? '关闭设置' : '设置'}
+            </button>
+          </div>
         </div>
         <p>自动汇总页面与接口请求，便于快速复制反馈。</p>
+        <div className="hero-subline">
+          {apifoxStatus.ready
+            ? `Apifox 已就绪，已缓存 ${apifoxStatus.endpointCount} 条接口。`
+            : settings.apifoxExportUrl
+              ? apifoxStatus.error || 'Apifox 尚未就绪，可点击右上角刷新重试。'
+              : '未配置 Apifox 导出地址，复制时将不会补充 Apifox 链接。'}
+        </div>
       </section>
 
       {showSettings ? (
@@ -293,6 +610,18 @@ export default function Popup() {
               />
               <small>每行一个字段，复制结果会自动附带这些内容。</small>
             </label>
+
+            <label className="field-block">
+              <span>本地 Apifox 导出地址</span>
+              <textarea
+                className="note-input"
+                onChange={(event) => setApifoxExportUrlInput(event.target.value)}
+                placeholder="http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator"
+                rows={3}
+                value={apifoxExportUrlInput}
+              />
+              <small>保存时会立即校验地址并把接口信息缓存在内存中，未响应时通常是本地 Apifox 未打开。</small>
+            </label>
           </div>
 
           <div className="settings-actions">
@@ -312,7 +641,7 @@ export default function Popup() {
               {savingSettings ? '保存中...' : '保存配置'}
             </button>
           </div>
-          <p className="settings-hint">保存后请刷新当前页面，再使用新的过滤规则与自定义字段。</p>
+          <p className="settings-hint">保存时会同步校验 Apifox 地址；接口前缀与自定义字段保存后可直接生效。</p>
         </section>
       ) : (
         <>

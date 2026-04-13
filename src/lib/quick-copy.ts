@@ -18,6 +18,7 @@ export interface NetworkRequestRecord {
   completedAt?: number;
   headers: HeaderRecord;
   error?: string;
+  apifoxUrl?: string;
 }
 
 export interface PageSummary {
@@ -39,15 +40,46 @@ export interface CopyPayload extends PopupPayload {
 export interface QuickCopySettings {
   apiPrefixes: string[];
   customFields: string[];
+  apifoxExportUrl: string;
 }
 
 export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-tab-requests'; tabId: number }
-  | { type: 'quick-copy/clear-tab-requests'; tabId: number };
+  | { type: 'quick-copy/clear-tab-requests'; tabId: number }
+  | { type: 'quick-copy/get-apifox-status' }
+  | { type: 'quick-copy/refresh-apifox-data'; exportUrl: string }
+  | { type: 'quick-copy/clear-apifox-data' }
+  | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] };
 
 export type RuntimeResponseMessage =
   | { ok: true; data: NetworkRequestRecord[] }
   | { ok: false; error: string };
+
+export interface ApifoxCacheStatus {
+  ready: boolean;
+  sourceUrl: string;
+  endpointCount: number;
+  updatedAt?: number;
+  error?: string;
+}
+
+export type ApifoxStatusResponse =
+  | { ok: true; data: ApifoxCacheStatus }
+  | { ok: false; error: string };
+
+export type ApifoxRefreshResponse =
+  | { ok: true; data: ApifoxCacheStatus }
+  | { ok: false; error: string };
+
+export type ApifoxMatchesResponse =
+  | { ok: true; data: Record<string, string> }
+  | { ok: false; error: string };
+
+export interface ApifoxEndpoint {
+  path: string;
+  method: string;
+  apifoxUrl: string;
+}
 
 export function normalizeHeaders(
   headers: chrome.webRequest.HttpHeader[] | undefined,
@@ -155,6 +187,7 @@ export function getDefaultSettings(): QuickCopySettings {
   return {
     apiPrefixes: ['/api/saas/'],
     customFields: [],
+    apifoxExportUrl: '',
   };
 }
 
@@ -166,6 +199,10 @@ export async function loadSettings(): Promise<QuickCopySettings> {
   return {
     apiPrefixes: Array.isArray(current?.apiPrefixes) ? current.apiPrefixes.filter(Boolean) : defaults.apiPrefixes,
     customFields: Array.isArray(current?.customFields) ? current.customFields.filter(Boolean) : defaults.customFields,
+    apifoxExportUrl:
+      typeof current?.apifoxExportUrl === 'string'
+        ? current.apifoxExportUrl.trim()
+        : defaults.apifoxExportUrl,
   };
 }
 
@@ -220,6 +257,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
       sections.push(`- 耗时: ${formatDuration(request.startedAt, request.completedAt)}`);
+      sections.push(`- apifox: ${request.apifoxUrl ?? 'N/A'}`);
 
       if (index < payload.requests.length - 1) {
         sections.push('');
@@ -251,4 +289,59 @@ export function buildFeedbackText(payload: CopyPayload): string {
   sections.push('=== From Quick Copy Ext');
 
   return sections.join('\n');
+}
+
+export function normalizeApifoxMethod(method: string): string {
+  return method.trim().toLowerCase();
+}
+
+export function getUrlPath(rawUrl: string): string {
+  try {
+    return new URL(rawUrl).pathname || '/';
+  } catch {
+    const [path = rawUrl] = rawUrl.split(/[?#]/);
+    return path || '/';
+  }
+}
+
+export function getApifoxLookupKey(path: string, method: string): string {
+  return `${normalizeApifoxMethod(method)} ${path}`;
+}
+
+export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
+  if (!schema || typeof schema !== 'object') {
+    throw new Error('Apifox 导出内容格式不正确。');
+  }
+
+  const paths = (schema as { paths?: Record<string, unknown> }).paths;
+  if (!paths || typeof paths !== 'object') {
+    throw new Error('Apifox 导出内容中未找到 paths 字段。');
+  }
+
+  const endpoints: ApifoxEndpoint[] = [];
+
+  Object.entries(paths).forEach(([path, pathItem]) => {
+    if (!pathItem || typeof pathItem !== 'object') {
+      return;
+    }
+
+    Object.entries(pathItem).forEach(([method, operation]) => {
+      if (!operation || typeof operation !== 'object') {
+        return;
+      }
+
+      const apifoxUrl = (operation as { 'x-run-in-apifox'?: unknown })['x-run-in-apifox'];
+      if (typeof apifoxUrl !== 'string' || !apifoxUrl.trim()) {
+        return;
+      }
+
+      endpoints.push({
+        path,
+        method: normalizeApifoxMethod(method),
+        apifoxUrl: apifoxUrl.trim(),
+      });
+    });
+  });
+
+  return endpoints;
 }

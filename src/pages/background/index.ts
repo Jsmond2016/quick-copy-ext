@@ -1,4 +1,8 @@
 import {
+  ApifoxCacheStatus,
+  extractApifoxEndpoints,
+  getApifoxLookupKey,
+  getUrlPath,
   MAX_REQUESTS_PER_TAB,
   NetworkRequestRecord,
   RuntimeRequestMessage,
@@ -9,6 +13,15 @@ import {
 const requestsByTab = new Map<number, NetworkRequestRecord[]>();
 const requestIndex = new Map<string, NetworkRequestRecord>();
 const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest']);
+const apifoxEndpointMap = new Map<string, string>();
+const apifoxPathMap = new Map<string, string>();
+const defaultApifoxStatus: ApifoxCacheStatus = {
+  ready: false,
+  sourceUrl: '',
+  endpointCount: 0,
+};
+
+let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 
 function upsertRequest(record: NetworkRequestRecord) {
   const existing = requestsByTab.get(record.tabId) ?? [];
@@ -32,6 +45,79 @@ function updateRequest(
 
   requestsByTab.set(current.tabId, updated);
   requestIndex.set(requestId, next);
+}
+
+function resetApifoxCache(sourceUrl = '') {
+  apifoxEndpointMap.clear();
+  apifoxPathMap.clear();
+  apifoxStatus = {
+    ready: false,
+    sourceUrl,
+    endpointCount: 0,
+  };
+}
+
+async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> {
+  const normalizedUrl = exportUrl.trim();
+  if (!normalizedUrl) {
+    resetApifoxCache('');
+    return apifoxStatus;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(normalizedUrl, {
+      method: 'GET',
+      cache: 'no-store',
+    });
+  } catch {
+    resetApifoxCache(normalizedUrl);
+    apifoxStatus.error = '未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。';
+    throw new Error('未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。');
+  }
+
+  if (!response.ok) {
+    resetApifoxCache(normalizedUrl);
+    apifoxStatus.error = `Apifox 导出地址请求失败：HTTP ${response.status}`;
+    throw new Error(`Apifox 导出地址请求失败：HTTP ${response.status}`);
+  }
+
+  const schema = (await response.json()) as unknown;
+  const endpoints = extractApifoxEndpoints(schema);
+
+  apifoxEndpointMap.clear();
+  apifoxPathMap.clear();
+  endpoints.forEach((endpoint) => {
+    apifoxEndpointMap.set(getApifoxLookupKey(endpoint.path, endpoint.method), endpoint.apifoxUrl);
+    if (!apifoxPathMap.has(endpoint.path)) {
+      apifoxPathMap.set(endpoint.path, endpoint.apifoxUrl);
+    }
+  });
+
+  apifoxStatus = {
+    ready: true,
+    sourceUrl: normalizedUrl,
+    endpointCount: endpoints.length,
+    updatedAt: Date.now(),
+  };
+
+  return apifoxStatus;
+}
+
+function getApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>[]) {
+  const result: Record<string, string> = {};
+
+  requests.forEach((request) => {
+    const path = getUrlPath(request.url);
+    const exactKey = getApifoxLookupKey(path, request.method);
+    const matchedUrl = apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(path);
+
+    if (matchedUrl) {
+      result[`${request.method.toUpperCase()} ${request.url}`] = matchedUrl;
+    }
+  });
+
+  return result;
 }
 
 chrome.webRequest.onBeforeRequest.addListener(
@@ -97,7 +183,7 @@ chrome.runtime.onMessage.addListener(
   (
     message: RuntimeRequestMessage,
     _sender,
-    sendResponse: (response: RuntimeResponseMessage) => void,
+    sendResponse: (response: RuntimeResponseMessage | { ok: true; data: unknown } | { ok: false; error: string }) => void,
   ) => {
     if (message.type === 'quick-copy/get-tab-requests') {
       const requests = requestsByTab.get(message.tabId) ?? [];
@@ -109,6 +195,32 @@ chrome.runtime.onMessage.addListener(
       requestsByTab.delete(message.tabId);
       sendResponse({ ok: true, data: [] });
       return false;
+    }
+
+    if (message.type === 'quick-copy/get-apifox-status') {
+      sendResponse({ ok: true, data: apifoxStatus });
+      return false;
+    }
+
+    if (message.type === 'quick-copy/clear-apifox-data') {
+      resetApifoxCache('');
+      sendResponse({ ok: true, data: apifoxStatus });
+      return false;
+    }
+
+    if (message.type === 'quick-copy/get-apifox-matches') {
+      sendResponse({ ok: true, data: getApifoxMatches(message.requests) });
+      return false;
+    }
+
+    if (message.type === 'quick-copy/refresh-apifox-data') {
+      void refreshApifoxData(message.exportUrl)
+        .then((status) => sendResponse({ ok: true, data: status }))
+        .catch((error: unknown) => {
+          const messageText = error instanceof Error ? error.message : '刷新 Apifox 数据失败。';
+          sendResponse({ ok: false, error: messageText });
+        });
+      return true;
     }
 
     sendResponse({ ok: false, error: 'Unknown message type.' });
