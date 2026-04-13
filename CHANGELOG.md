@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.7](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.7) (2026-04-13)
+
+
+### Bug Fixes
+
+* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
+
+
+### Features
+
+* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
+
 ## [1.4.6](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.5...v1.4.6) (2026-04-13)
 
 
