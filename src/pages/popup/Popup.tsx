@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   buildFeedbackText,
-  formatDuration,
-  formatTime,
   getDefaultSettings,
   getDisplayPath,
-  getTraceId,
   loadSettings,
   matchesApiPrefixes,
   NetworkRequestRecord,
@@ -248,7 +245,10 @@ export default function Popup() {
 
       <section className="hero-card">
         <div className="hero-topbar">
-          <div className="hero-label">Quick Copy Ext</div>
+          <div>
+            <div className="hero-label">Quick Copy Ext</div>
+            <h1>异常反馈一键复制</h1>
+          </div>
           <button
             className={`icon-button ${showSettings ? 'active' : ''}`}
             onClick={() => setShowSettings((current) => !current)}
@@ -257,10 +257,7 @@ export default function Popup() {
             {showSettings ? '关闭设置' : '设置'}
           </button>
         </div>
-        <h1>异常反馈一键复制</h1>
-        <p>
-          自动汇总当前页面与接口请求信息，减少补充沟通，帮助前后端更快复现问题。
-        </p>
+        <p>自动汇总页面与接口请求，便于快速复制反馈。</p>
       </section>
 
       {showSettings ? (
@@ -323,7 +320,7 @@ export default function Popup() {
             <div className="panel-head">
               <div>
                 <span className="panel-kicker">当前页面</span>
-                <h2>页面基础信息</h2>
+                <h2>页面摘要</h2>
               </div>
               <button className="ghost-button" type="button" onClick={() => void loadData()}>
                 刷新
@@ -337,7 +334,7 @@ export default function Popup() {
               </div>
               <div>
                 <dt>URL</dt>
-                <dd title={page.url}>{page.url || 'N/A'}</dd>
+                <dd title={page.url}>{getDisplayPath(page.url) || 'N/A'}</dd>
               </div>
             </dl>
           </section>
@@ -395,12 +392,6 @@ export default function Popup() {
                           <span className="request-path" title={request.url}>
                             {getDisplayPath(request.url)}
                           </span>
-                        </div>
-                        <div className="request-meta">
-                          <span>traceId: {getTraceId(request.headers)}</span>
-                          <span>状态: {request.statusCode ?? request.error ?? '进行中'}</span>
-                          <span>耗时: {formatDuration(request.startedAt, request.completedAt)}</span>
-                          <span>时间: {formatTime(request.startedAt)}</span>
                         </div>
                       </div>
                     </label>

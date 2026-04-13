@@ -76,12 +76,42 @@ export function getTraceId(headers: HeaderRecord): string {
   return 'N/A';
 }
 
+export function getCompactText(value: string, head = 8, tail = 6): string {
+  if (!value) {
+    return 'N/A';
+  }
+
+  if (value.length <= head + tail + 3) {
+    return value;
+  }
+
+  return `${value.slice(0, head)}...${value.slice(-tail)}`;
+}
+
 export function getDisplayPath(rawUrl: string): string {
   try {
     const url = new URL(rawUrl);
-    return `${url.pathname}${url.search}`;
+    const segments = url.pathname.split('/').filter(Boolean);
+    const visibleSegments = segments.slice(-3);
+    const suffix = `${url.search}${url.hash}`;
+
+    if (segments.length === 0) {
+      return `${url.pathname || '/'}${suffix}`;
+    }
+
+    const prefix = segments.length > visibleSegments.length ? '/.../' : '/';
+    return `${prefix}${visibleSegments.join('/')}${suffix}`;
   } catch {
-    return rawUrl;
+    const [path = rawUrl, suffix = ''] = rawUrl.split(/(?=[?#])/);
+    const segments = path.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      return rawUrl;
+    }
+
+    const visibleSegments = segments.slice(-3).join('/');
+    const prefix = segments.length > 3 ? '/.../' : '/';
+    return `${prefix}${visibleSegments}${suffix}`;
   }
 }
 
@@ -176,7 +206,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
     sections.push('- 未选择异常接口');
   } else {
     payload.requests.forEach((request, index) => {
-      sections.push(`- ${request.method.toUpperCase()} ${getDisplayPath(request.url)}`);
+      sections.push(`- ${request.method.toUpperCase()} ${request.url}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
