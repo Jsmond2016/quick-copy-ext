@@ -32,12 +32,14 @@ export interface PopupPayload {
 }
 
 export interface CopyPayload extends PopupPayload {
+  feedbackTitle: string;
   note: string;
   screenshotLabel: string;
   customFields: string[];
 }
 
 export interface QuickCopySettings {
+  feedbackTitle: string;
   monitoredOrigins: string[];
   apiPrefixes: string[];
   customFields: string[];
@@ -186,6 +188,7 @@ export function stringifyLines(values: string[]): string {
 
 export function getDefaultSettings(): QuickCopySettings {
   return {
+    feedbackTitle: '异常接口反馈',
     monitoredOrigins: ['localhost', '127.0.0.1'],
     apiPrefixes: ['/api/saas/'],
     customFields: [],
@@ -199,6 +202,10 @@ export async function loadSettings(): Promise<QuickCopySettings> {
   const defaults = getDefaultSettings();
 
   return {
+    feedbackTitle:
+      typeof current?.feedbackTitle === 'string' && current.feedbackTitle.trim()
+        ? current.feedbackTitle.trim()
+        : defaults.feedbackTitle,
     monitoredOrigins: Array.isArray(current?.monitoredOrigins)
       ? current.monitoredOrigins.filter(Boolean)
       : defaults.monitoredOrigins,
@@ -282,7 +289,7 @@ export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): 
 
 export function buildFeedbackText(payload: CopyPayload): string {
   const sections: string[] = [
-    '=== 异常接口反馈',
+    `=== ${payload.feedbackTitle.trim() || '异常接口反馈'}`,
     '',
     'Web 信息：',
     '',

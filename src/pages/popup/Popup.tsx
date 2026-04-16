@@ -229,6 +229,7 @@ export default function Popup() {
     null,
   );
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
+  const [feedbackTitleInput, setFeedbackTitleInput] = useState(getDefaultSettings().feedbackTitle);
   const [originInput, setOriginInput] = useState(stringifyLines(getDefaultSettings().monitoredOrigins));
   const [prefixInput, setPrefixInput] = useState(stringifyLines(getDefaultSettings().apiPrefixes));
   const [customFieldsInput, setCustomFieldsInput] = useState(
@@ -351,6 +352,7 @@ export default function Popup() {
     void (async () => {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
+      setFeedbackTitleInput(loadedSettings.feedbackTitle);
       setOriginInput(stringifyLines(loadedSettings.monitoredOrigins));
       setPrefixInput(stringifyLines(loadedSettings.apiPrefixes));
       setCustomFieldsInput(stringifyLines(loadedSettings.customFields));
@@ -438,6 +440,7 @@ export default function Popup() {
       const text = buildFeedbackText({
         page,
         requests: requestsWithApifox,
+        feedbackTitle: settings.feedbackTitle,
         note,
         screenshotLabel: 'N/A（当前版本暂未启用自动截图）',
         customFields: settings.customFields,
@@ -465,6 +468,7 @@ export default function Popup() {
 
     try {
       const nextSettings: QuickCopySettings = {
+        feedbackTitle: feedbackTitleInput.trim() || getDefaultSettings().feedbackTitle,
         monitoredOrigins: parseLines(originInput),
         apiPrefixes: parseLines(prefixInput),
         customFields: parseLines(customFieldsInput),
@@ -600,6 +604,18 @@ export default function Popup() {
           </div>
 
           <div className="config-grid">
+            <label className="field-block">
+              <span>复制标题</span>
+              <input
+                className="note-input"
+                onChange={(event) => setFeedbackTitleInput(event.target.value)}
+                placeholder="异常接口反馈"
+                type="text"
+                value={feedbackTitleInput}
+              />
+              <small>复制内容第一行标题，默认值为“异常接口反馈”，支持自定义。</small>
+            </label>
+
             <label className="field-block">
               <span>监听页面 Origin</span>
               <textarea
