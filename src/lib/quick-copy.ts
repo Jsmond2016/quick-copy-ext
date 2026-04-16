@@ -288,8 +288,15 @@ export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): 
 }
 
 export function buildFeedbackText(payload: CopyPayload): string {
+  const normalizedTitle = payload.feedbackTitle.trim() || '异常接口反馈';
+  const normalizedNote = payload.note.trim() || 'N/A';
+  const normalizedScreenshotLabel = payload.screenshotLabel.trim() || 'N/A';
   const sections: string[] = [
-    `=== ${payload.feedbackTitle.trim() || '异常接口反馈'}`,
+    `- 问题：${normalizedNote}`,
+    '- 详细描述：N/A',
+    `- 截图：${normalizedScreenshotLabel}`,
+    '',
+    `=== ${normalizedTitle}`,
     '',
     'Web 信息：',
     '',
@@ -318,24 +325,12 @@ export function buildFeedbackText(payload: CopyPayload): string {
   }
 
   sections.push('');
-  // sections.push('截图信息：');
-  // sections.push('');
-  // sections.push(`- ${payload.screenshotLabel}`);
-  // sections.push('');
   if (payload.customFields.length !== 0) {
     sections.push('---');
     sections.push('');
     payload.customFields.forEach((field) => {
       sections.push(`- ${field}`);
     });
-  }
-
-  if ((payload.note.trim()) !== "") {
-    sections.push('');
-    sections.push('其他备注说明：');
-    sections.push('');
-    sections.push(payload.note)
-    // sections.push(payload.note.trim() || '无');
   }
   sections.push('');
   sections.push('=== From Quick Copy Ext');

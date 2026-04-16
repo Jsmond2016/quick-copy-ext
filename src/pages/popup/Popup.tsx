@@ -442,7 +442,7 @@ export default function Popup() {
         requests: requestsWithApifox,
         feedbackTitle: settings.feedbackTitle,
         note,
-        screenshotLabel: 'N/A（当前版本暂未启用自动截图）',
+        screenshotLabel: 'N/A',
         customFields: settings.customFields,
       });
 
