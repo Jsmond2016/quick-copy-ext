@@ -5,11 +5,8 @@ import {
   ApifoxRefreshResponse,
   ApifoxStatusResponse,
   buildFeedbackText,
-  extractApifoxEndpoints,
-  getApifoxLookupKey,
   getDefaultSettings,
   getDisplayPath,
-  getUrlPath,
   loadSettings,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
@@ -27,87 +24,18 @@ const DEFAULT_PAGE: PageSummary = {
   url: '',
 };
 
-const localApifoxCache = {
-  status: {
-    ready: false,
-    sourceUrl: '',
-    endpointCount: 0,
-  } as ApifoxCacheStatus,
-  endpointMap: new Map<string, string>(),
-  pathMap: new Map<string, string>(),
+const DEFAULT_APIFOX_STATUS: ApifoxCacheStatus = {
+  ready: false,
+  sourceUrl: '',
+  endpointCount: 0,
 };
 
 function isUnknownMessageTypeError(error: unknown): boolean {
   return error instanceof Error && error.message === 'Unknown message type.';
 }
 
-async function refreshApifoxLocally(exportUrl: string): Promise<ApifoxCacheStatus> {
-  const normalizedUrl = exportUrl.trim();
-  if (!normalizedUrl) {
-    localApifoxCache.status = {
-      ready: false,
-      sourceUrl: '',
-      endpointCount: 0,
-    };
-    localApifoxCache.endpointMap.clear();
-    localApifoxCache.pathMap.clear();
-    return localApifoxCache.status;
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(normalizedUrl, {
-      method: 'GET',
-      cache: 'no-store',
-    });
-  } catch {
-    throw new Error('未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。');
-  }
-
-  if (!response.ok) {
-    throw new Error(`Apifox 导出地址请求失败：HTTP ${response.status}`);
-  }
-
-  const schema = (await response.json()) as unknown;
-  const endpoints = extractApifoxEndpoints(schema);
-
-  localApifoxCache.endpointMap.clear();
-  localApifoxCache.pathMap.clear();
-  endpoints.forEach((endpoint) => {
-    localApifoxCache.endpointMap.set(
-      getApifoxLookupKey(endpoint.path, endpoint.method),
-      endpoint.apifoxUrl,
-    );
-    if (!localApifoxCache.pathMap.has(endpoint.path)) {
-      localApifoxCache.pathMap.set(endpoint.path, endpoint.apifoxUrl);
-    }
-  });
-
-  localApifoxCache.status = {
-    ready: true,
-    sourceUrl: normalizedUrl,
-    endpointCount: endpoints.length,
-    updatedAt: Date.now(),
-  };
-
-  return localApifoxCache.status;
-}
-
-function getLocalApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>[]) {
-  const result: Record<string, string> = {};
-
-  requests.forEach((request) => {
-    const path = getUrlPath(request.url);
-    const matchedUrl =
-      localApifoxCache.endpointMap.get(getApifoxLookupKey(path, request.method)) ??
-      localApifoxCache.pathMap.get(path);
-
-    if (matchedUrl) {
-      result[`${request.method.toUpperCase()} ${request.url}`] = matchedUrl;
-    }
-  });
-
-  return result;
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
 }
 
 async function getActiveTab() {
@@ -144,7 +72,11 @@ async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
       throw error;
     }
 
-    return localApifoxCache.status;
+    return {
+      ready: false,
+      sourceUrl: '',
+      endpointCount: 0,
+    };
   }
 }
 
@@ -165,7 +97,7 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
       throw error;
     }
 
-    return refreshApifoxLocally(exportUrl);
+    throw new Error('当前扩展后台不支持 Apifox 缓存刷新，请重新加载扩展。');
   }
 }
 
@@ -178,14 +110,6 @@ async function clearApifoxData(): Promise<void> {
     if (!isUnknownMessageTypeError(error)) {
       throw error;
     }
-
-    localApifoxCache.status = {
-      ready: false,
-      sourceUrl: '',
-      endpointCount: 0,
-    };
-    localApifoxCache.endpointMap.clear();
-    localApifoxCache.pathMap.clear();
   }
 }
 
@@ -208,7 +132,7 @@ async function getApifoxMatches(
       throw error;
     }
 
-    return getLocalApifoxMatches(requests);
+    throw new Error('当前扩展后台不支持 Apifox 匹配，请重新加载扩展。');
   }
 }
 
@@ -238,11 +162,7 @@ export default function Popup() {
   const [apifoxExportUrlInput, setApifoxExportUrlInput] = useState(
     getDefaultSettings().apifoxExportUrl,
   );
-  const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>({
-    ready: false,
-    sourceUrl: '',
-    endpointCount: 0,
-  });
+  const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>(DEFAULT_APIFOX_STATUS);
 
   const filteredRequests = useMemo(
     () => requests.filter((request) => matchesApiPrefixes(request.url, settings.apiPrefixes)),
@@ -301,53 +221,6 @@ export default function Popup() {
     }
   }
 
-  async function syncApifoxStatus(exportUrl: string, options?: { forceRefresh?: boolean; silent?: boolean }) {
-    const normalizedUrl = exportUrl.trim();
-
-    if (!normalizedUrl) {
-      setApifoxStatus({
-        ready: false,
-        sourceUrl: '',
-        endpointCount: 0,
-      });
-      return;
-    }
-
-    if (!options?.silent) {
-      setRefreshingApifox(true);
-    }
-
-    try {
-      const currentStatus = await getApifoxStatus();
-      const needsRefresh =
-        options?.forceRefresh ||
-        !currentStatus.ready ||
-        currentStatus.sourceUrl !== normalizedUrl ||
-        currentStatus.endpointCount === 0;
-
-      const nextStatus = needsRefresh ? await refreshApifoxData(normalizedUrl) : currentStatus;
-      setApifoxStatus(nextStatus);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Apifox 数据准备失败。';
-      setApifoxStatus({
-        ready: false,
-        sourceUrl: normalizedUrl,
-        endpointCount: 0,
-        error: message,
-      });
-
-      if (!options?.silent) {
-        setErrorText(message);
-        setStatusText(message);
-        setToast({ type: 'error', text: message });
-      }
-    } finally {
-      if (!options?.silent) {
-        setRefreshingApifox(false);
-      }
-    }
-  }
-
   useEffect(() => {
     void (async () => {
       const loadedSettings = await loadSettings();
@@ -357,7 +230,10 @@ export default function Popup() {
       setPrefixInput(stringifyLines(loadedSettings.apiPrefixes));
       setCustomFieldsInput(stringifyLines(loadedSettings.customFields));
       setApifoxExportUrlInput(loadedSettings.apifoxExportUrl);
-      await syncApifoxStatus(loadedSettings.apifoxExportUrl, { silent: true });
+      const currentApifoxStatus = loadedSettings.apifoxExportUrl
+        ? await getApifoxStatus()
+        : DEFAULT_APIFOX_STATUS;
+      setApifoxStatus(currentApifoxStatus);
       await loadData(loadedSettings);
     })();
   }, []);
@@ -394,6 +270,58 @@ export default function Popup() {
 
   function clearSelection() {
     setSelectedIds([]);
+  }
+
+  async function runApifoxRefresh(
+    exportUrl: string,
+    options?: {
+      successText?: string;
+      fallbackErrorText?: string;
+      preserveStatusTextOnError?: boolean;
+      toastOnSuccess?: boolean;
+      toastOnError?: boolean;
+    },
+  ) {
+    setRefreshingApifox(true);
+
+    try {
+      const nextStatus = await refreshApifoxData(exportUrl);
+      setApifoxStatus(nextStatus);
+
+      if (options?.successText) {
+        setStatusText(options.successText);
+      }
+
+      if (options?.toastOnSuccess && options.successText) {
+        setToast({
+          type: 'success',
+          text: options.successText,
+        });
+      }
+
+      return nextStatus;
+    } catch (error) {
+      const message = getErrorMessage(error, options?.fallbackErrorText ?? '刷新 Apifox 数据失败。');
+      setApifoxStatus({
+        ready: false,
+        sourceUrl: exportUrl.trim(),
+        endpointCount: 0,
+        error: message,
+      });
+      setErrorText(message);
+
+      if (!options?.preserveStatusTextOnError) {
+        setStatusText(message);
+      }
+
+      if (options?.toastOnError) {
+        setToast({ type: 'error', text: message });
+      }
+
+      throw error;
+    } finally {
+      setRefreshingApifox(false);
+    }
   }
 
   async function clearCurrentTabRequests() {
@@ -475,38 +403,48 @@ export default function Popup() {
         apifoxExportUrl: apifoxExportUrlInput.trim(),
       };
 
-      if (nextSettings.apifoxExportUrl) {
-        setRefreshingApifox(true);
-        const nextStatus = await refreshApifoxData(nextSettings.apifoxExportUrl);
-        setApifoxStatus(nextStatus);
-      } else {
+      if (!nextSettings.apifoxExportUrl) {
         await clearApifoxData();
+        setApifoxStatus(DEFAULT_APIFOX_STATUS);
+      } else {
         setApifoxStatus({
           ready: false,
-          sourceUrl: '',
+          sourceUrl: nextSettings.apifoxExportUrl,
           endpointCount: 0,
         });
       }
 
       await saveSettings(nextSettings);
       setSettings(nextSettings);
-      setStatusText('配置已保存，新的监听范围、过滤规则与 Apifox 设置已生效。');
+      const savedStatusText = nextSettings.apifoxExportUrl
+        ? '配置已保存，监听范围与筛选规则已生效，Apifox 接口信息正在后台刷新。'
+        : '配置已保存，新的监听范围、过滤规则与 Apifox 设置已生效。';
+      setStatusText(savedStatusText);
       setToast({
         type: 'info',
         text: nextSettings.apifoxExportUrl
-          ? '配置已保存，监听范围与 Apifox 接口信息已更新。'
+          ? '配置已保存，Apifox 接口信息正在后台刷新。'
           : '配置已保存，监听范围已更新，且已清空 Apifox 缓存。',
       });
       setShowSettings(false);
       await loadData(nextSettings);
+
+      if (nextSettings.apifoxExportUrl) {
+        void runApifoxRefresh(nextSettings.apifoxExportUrl, {
+          successText: 'Apifox 接口信息已在后台刷新完成。',
+          fallbackErrorText: '后台刷新 Apifox 数据失败。',
+          toastOnSuccess: true,
+          toastOnError: true,
+          preserveStatusTextOnError: true,
+        }).catch(() => undefined);
+      }
     } catch (error) {
-      const message = error instanceof Error ? error.message : '保存配置失败。';
+      const message = getErrorMessage(error, '保存配置失败。');
       setErrorText(message);
       setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
       setSavingSettings(false);
-      setRefreshingApifox(false);
     }
   }
 
@@ -522,28 +460,20 @@ export default function Popup() {
 
     setErrorText('');
     setStatusText('正在刷新 Apifox 接口信息...');
-    setRefreshingApifox(true);
 
     try {
-      const nextStatus = await refreshApifoxData(settings.apifoxExportUrl);
-      setApifoxStatus(nextStatus);
-      setStatusText(`Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`);
+      const nextStatus = await runApifoxRefresh(settings.apifoxExportUrl, {
+        fallbackErrorText: '刷新 Apifox 数据失败。',
+      });
+      const successText = `Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`;
+      setStatusText(successText);
       setToast({
         type: 'success',
-        text: `Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`,
+        text: successText,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : '刷新 Apifox 数据失败。';
-      setApifoxStatus((current) => ({
-        ...current,
-        ready: false,
-        error: message,
-      }));
-      setErrorText(message);
-      setStatusText(message);
+      const message = getErrorMessage(error, '刷新 Apifox 数据失败。');
       setToast({ type: 'error', text: message });
-    } finally {
-      setRefreshingApifox(false);
     }
   }
 
@@ -661,7 +591,7 @@ export default function Popup() {
                 rows={3}
                 value={apifoxExportUrlInput}
               />
-              <small>保存时会立即校验地址并把接口信息缓存在内存中，未响应时通常是本地 Apifox 未打开。</small>
+              <small>保存后会在后台异步刷新接口缓存；如果未响应，通常是本地 Apifox 未打开。</small>
             </label>
           </div>
 
@@ -682,7 +612,7 @@ export default function Popup() {
               {savingSettings ? '保存中...' : '保存配置'}
             </button>
           </div>
-          <p className="settings-hint">保存时会同步校验 Apifox 地址；接口前缀与自定义字段保存后可直接生效。</p>
+          <p className="settings-hint">接口前缀与自定义字段保存后立即生效；Apifox 地址保存后会在后台异步刷新。</p>
         </section>
       ) : (
         <>

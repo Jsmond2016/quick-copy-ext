@@ -78,10 +78,10 @@ export type ApifoxMatchesResponse =
   | { ok: true; data: Record<string, string> }
   | { ok: false; error: string };
 
-export interface ApifoxEndpoint {
-  path: string;
-  method: string;
-  apifoxUrl: string;
+export interface ApifoxLookupMaps {
+  endpointMap: Map<string, string>;
+  pathMap: Map<string, string>;
+  endpointCount: number;
 }
 
 export function normalizeHeaders(
@@ -365,7 +365,7 @@ export function normalizeApifoxUrl(rawUrl: string): string {
   return trimmedUrl.replace(/-run(?=[?#]|$)/, '');
 }
 
-export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
+export function buildApifoxLookupMaps(schema: unknown): ApifoxLookupMaps {
   if (!schema || typeof schema !== 'object') {
     throw new Error('Apifox 导出内容格式不正确。');
   }
@@ -375,7 +375,9 @@ export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
     throw new Error('Apifox 导出内容中未找到 paths 字段。');
   }
 
-  const endpoints: ApifoxEndpoint[] = [];
+  const endpointMap = new Map<string, string>();
+  const pathMap = new Map<string, string>();
+  let endpointCount = 0;
 
   Object.entries(paths).forEach(([path, pathItem]) => {
     if (!pathItem || typeof pathItem !== 'object') {
@@ -397,13 +399,18 @@ export function extractApifoxEndpoints(schema: unknown): ApifoxEndpoint[] {
         return;
       }
 
-      endpoints.push({
-        path,
-        method: normalizeApifoxMethod(method),
-        apifoxUrl,
-      });
+      const normalizedMethod = normalizeApifoxMethod(method);
+      endpointMap.set(getApifoxLookupKey(path, normalizedMethod), apifoxUrl);
+      if (!pathMap.has(path)) {
+        pathMap.set(path, apifoxUrl);
+      }
+      endpointCount += 1;
     });
   });
 
-  return endpoints;
+  return {
+    endpointMap,
+    pathMap,
+    endpointCount,
+  };
 }

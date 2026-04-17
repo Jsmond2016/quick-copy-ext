@@ -1,6 +1,6 @@
 import {
   ApifoxCacheStatus,
-  extractApifoxEndpoints,
+  buildApifoxLookupMaps,
   getApifoxLookupKey,
   getUrlPath,
   loadSettings,
@@ -139,21 +139,21 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
   }
 
   const schema = (await response.json()) as unknown;
-  const endpoints = extractApifoxEndpoints(schema);
+  const lookupMaps = buildApifoxLookupMaps(schema);
 
   apifoxEndpointMap.clear();
   apifoxPathMap.clear();
-  endpoints.forEach((endpoint) => {
-    apifoxEndpointMap.set(getApifoxLookupKey(endpoint.path, endpoint.method), endpoint.apifoxUrl);
-    if (!apifoxPathMap.has(endpoint.path)) {
-      apifoxPathMap.set(endpoint.path, endpoint.apifoxUrl);
-    }
+  lookupMaps.endpointMap.forEach((apifoxUrl, lookupKey) => {
+    apifoxEndpointMap.set(lookupKey, apifoxUrl);
+  });
+  lookupMaps.pathMap.forEach((apifoxUrl, path) => {
+    apifoxPathMap.set(path, apifoxUrl);
   });
 
   apifoxStatus = {
     ready: true,
     sourceUrl: normalizedUrl,
-    endpointCount: endpoints.length,
+    endpointCount: lookupMaps.endpointCount,
     updatedAt: Date.now(),
   };
 
