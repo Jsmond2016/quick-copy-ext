@@ -20,6 +20,7 @@ const tabUrlMap = new Map<number, string>();
 const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest']);
 const apifoxEndpointMap = new Map<string, string>();
 const apifoxPathMap = new Map<string, string>();
+const RUNTIME_SESSION_CACHE_KEY = 'quick-copy-runtime-session-cache';
 const APIFOX_SESSION_CACHE_KEY = 'quick-copy-apifox-session-cache';
 const defaultApifoxStatus: ApifoxCacheStatus = {
   ready: false,
@@ -33,8 +34,70 @@ interface SerializedApifoxCache {
   pathEntries: [string, string][];
 }
 
+interface SerializedRuntimeCache {
+  requestsByTab: [number, NetworkRequestRecord[]][];
+  tabUrlEntries: [number, string][];
+}
+
 let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
+let runtimePersistTimer: number | undefined;
+
+async function persistRuntimeCache() {
+  const payload: SerializedRuntimeCache = {
+    requestsByTab: Array.from(requestsByTab.entries()),
+    tabUrlEntries: Array.from(tabUrlMap.entries()),
+  };
+
+  await chrome.storage.session.set({
+    [RUNTIME_SESSION_CACHE_KEY]: payload,
+  });
+}
+
+function scheduleRuntimeCachePersist() {
+  if (runtimePersistTimer !== undefined) {
+    clearTimeout(runtimePersistTimer);
+  }
+
+  runtimePersistTimer = setTimeout(() => {
+    runtimePersistTimer = undefined;
+    void persistRuntimeCache();
+  }, 80);
+}
+
+async function hydrateRuntimeCache() {
+  const stored = await chrome.storage.session.get(RUNTIME_SESSION_CACHE_KEY);
+  const payload = stored[RUNTIME_SESSION_CACHE_KEY] as SerializedRuntimeCache | undefined;
+
+  if (!payload || typeof payload !== 'object') {
+    return;
+  }
+
+  requestsByTab.clear();
+  requestIndex.clear();
+  tabUrlMap.clear();
+
+  payload.requestsByTab?.forEach(([tabId, records]) => {
+    if (typeof tabId !== 'number' || !Array.isArray(records)) {
+      return;
+    }
+
+    const nextRecords = records
+      .filter((record): record is NetworkRequestRecord => Boolean(record) && typeof record === 'object')
+      .slice(0, MAX_REQUESTS_PER_TAB);
+
+    requestsByTab.set(tabId, nextRecords);
+    nextRecords.forEach((record) => {
+      requestIndex.set(record.requestId, record);
+    });
+  });
+
+  payload.tabUrlEntries?.forEach(([tabId, tabUrl]) => {
+    if (typeof tabId === 'number' && typeof tabUrl === 'string') {
+      tabUrlMap.set(tabId, tabUrl);
+    }
+  });
+}
 
 async function persistApifoxCache() {
   const payload: SerializedApifoxCache = {
@@ -86,9 +149,14 @@ async function hydrateApifoxCache() {
 }
 
 const apifoxCacheReadyPromise = hydrateApifoxCache().catch(() => undefined);
+const runtimeCacheReadyPromise = hydrateRuntimeCache().catch(() => undefined);
 
 async function ensureApifoxCacheReady() {
   await apifoxCacheReadyPromise;
+}
+
+async function ensureRuntimeCacheReady() {
+  await runtimeCacheReadyPromise;
 }
 
 function upsertRequest(record: NetworkRequestRecord) {
@@ -96,6 +164,7 @@ function upsertRequest(record: NetworkRequestRecord) {
   const next = [record, ...existing.filter((item) => item.requestId !== record.requestId)];
   requestsByTab.set(record.tabId, next.slice(0, MAX_REQUESTS_PER_TAB));
   requestIndex.set(record.requestId, record);
+  scheduleRuntimeCachePersist();
 }
 
 function updateRequest(
@@ -113,6 +182,7 @@ function updateRequest(
 
   requestsByTab.set(current.tabId, updated);
   requestIndex.set(requestId, next);
+  scheduleRuntimeCachePersist();
 }
 
 function clearTabRequests(tabId: number) {
@@ -121,6 +191,7 @@ function clearTabRequests(tabId: number) {
     requestIndex.delete(record.requestId);
   });
   requestsByTab.delete(tabId);
+  scheduleRuntimeCachePersist();
 }
 
 function shouldTrackTabUrl(tabUrl: string | undefined): boolean {
@@ -142,7 +213,26 @@ function setTabUrl(tabId: number, tabUrl: string | undefined) {
 
   if (!shouldTrackTabUrl(tabUrl)) {
     clearTabRequests(tabId);
+    scheduleRuntimeCachePersist();
+    return;
   }
+
+  scheduleRuntimeCachePersist();
+}
+
+function shouldTrackRequest(tabId: number, initiator?: string) {
+  const tabUrl = tabUrlMap.get(tabId);
+  if (shouldTrackTabUrl(tabUrl)) {
+    return true;
+  }
+
+  if (initiator && matchesMonitoredOrigins(initiator, monitoredOrigins)) {
+    tabUrlMap.set(tabId, initiator);
+    scheduleRuntimeCachePersist();
+    return true;
+  }
+
+  return false;
 }
 
 async function refreshMonitoredOrigins() {
@@ -248,8 +338,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       return undefined;
     }
 
-    const tabUrl = tabUrlMap.get(details.tabId);
-    if (!shouldTrackTabUrl(tabUrl)) {
+    if (!shouldTrackRequest(details.tabId, details.initiator)) {
       return undefined;
     }
 
@@ -276,8 +365,7 @@ chrome.webRequest.onCompleted.addListener(
       return;
     }
 
-    const tabUrl = tabUrlMap.get(details.tabId);
-    if (!shouldTrackTabUrl(tabUrl)) {
+    if (!requestIndex.has(details.requestId)) {
       return;
     }
 
@@ -298,8 +386,7 @@ chrome.webRequest.onErrorOccurred.addListener(
       return;
     }
 
-    const tabUrl = tabUrlMap.get(details.tabId);
-    if (!shouldTrackTabUrl(tabUrl)) {
+    if (!requestIndex.has(details.requestId)) {
       return;
     }
 
@@ -337,7 +424,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 });
 
 void refreshMonitoredOrigins()
-  .then(() => bootstrapTabs())
+  .then(async () => {
+    await ensureRuntimeCacheReady();
+    await bootstrapTabs();
+  })
   .catch(() => {
     monitoredOrigins = [];
   });
@@ -349,15 +439,29 @@ chrome.runtime.onMessage.addListener(
     sendResponse: (response: RuntimeResponseMessage | { ok: true; data: unknown } | { ok: false; error: string }) => void,
   ) => {
     if (message.type === 'quick-copy/get-tab-requests') {
-      const requests = requestsByTab.get(message.tabId) ?? [];
-      sendResponse({ ok: true, data: requests });
-      return false;
+      void ensureRuntimeCacheReady()
+        .then(() => {
+          const requests = requestsByTab.get(message.tabId) ?? [];
+          sendResponse({ ok: true, data: requests });
+        })
+        .catch((error: unknown) => {
+          const messageText = error instanceof Error ? error.message : '读取请求记录失败。';
+          sendResponse({ ok: false, error: messageText });
+        });
+      return true;
     }
 
     if (message.type === 'quick-copy/clear-tab-requests') {
-      clearTabRequests(message.tabId);
-      sendResponse({ ok: true, data: [] });
-      return false;
+      void ensureRuntimeCacheReady()
+        .then(() => {
+          clearTabRequests(message.tabId);
+          sendResponse({ ok: true, data: [] });
+        })
+        .catch((error: unknown) => {
+          const messageText = error instanceof Error ? error.message : '清空请求记录失败。';
+          sendResponse({ ok: false, error: messageText });
+        });
+      return true;
     }
 
     if (message.type === 'quick-copy/get-apifox-status') {
