@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.11](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.11) (2026-04-17)
+
+
+### Bug Fixes
+
+* **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
+* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
+* persist apifox cache across worker restarts ([1a05d50](https://github.com/Jsmond2016/quick-copy-ext/commit/1a05d50dd7c46c185fa9c6a29f5165bcb287d1bc))
+
+
+### Features
+
+* optimize popup apifox loading ([bf590c6](https://github.com/Jsmond2016/quick-copy-ext/commit/bf590c697f6687749b860634d6668f375f7e717d))
+* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
+* support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
+
 ## [1.4.10](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.10) (2026-04-17)
 
 
