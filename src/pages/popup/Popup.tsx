@@ -98,7 +98,7 @@ export default function Popup() {
           ? `已加载 ${nextRequests.length} 条接口记录，可勾选后复制。`
           : isMonitoredPage
             ? '暂未捕获到接口请求，请先在页面上执行相关操作后再刷新。'
-            : '当前页面不在监听 Origin 范围内，插件不会记录这里的接口请求。',
+            : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : '读取请求记录失败。';

@@ -188,7 +188,7 @@ export function stringifyLines(values: string[]): string {
 
 export function getDefaultSettings(): QuickCopySettings {
   return {
-    feedbackTitle: '异常接口反馈',
+    feedbackTitle: '页面接口信息如下',
     monitoredOrigins: ['localhost', '127.0.0.1'],
     apiPrefixes: ['/api/saas/'],
     customFields: [],
@@ -288,7 +288,7 @@ export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): 
 }
 
 export function buildFeedbackText(payload: CopyPayload): string {
-  const normalizedTitle = payload.feedbackTitle.trim() || '异常接口反馈';
+  const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || 'N/A';
   const normalizedScreenshotLabel = payload.screenshotLabel.trim() || 'N/A';
   const sections: string[] = [

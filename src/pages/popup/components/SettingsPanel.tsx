@@ -85,11 +85,11 @@ export function SettingsPanel({
           <textarea
             className="note-input"
             onChange={handleChange('apifoxExportUrlInput')}
-            placeholder="http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator"
-            rows={3}
+            rows={2}
             value={form.apifoxExportUrlInput}
           />
-          <small>保存后会在后台异步刷新接口缓存；如果未响应，通常是本地 Apifox 未打开。</small>
+          <small>示例：http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator</small>
+          <small>保存后会在后台异步刷新接口缓存；若未响应，通常是本地 Apifox 未打开。</small>
         </label>
       </div>
 
