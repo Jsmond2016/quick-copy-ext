@@ -489,7 +489,7 @@ export default function Popup() {
         <div className="hero-topbar">
           <div>
             <div className="hero-label">Quick Copy Ext</div>
-            <h1>异常反馈一键复制</h1>
+            <h1>页面信息一键复制</h1>
           </div>
           <div className="hero-actions">
             <div className={`apifox-badge ${apifoxStatus.ready ? 'ready' : 'idle'}`}>
@@ -539,11 +539,11 @@ export default function Popup() {
               <input
                 className="note-input"
                 onChange={(event) => setFeedbackTitleInput(event.target.value)}
-                placeholder="异常接口反馈"
+                placeholder="页面信息反馈"
                 type="text"
                 value={feedbackTitleInput}
               />
-              <small>复制内容第一行标题，默认值为“异常接口反馈”，支持自定义。</small>
+              <small>复制内容第一行标题，默认值为“页面信息反馈”，支持自定义。</small>
             </label>
 
             <label className="field-block">
@@ -728,7 +728,7 @@ export default function Popup() {
               onClick={() => void copyFeedback()}
               type="button"
             >
-              {copying ? '复制中...' : '复制异常反馈'}
+              {copying ? '复制中...' : '复制页面接口信息'}
             </button>
           </section>
         </>
