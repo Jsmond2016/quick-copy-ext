@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.15](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.15) (2026-04-20)
+
+
+### Bug Fixes
+
+* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
+
 ## [1.4.14](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.14) (2026-04-20)
 
 ## [1.4.13](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.12...v1.4.13) (2026-04-18)
