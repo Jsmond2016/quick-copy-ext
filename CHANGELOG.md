@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.14](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.14) (2026-04-20)
+
 ## [1.4.13](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.12...v1.4.13) (2026-04-18)
 
 ## [1.4.12](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.12) (2026-04-17)
