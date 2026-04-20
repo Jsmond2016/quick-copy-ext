@@ -43,7 +43,7 @@ export function PopupHero({
             onClick={onToggleSettings}
             type="button"
           >
-            {showSettings ? '关闭设置' : '设置'}
+            {showSettings ? '返回' : '设置'}
           </button>
         </div>
       </div>
