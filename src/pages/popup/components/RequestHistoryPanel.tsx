@@ -31,8 +31,7 @@ export function RequestHistoryPanel({
     <section className="panel">
       <div className="panel-head">
         <div>
-          <span className="panel-kicker">接口历史</span>
-          <h2>捕获到的请求</h2>
+          <span className="panel-kicker">捕获接口历史</span>
         </div>
         <div className="inline-actions">
           <button className="ghost-button" type="button" onClick={onSelectAll} disabled={requests.length === 0}>
@@ -52,10 +51,12 @@ export function RequestHistoryPanel({
         </div>
       </div>
 
-      <div className="status-row">
-        <span className={`status-dot ${errorText ? 'danger' : loading ? 'pending' : 'success'}`} />
-        <p>{statusText}</p>
-      </div>
+      {statusText ? (
+        <div className="status-row">
+          <span className={`status-dot ${errorText ? 'danger' : loading ? 'pending' : 'success'}`} />
+          <p>{statusText}</p>
+        </div>
+      ) : null}
 
       <div className="filter-summary">
         当前筛选前缀：{settings.apiPrefixes.length > 0 ? settings.apiPrefixes.join('，') : '不过滤'}

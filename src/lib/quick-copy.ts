@@ -291,6 +291,8 @@ export function buildFeedbackText(payload: CopyPayload): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || 'N/A';
   const normalizedScreenshotLabel = payload.screenshotLabel.trim() || 'N/A';
+  const abnormalRequestsTitle =
+    payload.requests.length > 1 ? `异常接口信息-${payload.requests.length}条接口` : '异常接口信息';
   const sections: string[] = [
     `- 问题：${normalizedNote}`,
     '- 详细描述：N/A',
@@ -303,7 +305,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
     `- 页面 URL：${payload.page.url || 'N/A'}`,
     `- 页面标题：${payload.page.title || 'N/A'}`,
     '',
-    '异常接口信息：',
+    `${abnormalRequestsTitle}：`,
     '',
   ];
 

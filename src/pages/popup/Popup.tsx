@@ -97,7 +97,7 @@ export default function Popup() {
         nextRequests.length > 0
           ? `已加载 ${nextRequests.length} 条接口记录，可勾选后复制。`
           : isMonitoredPage
-            ? '暂未捕获到接口请求，请先在页面上执行相关操作后再刷新。'
+            ? ''
             : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
       );
     } catch (error) {
@@ -376,19 +376,21 @@ export default function Popup() {
             onRefresh={() => void loadData()}
           />
 
-          <RequestHistoryPanel
-            errorText={errorText}
-            filteredRequests={filteredRequests}
-            loading={loading}
-            requests={requests}
-            selectedIds={selectedIds}
-            settings={settings}
-            statusText={statusText}
-            onClearRequests={() => void clearCurrentTabRequests()}
-            onClearSelection={clearSelection}
-            onSelectAll={selectAll}
-            onToggleRequest={toggleRequest}
-          />
+          {pageMonitoringEnabled ? (
+            <RequestHistoryPanel
+              errorText={errorText}
+              filteredRequests={filteredRequests}
+              loading={loading}
+              requests={requests}
+              selectedIds={selectedIds}
+              settings={settings}
+              statusText={statusText}
+              onClearRequests={() => void clearCurrentTabRequests()}
+              onClearSelection={clearSelection}
+              onSelectAll={selectAll}
+              onToggleRequest={toggleRequest}
+            />
+          ) : null}
 
           <NotePanel
             copying={copying}
