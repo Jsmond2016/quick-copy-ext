@@ -357,6 +357,20 @@ export function getApifoxLookupKey(path: string, method: string): string {
   return `${normalizeApifoxMethod(method)} ${path}`;
 }
 
+export function getApifoxPathCandidates(path: string): string[] {
+  const candidates = [path];
+  const fallbackPatterns = [/^\/api\/[^/]+\/v\d+(?=\/|$)/i, /^\/api\/[^/]+(?=\/|$)/i];
+
+  fallbackPatterns.forEach((pattern) => {
+    const trimmedPath = path.replace(pattern, '') || '/';
+    if (trimmedPath !== path && !candidates.includes(trimmedPath)) {
+      candidates.push(trimmedPath);
+    }
+  });
+
+  return candidates;
+}
+
 export function normalizeApifoxUrl(rawUrl: string): string {
   const trimmedUrl = rawUrl.trim();
 

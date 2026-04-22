@@ -1,6 +1,7 @@
 import {
   ApifoxCacheStatus,
   buildApifoxLookupMaps,
+  getApifoxPathCandidates,
   getApifoxLookupKey,
   getUrlPath,
   loadSettings,
@@ -321,8 +322,14 @@ function getApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>
 
   requests.forEach((request) => {
     const path = getUrlPath(request.url);
-    const exactKey = getApifoxLookupKey(path, request.method);
-    const matchedUrl = apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(path);
+    const matchedUrl = getApifoxPathCandidates(path).reduce<string | undefined>((currentMatch, candidatePath) => {
+      if (currentMatch) {
+        return currentMatch;
+      }
+
+      const exactKey = getApifoxLookupKey(candidatePath, request.method);
+      return apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(candidatePath);
+    }, undefined);
 
     if (matchedUrl) {
       result[`${request.method.toUpperCase()} ${request.url}`] = matchedUrl;
