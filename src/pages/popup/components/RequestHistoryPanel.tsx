@@ -73,19 +73,42 @@ export function RequestHistoryPanel({
         ) : (
           filteredRequests.map((request) => {
             const checked = selectedIds.includes(request.id);
+            const displayPath = getDisplayPath(request.url);
 
             return (
-              <label className={`request-card ${checked ? 'active' : ''}`} key={request.id}>
-                <input checked={checked} onChange={() => onToggleRequest(request.id)} type="checkbox" />
+              <article
+                className={`request-card ${checked ? 'active' : ''}`}
+                key={request.id}
+                onClick={() => onToggleRequest(request.id)}
+              >
+                <input
+                  checked={checked}
+                  onChange={() => onToggleRequest(request.id)}
+                  onClick={(event) => event.stopPropagation()}
+                  type="checkbox"
+                />
                 <div className="request-main">
                   <div className="request-line">
                     <span className="method-pill">{request.method.toUpperCase()}</span>
-                    <span className="request-path" title={request.url}>
-                      {getDisplayPath(request.url)}
-                    </span>
+                    {request.apifoxUrl ? (
+                      <a
+                        className="request-path request-link"
+                        href={request.apifoxUrl}
+                        onClick={(event) => event.stopPropagation()}
+                        rel="noreferrer"
+                        target="_blank"
+                        title={`${displayPath}\n点击跳转到 Apifox`}
+                      >
+                        {displayPath}
+                      </a>
+                    ) : (
+                      <span className="request-path" title={request.url}>
+                        {displayPath}
+                      </span>
+                    )}
                   </div>
                 </div>
-              </label>
+              </article>
             );
           })
         )}

@@ -68,7 +68,23 @@ export default function Popup() {
     [page.url, settings.monitoredOrigins],
   );
 
-  async function loadData(currentSettings = settings) {
+  async function attachApifoxUrls(
+    nextRequests: NetworkRequestRecord[],
+    currentApifoxStatus = apifoxStatus,
+  ): Promise<NetworkRequestRecord[]> {
+    if (!currentApifoxStatus.ready || nextRequests.length === 0) {
+      return nextRequests.map(({ apifoxUrl: _apifoxUrl, ...request }) => request);
+    }
+
+    const apifoxMatches = await getApifoxMatches(nextRequests.map(({ url, method }) => ({ url, method })));
+
+    return nextRequests.map((request) => ({
+      ...request,
+      apifoxUrl: apifoxMatches[`${request.method.toUpperCase()} ${request.url}`],
+    }));
+  }
+
+  async function loadData(currentSettings = settings, currentApifoxStatus = apifoxStatus) {
     setLoading(true);
     setErrorText('');
     setStatusText('正在读取当前页面请求记录...');
@@ -87,15 +103,16 @@ export default function Popup() {
       });
 
       const nextRequests = await getTabRequests(tab.id);
-      setRequests(nextRequests);
+      const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, currentApifoxStatus);
+      setRequests(nextRequestsWithApifox);
       setSelectedIds((current) =>
-        current.filter((id) => nextRequests.some((request) => request.id === id)),
+        current.filter((id) => nextRequestsWithApifox.some((request) => request.id === id)),
       );
       const nextPageUrl = tab.url ?? '';
       const isMonitoredPage = matchesMonitoredOrigins(nextPageUrl, currentSettings.monitoredOrigins);
       setStatusText(
-        nextRequests.length > 0
-          ? `已加载 ${nextRequests.length} 条接口记录，可勾选后复制。`
+        nextRequestsWithApifox.length > 0
+          ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
           : isMonitoredPage
             ? ''
             : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
@@ -120,7 +137,7 @@ export default function Popup() {
         ? await getApifoxStatus()
         : DEFAULT_APIFOX_STATUS;
       setApifoxStatus(currentApifoxStatus);
-      await loadData(loadedSettings);
+      await loadData(loadedSettings, currentApifoxStatus);
     })();
   }, []);
 
@@ -275,6 +292,7 @@ export default function Popup() {
       if (!nextSettings.apifoxExportUrl) {
         await clearApifoxData();
         setApifoxStatus(DEFAULT_APIFOX_STATUS);
+        setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, ...request }) => request));
       } else {
         setApifoxStatus({
           ready: false,
@@ -297,7 +315,7 @@ export default function Popup() {
           : '配置已保存，监听范围已更新，且已清空 Apifox 缓存。',
       });
       setShowSettings(false);
-      await loadData(nextSettings);
+      await loadData(nextSettings, DEFAULT_APIFOX_STATUS);
 
       if (nextSettings.apifoxExportUrl) {
         void runApifoxRefresh(nextSettings.apifoxExportUrl, {
@@ -306,7 +324,9 @@ export default function Popup() {
           toastOnSuccess: true,
           toastOnError: true,
           preserveStatusTextOnError: true,
-        }).catch(() => undefined);
+        })
+          .then(async (nextStatus) => loadData(nextSettings, nextStatus))
+          .catch(() => undefined);
       }
     } catch (error) {
       const message = getErrorMessage(error, '保存配置失败。');
@@ -335,6 +355,7 @@ export default function Popup() {
       const nextStatus = await runApifoxRefresh(settings.apifoxExportUrl, {
         fallbackErrorText: '刷新 Apifox 数据失败。',
       });
+      await loadData(settings, nextStatus);
       const successText = `Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`;
       setStatusText(successText);
       setToast({

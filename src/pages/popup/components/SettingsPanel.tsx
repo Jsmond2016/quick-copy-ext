@@ -85,7 +85,7 @@ export function SettingsPanel({
           <textarea
             className="note-input"
             onChange={handleChange('apifoxExportUrlInput')}
-            rows={2}
+            rows={3}
             value={form.apifoxExportUrlInput}
           />
           <small>示例：http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator</small>

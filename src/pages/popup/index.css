@@ -403,6 +403,7 @@ input {
 .request-card {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
   gap: 10px;
   padding: 12px;
   border-radius: 18px;
@@ -417,7 +418,8 @@ input {
 }
 
 .request-card input {
-  margin-top: 3px;
+  margin: 0;
+  align-self: center;
 }
 
 .request-main {
@@ -426,7 +428,7 @@ input {
 
 .request-line {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -448,6 +450,17 @@ input {
   line-height: 1.45;
   word-break: break-word;
   font-weight: 600;
+}
+
+.request-link {
+  color: var(--brand-deep);
+  text-decoration: underline;
+  text-decoration-color: rgba(143, 52, 22, 0.35);
+  text-underline-offset: 2px;
+}
+
+.request-link:hover {
+  text-decoration-color: currentColor;
 }
 
 .empty-state {
