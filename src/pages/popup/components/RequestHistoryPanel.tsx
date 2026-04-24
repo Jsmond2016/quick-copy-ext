@@ -14,6 +14,46 @@ interface RequestHistoryPanelProps {
   onToggleRequest: (id: string) => void;
 }
 
+function splitRequestPath(rawUrl: string) {
+  const fallbackDisplay = getDisplayPath(rawUrl);
+
+  try {
+    const url = new URL(rawUrl);
+    const pathname = url.pathname || '/';
+    const segments = pathname.split('/').filter(Boolean);
+    const leaf = segments.at(-1) || pathname;
+    const parentSegments = segments.slice(0, -1);
+    const parentPath = parentSegments.length > 0 ? `/${parentSegments.join('/')}` : '/';
+    const suffix = `${url.search}${url.hash}`;
+
+    return {
+      leaf: `${leaf}${suffix}`,
+      parentPath,
+      title: `${pathname}${suffix}`,
+    };
+  } catch {
+    const [path = rawUrl, suffix = ''] = rawUrl.split(/(?=[?#])/);
+    const segments = path.split('/').filter(Boolean);
+
+    if (segments.length === 0) {
+      return {
+        leaf: fallbackDisplay,
+        parentPath: '',
+        title: rawUrl,
+      };
+    }
+
+    const leaf = segments.at(-1) || path;
+    const parentSegments = segments.slice(0, -1);
+
+    return {
+      leaf: `${leaf}${suffix}`,
+      parentPath: parentSegments.length > 0 ? `/${parentSegments.join('/')}` : '/',
+      title: `${path}${suffix}`,
+    };
+  }
+}
+
 export function RequestHistoryPanel({
   requests,
   filteredRequests,
@@ -73,7 +113,7 @@ export function RequestHistoryPanel({
         ) : (
           filteredRequests.map((request) => {
             const checked = selectedIds.includes(request.id);
-            const displayPath = getDisplayPath(request.url);
+            const { leaf, parentPath, title } = splitRequestPath(request.url);
 
             return (
               <article
@@ -94,16 +134,23 @@ export function RequestHistoryPanel({
                       <a
                         className="request-path request-link"
                         href={request.apifoxUrl}
-                        onClick={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                        }}
+                        onMouseDown={(event) => {
+                          event.stopPropagation();
+                        }}
                         rel="noreferrer"
                         target="_blank"
-                        title={`${displayPath}\n点击跳转到 Apifox`}
+                        title={`${title}\n点击跳转到 Apifox`}
                       >
-                        {displayPath}
+                        <span className="request-path-leaf">{leaf}</span>
+                        <span className="request-path-parent">{parentPath}</span>
                       </a>
                     ) : (
-                      <span className="request-path" title={request.url}>
-                        {displayPath}
+                      <span className="request-path" title={title}>
+                        <span className="request-path-leaf">{leaf}</span>
+                        <span className="request-path-parent">{parentPath}</span>
                       </span>
                     )}
                   </div>

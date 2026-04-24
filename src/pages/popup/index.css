@@ -428,7 +428,7 @@ input {
 
 .request-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -443,24 +443,46 @@ input {
 
 .request-path {
   min-width: 0;
-  display: -webkit-box;
+  display: grid;
+  gap: 2px;
   overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  line-height: 1.45;
-  word-break: break-word;
-  font-weight: 600;
+  line-height: 1.35;
+}
+
+.request-path-leaf,
+.request-path-parent {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.request-path-leaf {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.request-path-parent {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .request-link {
+  display: grid;
+  cursor: pointer;
   color: var(--brand-deep);
-  text-decoration: underline;
-  text-decoration-color: rgba(143, 52, 22, 0.35);
-  text-underline-offset: 2px;
+  text-decoration: none;
 }
 
 .request-link:hover {
-  text-decoration-color: currentColor;
+  color: var(--brand);
+}
+
+.request-link .request-path-leaf {
+  color: inherit;
+}
+
+.request-link .request-path-parent {
+  color: color-mix(in srgb, var(--brand-deep) 48%, white);
 }
 
 .empty-state {
