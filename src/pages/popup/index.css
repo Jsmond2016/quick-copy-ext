@@ -428,7 +428,7 @@ input {
 
 .request-line {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
