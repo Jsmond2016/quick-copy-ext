@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.20](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.20) (2026-04-27)
+
+
+### Bug Fixes
+
+* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
+* **popup:** align request method vertically ([c43369a](https://github.com/Jsmond2016/quick-copy-ext/commit/c43369a33de4d63ca8b325a901eaf810c936d440))
+* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
+
+
+### Features
+
+* improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
+* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
+* **popup:** show extension version ([21d9988](https://github.com/Jsmond2016/quick-copy-ext/commit/21d9988716d8573fe91c17c8d9dcfd6c7f694169))
+
 ## [1.4.19](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.19) (2026-04-27)
 
 
