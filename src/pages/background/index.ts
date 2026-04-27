@@ -42,7 +42,7 @@ interface SerializedRuntimeCache {
 
 let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
-let runtimePersistTimer: number | undefined;
+let runtimePersistTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function persistRuntimeCache() {
   const payload: SerializedRuntimeCache = {
