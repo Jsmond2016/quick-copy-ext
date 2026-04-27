@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import pkg from '../../../package.json';
 import {
   ApifoxCacheStatus,
   buildFeedbackText,
@@ -37,6 +38,7 @@ import {
 } from '@pages/popup/utils/settings-form';
 
 export default function Popup() {
+  const versionText = `当前版本：v${pkg.version}`;
   const [page, setPage] = useState<PageSummary>(DEFAULT_PAGE);
   const [requests, setRequests] = useState<NetworkRequestRecord[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -422,6 +424,8 @@ export default function Popup() {
           />
         </>
       )}
+
+      <div className="popup-version">{versionText}</div>
     </main>
   );
 }
