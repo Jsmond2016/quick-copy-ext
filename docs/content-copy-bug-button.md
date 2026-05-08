@@ -1,8 +1,8 @@
-# 内容脚本复制 Bug ID
+# 内容脚本复制 Markdown 链接
 
 ## 功能说明
 
-内容脚本会在符合规则的页面内监听目标弹窗出现，并在弹窗右侧注入“复制 Bug ID”按钮。
+内容脚本会在符合规则的页面内监听目标弹窗出现，并在弹窗右侧注入“复制 Markdown 链接”按钮。
 
 当前已支持规则：
 
@@ -11,16 +11,14 @@
   - `J-card-edit-modal-body`
   - `bitable-hover-scrollbar-sm-no-shift`
   - `J-card-edit-modal-body--padding-standard`
-- 目标字段：`data-field-id="fldnlFKfeD"`
-- 目标链接：字段内 `href` 或 `data-href` 包含 `/record/`
+- 目标字段：`data-field-id="fld0c084Bv"`
+- 目标内容：字段内 `.formula_editor_value_wraper_text` 的文本内容
 
 复制格式固定为：
 
 ```text
-bug-id-#{targetId}
+[【SaaS-立项申请】调减总金额不应取绝对值，展示实际值](https://supermonkey.feishu.cn/record/XFI6r74tWeO8auc677CceuIFnxt)
 ```
-
-其中 `targetId` 来自目标链接中的 `/record/{targetId}`。
 
 ## 实现边界
 
@@ -39,6 +37,6 @@ bug-id-#{targetId}
 
 - 页面 URL 匹配规则
 - modal class 列表
-- 目标字段 `recordFieldId`
+- 目标字段 `markdownFieldId`
 
 如果后续真的需要“用户可配置”，再把这组规则迁移到存储层和 popup 设置页，不建议在当前阶段提前扩大改动面。

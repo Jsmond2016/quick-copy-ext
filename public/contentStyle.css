@@ -1,0 +1,71 @@
+.quick-copy-bug-button-wrapper {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  left: auto;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+}
+
+.quick-copy-bug-button {
+  min-width: 112px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d92d20;
+  border-radius: 999px;
+  background: #d92d20;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 8px 24px rgb(217 45 32 / 22%);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    opacity 0.18s ease;
+}
+
+.quick-copy-bug-button:hover:not(:disabled) {
+  border-color: #b42318;
+  background: #b42318;
+  transform: translateY(-1px);
+}
+
+.quick-copy-bug-button:disabled {
+  border-color: #b7c5e7;
+  background: #b7c5e7;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.quick-copy-bug-button-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  z-index: 10000;
+  max-width: min(80vw, 480px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(12 20 33 / 92%);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -12px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.quick-copy-bug-button-toast[data-type='error'] {
+  background: rgb(181 45 45 / 94%);
+}
+
+.quick-copy-bug-button-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

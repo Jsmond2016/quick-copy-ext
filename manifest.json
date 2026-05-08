@@ -23,7 +23,7 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "https://supermonkey.feishu.cn/wiki/*"
       ],
       "js": [
         "src/pages/content/index.ts"
