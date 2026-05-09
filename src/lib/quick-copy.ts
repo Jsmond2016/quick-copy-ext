@@ -1,9 +1,21 @@
 export const MAX_REQUESTS_PER_TAB = 200;
 export const SETTINGS_STORAGE_KEY = 'quick-copy-settings';
+export const DEFAULT_RESPONSE_ERROR_RULE = 'res.rtn !== 0';
 
 export const TRACE_HEADER_KEYS = ['traceid', 'trace-id', 'x-trace-id', 'x-b3-traceid'];
 
 export type HeaderRecord = Record<string, string>;
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+
+export interface CapturedResponsePayload {
+  url: string;
+  method: string;
+  startedAt: number;
+  completedAt: number;
+  statusCode?: number;
+  response?: JsonValue;
+}
 
 export interface NetworkRequestRecord {
   id: string;
@@ -19,6 +31,10 @@ export interface NetworkRequestRecord {
   headers: HeaderRecord;
   error?: string;
   apifoxUrl?: string;
+  responseSnapshot?: JsonValue;
+  responseRuleMatched?: boolean;
+  responseMessage?: string;
+  abnormalReasons?: string[];
 }
 
 export interface PageSummary {
@@ -44,6 +60,7 @@ export interface QuickCopySettings {
   apiPrefixes: string[];
   customFields: string[];
   apifoxExportUrl: string;
+  responseErrorRule: string;
 }
 
 export type RuntimeRequestMessage =
@@ -52,7 +69,8 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-apifox-status' }
   | { type: 'quick-copy/refresh-apifox-data'; exportUrl: string }
   | { type: 'quick-copy/clear-apifox-data' }
-  | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] };
+  | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] }
+  | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload };
 
 export type RuntimeResponseMessage =
   | { ok: true; data: NetworkRequestRecord[] }
@@ -193,6 +211,7 @@ export function getDefaultSettings(): QuickCopySettings {
     apiPrefixes: ['/api/saas/'],
     customFields: [],
     apifoxExportUrl: '',
+    responseErrorRule: DEFAULT_RESPONSE_ERROR_RULE,
   };
 }
 
@@ -215,6 +234,10 @@ export async function loadSettings(): Promise<QuickCopySettings> {
       typeof current?.apifoxExportUrl === 'string'
         ? current.apifoxExportUrl.trim()
         : defaults.apifoxExportUrl,
+    responseErrorRule:
+      typeof current?.responseErrorRule === 'string' && current.responseErrorRule.trim()
+        ? current.responseErrorRule.trim()
+        : defaults.responseErrorRule,
   };
 }
 
@@ -287,6 +310,267 @@ export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): 
   });
 }
 
+interface ParsedResponseErrorRule {
+  path: string[];
+  operator: '===' | '!==' | '==' | '!=' | '>=' | '<=' | '>' | '<';
+  expected: JsonValue;
+}
+
+function isJsonObject(value: JsonValue | undefined): value is Record<string, JsonValue> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseRuleLiteral(rawLiteral: string): JsonValue | undefined {
+  const trimmedLiteral = rawLiteral.trim();
+
+  if (!trimmedLiteral) {
+    return undefined;
+  }
+
+  if (
+    trimmedLiteral === 'true' ||
+    trimmedLiteral === 'false' ||
+    trimmedLiteral === 'null' ||
+    /^-?\d+(?:\.\d+)?$/.test(trimmedLiteral) ||
+    (trimmedLiteral.startsWith('"') && trimmedLiteral.endsWith('"')) ||
+    (trimmedLiteral.startsWith('[') && trimmedLiteral.endsWith(']')) ||
+    (trimmedLiteral.startsWith('{') && trimmedLiteral.endsWith('}'))
+  ) {
+    try {
+      return JSON.parse(trimmedLiteral) as JsonValue;
+    } catch {
+      return undefined;
+    }
+  }
+
+  if (trimmedLiteral.startsWith("'") && trimmedLiteral.endsWith("'")) {
+    return trimmedLiteral.slice(1, -1);
+  }
+
+  return undefined;
+}
+
+function parseResponseErrorRule(rule: string): ParsedResponseErrorRule | undefined {
+  const normalizedRule = rule.trim();
+  if (!normalizedRule) {
+    return undefined;
+  }
+
+  const matchedRule = normalizedRule.match(
+    /^res((?:\.[A-Za-z_$][\w$]*)+)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+)$/,
+  );
+
+  if (!matchedRule) {
+    return undefined;
+  }
+
+  const expected = parseRuleLiteral(matchedRule[3]);
+  if (expected === undefined) {
+    return undefined;
+  }
+
+  return {
+    path: matchedRule[1].split('.').filter(Boolean),
+    operator: matchedRule[2] as ParsedResponseErrorRule['operator'],
+    expected,
+  };
+}
+
+function getResponseRuleActualValue(
+  response: JsonValue | undefined,
+  path: string[],
+): JsonValue | undefined {
+  let currentValue = response;
+
+  for (const segment of path) {
+    if (!isJsonObject(currentValue) || !(segment in currentValue)) {
+      return undefined;
+    }
+
+    currentValue = currentValue[segment];
+  }
+
+  return currentValue;
+}
+
+export function getResponseMessage(response: JsonValue | undefined): string | undefined {
+  const messageValue = getResponseRuleActualValue(response, ['msg']);
+
+  if (typeof messageValue === 'string') {
+    return messageValue.trim() || undefined;
+  }
+
+  if (typeof messageValue === 'number' || typeof messageValue === 'boolean') {
+    return String(messageValue);
+  }
+
+  if (messageValue && typeof messageValue === 'object') {
+    try {
+      const serializedMessage = JSON.stringify(messageValue);
+      return serializedMessage || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+}
+
+function getResponseRtnValue(response: JsonValue | undefined): string | undefined {
+  const rtnValue = getResponseRuleActualValue(response, ['rtn']);
+
+  if (typeof rtnValue === 'string') {
+    return rtnValue.trim() || undefined;
+  }
+
+  if (typeof rtnValue === 'number' || typeof rtnValue === 'boolean') {
+    return String(rtnValue);
+  }
+
+  return undefined;
+}
+
+function compareRuleValues(
+  actual: JsonValue | undefined,
+  expected: JsonValue,
+  operator: ParsedResponseErrorRule['operator'],
+): boolean {
+  switch (operator) {
+    case '===':
+      return actual === expected;
+    case '!==':
+      return actual !== expected;
+    case '==':
+      // eslint-disable-next-line eqeqeq
+      return actual == expected;
+    case '!=':
+      // eslint-disable-next-line eqeqeq
+      return actual != expected;
+    case '>=':
+      return typeof actual === 'number' && typeof expected === 'number' && actual >= expected;
+    case '<=':
+      return typeof actual === 'number' && typeof expected === 'number' && actual <= expected;
+    case '>':
+      return typeof actual === 'number' && typeof expected === 'number' && actual > expected;
+    case '<':
+      return typeof actual === 'number' && typeof expected === 'number' && actual < expected;
+    default:
+      return false;
+  }
+}
+
+export function evaluateResponseErrorRule(
+  response: JsonValue | undefined,
+  rule: string,
+): boolean {
+  const parsedRule = parseResponseErrorRule(rule);
+  if (!parsedRule) {
+    return false;
+  }
+
+  const actualValue = getResponseRuleActualValue(response, parsedRule.path);
+  return compareRuleValues(actualValue, parsedRule.expected, parsedRule.operator);
+}
+
+export function sanitizeResponseSnapshot(
+  value: unknown,
+  depth = 0,
+): JsonValue | undefined {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
+    return typeof value === 'string' && value.length > 300 ? `${value.slice(0, 300)}...` : value;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (depth >= 3) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 10)
+      .map((item) => sanitizeResponseSnapshot(item, depth + 1))
+      .filter((item): item is JsonValue => item !== undefined);
+  }
+
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .slice(0, 20)
+      .map(([key, item]) => [key, sanitizeResponseSnapshot(item, depth + 1)] as const)
+      .filter((entry): entry is [string, JsonValue] => entry[1] !== undefined);
+
+    return Object.fromEntries(entries);
+  }
+
+  return undefined;
+}
+
+export function getRequestAbnormalReasons(
+  request: Pick<NetworkRequestRecord, 'statusCode' | 'error' | 'responseSnapshot'>,
+  responseErrorRule: string,
+): string[] {
+  const reasons: string[] = [];
+  const ruleMatched = evaluateResponseErrorRule(request.responseSnapshot, responseErrorRule);
+
+  if (request.error) {
+    reasons.push(request.error);
+  }
+
+  if (typeof request.statusCode === 'number' && request.statusCode !== 200) {
+    reasons.push(`HTTP ${request.statusCode}`);
+  }
+
+  if (request.statusCode === 200 && ruleMatched) {
+    reasons.push(`命中响应规则：${responseErrorRule}`);
+  }
+
+  return reasons;
+}
+
+export function withRequestAbnormalState(
+  request: NetworkRequestRecord,
+  responseErrorRule: string,
+): NetworkRequestRecord {
+  const abnormalReasons = getRequestAbnormalReasons(request, responseErrorRule);
+  const responseMessage = getResponseMessage(request.responseSnapshot);
+
+  return {
+    ...request,
+    responseRuleMatched: abnormalReasons.some((reason) => reason.startsWith('命中响应规则：')),
+    responseMessage,
+    abnormalReasons: abnormalReasons.length > 0 ? abnormalReasons : undefined,
+  };
+}
+
+function formatAbnormalReasonForCopy(request: NetworkRequestRecord): string {
+  const abnormalReasons = request.abnormalReasons ?? [];
+  const responseMessage = request.responseMessage ?? getResponseMessage(request.responseSnapshot);
+  const responseRtn = getResponseRtnValue(request.responseSnapshot);
+  const matchedResponseRule =
+    request.responseRuleMatched ||
+    abnormalReasons.some((reason) => reason.startsWith('命中响应规则：'));
+
+  if (typeof request.statusCode === 'number' && request.statusCode !== 200) {
+    return `status 状态为 {${request.statusCode}}`;
+  }
+
+  if (matchedResponseRule && responseRtn && responseMessage) {
+    return `{rtn: ${responseRtn}, msg: "${responseMessage}" }`;
+  }
+
+  if (matchedResponseRule && responseRtn) {
+    return `{rtn: ${responseRtn}}`;
+  }
+
+  if (matchedResponseRule && responseMessage) {
+    return `{msg: "${responseMessage}" }`;
+  }
+
+  return abnormalReasons[0] ?? 'N/A';
+}
+
 export function buildFeedbackText(payload: CopyPayload): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || 'N/A';
@@ -316,6 +600,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
       sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
+      sections.push(`- 异常原因: ${formatAbnormalReasonForCopy(request)}`);
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
       sections.push(`- 耗时: ${formatDuration(request.startedAt, request.completedAt)}`);
       sections.push(`- apifox: ${request.apifoxUrl ?? 'N/A'}`);

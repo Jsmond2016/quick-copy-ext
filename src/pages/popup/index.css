@@ -425,6 +425,11 @@ input {
   background: rgba(184, 79, 44, 0.08);
 }
 
+.request-card.abnormal {
+  border-color: rgba(213, 72, 59, 0.26);
+  background: rgba(255, 240, 238, 0.8);
+}
+
 .request-card input {
   margin: 0;
   align-self: center;
@@ -447,6 +452,19 @@ input {
   background: rgba(31, 37, 32, 0.08);
   font-size: 11px;
   font-weight: 700;
+}
+
+.request-badge {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.request-badge-danger {
+  color: #a12e24;
+  background: rgba(213, 72, 59, 0.14);
 }
 
 .request-path {
@@ -491,6 +509,16 @@ input {
 
 .request-link .request-path-parent {
   color: color-mix(in srgb, var(--brand-deep) 48%, white);
+}
+
+.request-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .empty-state {

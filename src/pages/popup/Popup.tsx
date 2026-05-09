@@ -250,29 +250,40 @@ export default function Popup() {
     setErrorText('');
 
     try {
+      const latestRequests =
+        tabId !== null
+          ? await attachApifoxUrls(await getTabRequests(tabId), apifoxStatus)
+          : requests;
+      const latestSelectedRequests = latestRequests.filter((request) => selectedIds.includes(request.id));
+
+      setRequests(latestRequests);
+
       const apifoxMatches =
-        apifoxStatus.ready && selectedRequests.length > 0
-          ? await getApifoxMatches(selectedRequests.map(({ url, method }) => ({ url, method })))
+        apifoxStatus.ready && latestSelectedRequests.length > 0
+          ? await getApifoxMatches(latestSelectedRequests.map(({ url, method }) => ({ url, method })))
           : {};
-      const requestsWithApifox = selectedRequests.map((request) => ({
+      const requestsWithApifox = latestSelectedRequests.map((request) => ({
         ...request,
         apifoxUrl: apifoxMatches[`${request.method.toUpperCase()} ${request.url}`],
       }));
+      const hasAbnormalRequest = requestsWithApifox.some(
+        (request) => (request.abnormalReasons?.length ?? 0) > 0,
+      );
 
       const text = buildFeedbackText({
         page,
         requests: requestsWithApifox,
-        feedbackTitle: settings.feedbackTitle,
+        feedbackTitle: hasAbnormalRequest ? '存在接口状态或返回异常' : settings.feedbackTitle,
         note,
         screenshotLabel: 'N/A',
         customFields: settings.customFields,
       });
 
       await navigator.clipboard.writeText(text);
-      setStatusText(`复制成功，已写入 ${selectedRequests.length} 条接口信息。`);
+      setStatusText(`复制成功，已写入 ${latestSelectedRequests.length} 条接口信息。`);
       setToast({
         type: 'success',
-        text: `复制成功，已写入 ${selectedRequests.length} 条接口信息。`,
+        text: `复制成功，已写入 ${latestSelectedRequests.length} 条接口信息。`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : '复制失败。';

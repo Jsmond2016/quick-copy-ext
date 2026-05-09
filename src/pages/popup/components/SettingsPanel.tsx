@@ -91,6 +91,19 @@ export function SettingsPanel({
           <small>示例：http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator</small>
           <small>保存后会在后台异步刷新接口缓存；若未响应，通常是本地 Apifox 未打开。</small>
         </label>
+
+        <label className="field-block">
+          <span>异常响应规则</span>
+          <input
+            className="note-input"
+            onChange={handleChange('responseErrorRuleInput')}
+            placeholder="res.rtn !== 0"
+            type="text"
+            value={form.responseErrorRuleInput}
+          />
+          <small>接口状态码不是 200 时，直接标记为异常；接口状态码为 200 但命中规则时，也会标记为异常。</small>
+          <small>当前支持 res.xxx === value、!==、&gt;、&lt; 等简单比较，例如 res.rtn !== 0。</small>
+        </label>
       </div>
 
       <div className="settings-actions">

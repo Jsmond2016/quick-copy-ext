@@ -67,6 +67,8 @@ export function RequestHistoryPanel({
   onClearRequests,
   onToggleRequest,
 }: RequestHistoryPanelProps) {
+  const abnormalCount = filteredRequests.filter((request) => (request.abnormalReasons?.length ?? 0) > 0).length;
+
   return (
     <section className="panel">
       <div className="panel-head">
@@ -101,6 +103,8 @@ export function RequestHistoryPanel({
       <div className="filter-summary">
         当前筛选前缀：{settings.apiPrefixes.length > 0 ? settings.apiPrefixes.join('，') : '不过滤'}
         <strong> · </strong>
+        异常 {abnormalCount} 条
+        <strong> · </strong>
         命中 {filteredRequests.length} / {requests.length} 条请求
       </div>
 
@@ -114,10 +118,11 @@ export function RequestHistoryPanel({
           filteredRequests.map((request) => {
             const checked = selectedIds.includes(request.id);
             const { leaf, parentPath, title } = splitRequestPath(request.url);
+            const isAbnormal = (request.abnormalReasons?.length ?? 0) > 0;
 
             return (
               <article
-                className={`request-card ${checked ? 'active' : ''}`}
+                className={`request-card ${checked ? 'active' : ''} ${isAbnormal ? 'abnormal' : ''}`}
                 key={request.id}
                 onClick={() => onToggleRequest(request.id)}
               >
@@ -130,6 +135,7 @@ export function RequestHistoryPanel({
                 <div className="request-main">
                   <div className="request-line">
                     <span className="method-pill">{request.method.toUpperCase()}</span>
+                    {isAbnormal ? <span className="request-badge request-badge-danger">异常</span> : null}
                     {request.apifoxUrl ? (
                       <a
                         className="request-path request-link"

@@ -1,5 +1,6 @@
 import {
   ApifoxCacheStatus,
+  CapturedResponsePayload,
   buildApifoxLookupMaps,
   getApifoxPathCandidates,
   getApifoxLookupKey,
@@ -13,6 +14,8 @@ import {
   RuntimeResponseMessage,
   SETTINGS_STORAGE_KEY,
   normalizeHeaders,
+  sanitizeResponseSnapshot,
+  withRequestAbnormalState,
 } from '@src/lib/quick-copy';
 
 const requestsByTab = new Map<number, NetworkRequestRecord[]>();
@@ -42,6 +45,7 @@ interface SerializedRuntimeCache {
 
 let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
+let responseErrorRule = '';
 let runtimePersistTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function persistRuntimeCache() {
@@ -186,6 +190,15 @@ function updateRequest(
   scheduleRuntimeCachePersist();
 }
 
+function replaceRequestRecord(nextRecord: NetworkRequestRecord) {
+  const records = requestsByTab.get(nextRecord.tabId) ?? [];
+  const updatedRecords = records.map((item) => (item.requestId === nextRecord.requestId ? nextRecord : item));
+
+  requestsByTab.set(nextRecord.tabId, updatedRecords);
+  requestIndex.set(nextRecord.requestId, nextRecord);
+  scheduleRuntimeCachePersist();
+}
+
 function clearTabRequests(tabId: number) {
   const records = requestsByTab.get(tabId) ?? [];
   records.forEach((record) => {
@@ -239,12 +252,23 @@ function shouldTrackRequest(tabId: number, initiator?: string) {
 async function refreshMonitoredOrigins() {
   const settings = await loadSettings();
   monitoredOrigins = settings.monitoredOrigins;
+  responseErrorRule = settings.responseErrorRule;
 
   tabUrlMap.forEach((tabUrl, tabId) => {
     if (!shouldTrackTabUrl(tabUrl)) {
       clearTabRequests(tabId);
     }
   });
+
+  requestsByTab.forEach((records, tabId) => {
+    const nextRecords = records.map((record) => withRequestAbnormalState(record, responseErrorRule));
+    requestsByTab.set(tabId, nextRecords);
+    nextRecords.forEach((record) => {
+      requestIndex.set(record.requestId, record);
+    });
+  });
+
+  scheduleRuntimeCachePersist();
 }
 
 async function bootstrapTabs() {
@@ -339,6 +363,56 @@ function getApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>
   return result;
 }
 
+function findBestMatchingRequest(
+  tabId: number,
+  payload: CapturedResponsePayload,
+): NetworkRequestRecord | undefined {
+  const records = requestsByTab.get(tabId) ?? [];
+  const normalizedMethod = payload.method.toUpperCase();
+
+  return records
+    .filter(
+      (record) =>
+        record.url === payload.url &&
+        record.method.toUpperCase() === normalizedMethod &&
+        Math.abs(record.startedAt - payload.startedAt) <= 15000,
+    )
+    .sort((left, right) => {
+      const leftDiff = Math.abs(left.startedAt - payload.startedAt);
+      const rightDiff = Math.abs(right.startedAt - payload.startedAt);
+
+      if (leftDiff !== rightDiff) {
+        return leftDiff - rightDiff;
+      }
+
+      const leftHasResponse = left.responseSnapshot !== undefined ? 1 : 0;
+      const rightHasResponse = right.responseSnapshot !== undefined ? 1 : 0;
+      return leftHasResponse - rightHasResponse;
+    })[0];
+}
+
+function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) {
+  const matchedRequest = findBestMatchingRequest(tabId, payload);
+  if (!matchedRequest) {
+    return;
+  }
+
+  replaceRequestRecord(
+    withRequestAbnormalState(
+      {
+        ...matchedRequest,
+        statusCode: payload.statusCode ?? matchedRequest.statusCode,
+        completedAt: payload.completedAt || matchedRequest.completedAt,
+        responseSnapshot:
+          payload.response === undefined
+            ? matchedRequest.responseSnapshot
+            : sanitizeResponseSnapshot(payload.response),
+      },
+      responseErrorRule,
+    ),
+  );
+}
+
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
     if (details.tabId < 0 || !TRACKED_RESOURCE_TYPES.has(details.type)) {
@@ -376,12 +450,17 @@ chrome.webRequest.onCompleted.addListener(
       return;
     }
 
-    updateRequest(details.requestId, (record) => ({
-      ...record,
-      statusCode: details.statusCode,
-      completedAt: Math.round(details.timeStamp),
-      headers: normalizeHeaders(details.responseHeaders),
-    }));
+    updateRequest(details.requestId, (record) =>
+      withRequestAbnormalState(
+        {
+          ...record,
+          statusCode: details.statusCode,
+          completedAt: Math.round(details.timeStamp),
+          headers: normalizeHeaders(details.responseHeaders),
+        },
+        responseErrorRule,
+      ),
+    );
   },
   { urls: ['<all_urls>'] },
   ['responseHeaders'],
@@ -397,11 +476,16 @@ chrome.webRequest.onErrorOccurred.addListener(
       return;
     }
 
-    updateRequest(details.requestId, (record) => ({
-      ...record,
-      completedAt: Math.round(details.timeStamp),
-      error: details.error,
-    }));
+    updateRequest(details.requestId, (record) =>
+      withRequestAbnormalState(
+        {
+          ...record,
+          completedAt: Math.round(details.timeStamp),
+          error: details.error,
+        },
+        responseErrorRule,
+      ),
+    );
   },
   { urls: ['<all_urls>'] },
 );
@@ -442,7 +526,7 @@ void refreshMonitoredOrigins()
 chrome.runtime.onMessage.addListener(
   (
     message: RuntimeRequestMessage,
-    _sender,
+    sender,
     sendResponse: (response: RuntimeResponseMessage | { ok: true; data: unknown } | { ok: false; error: string }) => void,
   ) => {
     if (message.type === 'quick-copy/get-tab-requests') {
@@ -518,6 +602,19 @@ chrome.runtime.onMessage.addListener(
           sendResponse({ ok: false, error: messageText });
         });
       return true;
+    }
+
+    if (message.type === 'quick-copy/report-response-body') {
+      const tabId = sender.tab?.id;
+
+      if (typeof tabId === 'number') {
+        void ensureRuntimeCacheReady().then(() => {
+          applyCapturedResponse(tabId, message.payload);
+        });
+      }
+
+      sendResponse({ ok: true, data: null });
+      return false;
     }
 
     sendResponse({ ok: false, error: 'Unknown message type.' });
