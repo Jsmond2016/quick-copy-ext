@@ -4,17 +4,25 @@ import { SettingsFormState } from '@pages/popup/utils/settings-form';
 interface SettingsPanelProps {
   form: SettingsFormState;
   savingSettings: boolean;
+  isDefaultConfig: boolean;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
   onCancel: () => void;
   onSave: () => void;
+  onReset: () => void;
+  onImport: () => void;
+  onExport: () => void;
 }
 
 export function SettingsPanel({
   form,
   savingSettings,
+  isDefaultConfig,
   onFieldChange,
   onCancel,
   onSave,
+  onReset,
+  onImport,
+  onExport,
 }: SettingsPanelProps) {
   function handleChange(field: keyof SettingsFormState) {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -28,6 +36,16 @@ export function SettingsPanel({
         <div>
           <span className="panel-kicker">自定义配置</span>
           <h2>筛选与附加字段</h2>
+        </div>
+        <div className="settings-actions" style={{ display: 'flex', gap: 8 }}>
+          {!isDefaultConfig && (
+            <button className="ghost-button" onClick={onExport} type="button">
+              导出配置
+            </button>
+          )}
+          <button className="ghost-button" onClick={onImport} type="button">
+            导入配置
+          </button>
         </div>
       </div>
 
@@ -107,6 +125,9 @@ export function SettingsPanel({
       </div>
 
       <div className="settings-actions">
+        <button className="ghost-button" onClick={onReset} type="button">
+          重置
+        </button>
         <button className="ghost-button" onClick={onCancel} type="button">
           取消
         </button>

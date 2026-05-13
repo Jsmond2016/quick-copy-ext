@@ -215,6 +215,21 @@ export function getDefaultSettings(): QuickCopySettings {
   };
 }
 
+export function isDefaultSettings(settings: QuickCopySettings): boolean {
+  const defaults = getDefaultSettings();
+  return (
+    settings.feedbackTitle === defaults.feedbackTitle &&
+    settings.monitoredOrigins.length === defaults.monitoredOrigins.length &&
+    settings.monitoredOrigins.every((v, i) => v === defaults.monitoredOrigins[i]) &&
+    settings.apiPrefixes.length === defaults.apiPrefixes.length &&
+    settings.apiPrefixes.every((v, i) => v === defaults.apiPrefixes[i]) &&
+    settings.customFields.length === defaults.customFields.length &&
+    settings.customFields.every((v, i) => v === defaults.customFields[i]) &&
+    settings.apifoxExportUrl === defaults.apifoxExportUrl &&
+    settings.responseErrorRule === defaults.responseErrorRule
+  );
+}
+
 export async function loadSettings(): Promise<QuickCopySettings> {
   const stored = await chrome.storage.sync.get(SETTINGS_STORAGE_KEY);
   const current = stored[SETTINGS_STORAGE_KEY] as Partial<QuickCopySettings> | undefined;

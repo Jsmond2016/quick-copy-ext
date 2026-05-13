@@ -4,6 +4,7 @@ import {
   ApifoxCacheStatus,
   buildFeedbackText,
   getDefaultSettings,
+  isDefaultSettings,
   loadSettings,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
@@ -54,7 +55,12 @@ export default function Popup() {
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
   const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>(DEFAULT_APIFOX_STATUS);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configModalContent, setConfigModalContent] = useState('');
+  const [configModalMode, setConfigModalMode] = useState<'import' | 'export'>('export');
   const { toast, setToast } = useToast();
+
+  const isDefaultConfig = useMemo(() => isDefaultSettings(settings), [settings]);
 
   const filteredRequests = useMemo(
     () => requests.filter((request) => matchesApiPrefixes(request.url, settings.apiPrefixes)),
@@ -295,12 +301,12 @@ export default function Popup() {
     }
   }
 
-  async function handleSaveSettings() {
+  async function handleSaveSettings(overrideForm?: SettingsFormState) {
     setSavingSettings(true);
     setErrorText('');
 
     try {
-      const nextSettings = buildSettingsFromForm(settingsForm);
+      const nextSettings = buildSettingsFromForm(overrideForm ?? settingsForm);
 
       if (!nextSettings.apifoxExportUrl) {
         await clearApifoxData();
@@ -381,6 +387,62 @@ export default function Popup() {
     }
   }
 
+  function handleExport() {
+    setConfigModalContent(JSON.stringify(settings, null, 2));
+    setConfigModalMode('export');
+    setShowConfigModal(true);
+  }
+
+  async function handleReset() {
+    const defaults = getDefaultSettings();
+    await saveSettings(defaults);
+    await clearApifoxData();
+    setSettings(defaults);
+    setSettingsForm(createSettingsFormState(defaults));
+    setApifoxStatus(DEFAULT_APIFOX_STATUS);
+    setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, ...request }) => request));
+    setToast({ type: 'success', text: '配置已重置为默认值' });
+  }
+
+  function handleImport() {
+    setConfigModalContent('');
+    setConfigModalMode('import');
+    setShowConfigModal(true);
+  }
+
+  function handleCopyExportConfig() {
+    navigator.clipboard.writeText(configModalContent).catch(() => {});
+    setShowConfigModal(false);
+    setToast({ type: 'success', text: '配置已复制到剪贴板' });
+  }
+
+  async function handleConfigModalConfirm() {
+    try {
+      const parsed = JSON.parse(configModalContent) as QuickCopySettings;
+
+      if (!parsed.monitoredOrigins || !parsed.apiPrefixes || !parsed.customFields) {
+        throw new Error('缺少必要字段');
+      }
+
+      const nextSettings: QuickCopySettings = {
+        feedbackTitle: parsed.feedbackTitle || getDefaultSettings().feedbackTitle,
+        monitoredOrigins: Array.isArray(parsed.monitoredOrigins) ? parsed.monitoredOrigins : [],
+        apiPrefixes: Array.isArray(parsed.apiPrefixes) ? parsed.apiPrefixes : [],
+        customFields: Array.isArray(parsed.customFields) ? parsed.customFields : [],
+        apifoxExportUrl: typeof parsed.apifoxExportUrl === 'string' ? parsed.apifoxExportUrl : '',
+        responseErrorRule: typeof parsed.responseErrorRule === 'string' ? parsed.responseErrorRule : getDefaultSettings().responseErrorRule,
+      };
+
+      await saveSettings(nextSettings);
+      setSettings(nextSettings);
+      setSettingsForm(createSettingsFormState(nextSettings));
+      setShowConfigModal(false);
+      setToast({ type: 'success', text: '配置导入成功' });
+    } catch {
+      setToast({ type: 'error', text: '配置格式错误，请检查 JSON' });
+    }
+  }
+
   return (
     <main className="popup-shell">
       <ToastMessage toast={toast} />
@@ -398,9 +460,13 @@ export default function Popup() {
         <SettingsPanel
           form={settingsForm}
           savingSettings={savingSettings}
+          isDefaultConfig={isDefaultConfig}
           onCancel={() => setShowSettings(false)}
           onFieldChange={updateSettingsForm}
           onSave={() => void handleSaveSettings()}
+          onReset={handleReset}
+          onImport={handleImport}
+          onExport={handleExport}
         />
       ) : (
         <>
@@ -434,6 +500,52 @@ export default function Popup() {
             onNoteChange={setNote}
           />
         </>
+      )}
+
+      {showConfigModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.4)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }} onClick={() => setShowConfigModal(false)}>
+          <div
+            className="panel"
+            style={{
+              width: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', gap: 12,
+              padding: 20, borderRadius: 22, border: '1px solid var(--line)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>
+              {configModalMode === 'import' ? '导入配置' : '导出配置'}
+            </h3>
+            <textarea
+              style={{
+                width: '100%', minHeight: 300, fontFamily: 'monospace',
+                fontSize: 13, padding: 8, boxSizing: 'border-box', resize: 'vertical',
+                border: '1px solid var(--line)', background: 'var(--paper)', color: 'var(--ink)',
+              }}
+              readOnly={configModalMode === 'export'}
+              value={configModalContent}
+              onChange={(e) => setConfigModalContent(e.target.value)}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              {configModalMode === 'import' && (
+                <button className="primary-button compact" onClick={handleConfigModalConfirm} type="button">
+                  确认导入
+                </button>
+              )}
+              {configModalMode === 'export' && (
+                <button className="primary-button compact" onClick={handleCopyExportConfig} type="button">
+                  复制
+                </button>
+              )}
+              <button className="ghost-button" onClick={() => setShowConfigModal(false)} type="button">
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="popup-version">{versionText}</div>
