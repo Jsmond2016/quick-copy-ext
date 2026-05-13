@@ -27,7 +27,7 @@ export function NotePanel({
         className="note-input"
         onChange={(event) => onNoteChange(event.target.value)}
         placeholder="可补充复现步骤、期望结果、异常表现等说明。"
-        rows={4}
+        rows={2}
         value={note}
       />
 

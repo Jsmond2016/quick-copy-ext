@@ -32,16 +32,14 @@ export function PageSummaryPanel({
           <dt>URL</dt>
           <dd title={page.url}>{getDisplayPath(page.url) || 'N/A'}</dd>
         </div>
-        <div>
-          <dt>监听页面</dt>
-          <dd>
-            {page.url
-              ? pageMonitoringEnabled
-                ? '是，当前页面会记录接口请求'
-                : '否，当前页面不在监听 Origin 范围内'
-              : 'N/A'}
-          </dd>
-        </div>
+        {page.url && !pageMonitoringEnabled && (
+          <div>
+            <dt>监听页面</dt>
+            <dd style={{ color: 'red' }}>
+              否，当前页面不在监听 Origin 范围内，请修改设置 origin
+            </dd>
+          </div>
+        )}
       </dl>
     </section>
   );

@@ -306,6 +306,12 @@ export function matchesMonitoredOrigins(rawUrl: string, originRules: string[]): 
       return currentOrigin === rule;
     }
 
+    // Wildcard: *.baidu.com matches any subdomain of baidu.com
+    if (rule.startsWith('*.')) {
+      const suffix = rule.slice(1); // .baidu.com
+      return currentHost.endsWith(suffix) || currentHostWithPort.endsWith(suffix);
+    }
+
     return currentHost === rule || currentHostWithPort === rule;
   });
 }
@@ -469,6 +475,13 @@ export function evaluateResponseErrorRule(
   }
 
   const actualValue = getResponseRuleActualValue(response, parsedRule.path);
+
+  // 响应体尚未捕获或路径不存在时，不判定为命中规则
+  // 否则 undefined !== 0 会被 JavaScript 判定为 true，导致误报
+  if (actualValue === undefined) {
+    return false;
+  }
+
   return compareRuleValues(actualValue, parsedRule.expected, parsedRule.operator);
 }
 

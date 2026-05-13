@@ -49,11 +49,11 @@ export function SettingsPanel({
           <textarea
             className="note-input"
             onChange={handleChange('originInput')}
-            placeholder={'localhost\n127.0.0.1\nhttp://localhost:3000'}
+            placeholder={'localhost\n*.baidu.com\nhttp://localhost:3000'}
             rows={3}
             value={form.originInput}
           />
-          <small>每行一个页面来源，支持 `host`、`host:port` 或完整 origin。仅命中这些页面时才会记录接口请求。</small>
+          <small>每行一个页面来源，支持 `host`、`host:port`、完整 origin 或 <code>*.example.com</code> 通配符。仅命中这些页面时才会记录接口请求。</small>
         </label>
 
         <label className="field-block">
@@ -62,7 +62,7 @@ export function SettingsPanel({
             className="note-input"
             onChange={handleChange('prefixInput')}
             placeholder="/api/saas/"
-            rows={3}
+            rows={1}
             value={form.prefixInput}
           />
           <small>每行一个前缀，支持按路径前缀过滤，例如 `/api/saas/`。</small>
@@ -74,7 +74,7 @@ export function SettingsPanel({
             className="note-input"
             onChange={handleChange('customFieldsInput')}
             placeholder={'反馈人-张三\n环境-测试环境'}
-            rows={3}
+            rows={1}
             value={form.customFieldsInput}
           />
           <small>每行一个字段，复制结果会自动附带这些内容。</small>
