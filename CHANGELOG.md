@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.24](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.23...v1.4.24) (2026-05-13)
+
+
+### Features
+
+* 支持 *.xxx 通配符 origin 匹配 & 备注文本框默认 2 行 & 异常判断修复 ([e0fe3e5](https://github.com/Jsmond2016/quick-copy-ext/commit/e0fe3e59dff3758117efb3317b2eeeb6c6f40773))
+
 ## [1.4.23](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.22...v1.4.23) (2026-05-09)
 
 
