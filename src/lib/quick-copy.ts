@@ -607,7 +607,6 @@ export function buildFeedbackText(payload: CopyPayload): string {
     payload.requests.length > 1 ? `异常接口信息-${payload.requests.length}条接口` : '异常接口信息';
   const sections: string[] = [
     `- 问题：${normalizedNote}`,
-    '- 详细描述：N/A',
     `- 截图：${normalizedScreenshotLabel}`,
     '',
     `=== ${normalizedTitle}`,
@@ -628,7 +627,9 @@ export function buildFeedbackText(payload: CopyPayload): string {
       sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
-      sections.push(`- 异常原因: ${formatAbnormalReasonForCopy(request)}`);
+      if (request.abnormalReasons && request.abnormalReasons.length > 0) {
+        sections.push(`- 异常原因: ${formatAbnormalReasonForCopy(request)}`);
+      }
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
       sections.push(`- 耗时: ${formatDuration(request.startedAt, request.completedAt)}`);
       sections.push(`- apifox: ${request.apifoxUrl ?? 'N/A'}`);
