@@ -397,6 +397,11 @@ function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) 
     return;
   }
 
+  const requestParams: Record<string, unknown> | undefined =
+    payload.requestParams !== undefined
+      ? (payload.requestParams as Record<string, unknown>)
+      : matchedRequest.requestParams;
+
   replaceRequestRecord(
     withRequestAbnormalState(
       {
@@ -407,6 +412,7 @@ function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) 
           payload.response === undefined
             ? matchedRequest.responseSnapshot
             : sanitizeResponseSnapshot(payload.response),
+        requestParams,
       },
       responseErrorRule,
     ),

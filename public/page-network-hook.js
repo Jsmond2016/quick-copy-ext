@@ -83,6 +83,38 @@
     );
   }
 
+  function captureRequestBody(body) {
+    if (body === null || body === undefined) {
+      return undefined;
+    }
+    if (typeof body === 'string') {
+      return safeJsonParse(body) || body;
+    }
+    if (typeof body === 'object') {
+      try {
+        if (body instanceof URLSearchParams) {
+          var obj = {};
+          body.forEach(function(value, key) {
+            obj[key] = value;
+          });
+          return obj;
+        }
+        if (body instanceof Blob || body instanceof FormData ||
+            body instanceof ArrayBuffer || body instanceof DataView ||
+            ArrayBuffer.isView(body)) {
+          return undefined;
+        }
+        if (typeof Request !== 'undefined' && body instanceof Request) {
+          return captureRequestBody(body.body);
+        }
+        return sanitizeValue(body, 0);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+
   function normalizeFetchInput(input) {
     if (typeof input === 'string') {
       return input;
@@ -104,6 +136,11 @@
       (typeof Request !== 'undefined' && input instanceof Request ? input.method : '') ||
       'GET';
     var requestUrl = normalizeFetchInput(input);
+    var requestBody = init && init.body ? captureRequestBody(init.body) : undefined;
+
+    if (!requestBody && typeof Request !== 'undefined' && input instanceof Request) {
+      requestBody = captureRequestBody(input.body);
+    }
 
     return originalFetch.apply(this, arguments).then(function onResolved(response) {
       var completedAt = Date.now();
@@ -116,6 +153,7 @@
           startedAt: startedAt,
           completedAt: completedAt,
           statusCode: response.status,
+          requestParams: requestBody,
         });
         return response;
       }
@@ -133,6 +171,7 @@
             completedAt: completedAt,
             statusCode: response.status,
             response: sanitizeValue(parsed, 0),
+            requestParams: requestBody,
           });
         })
         .catch(function onReadError() {
@@ -142,6 +181,7 @@
             startedAt: startedAt,
             completedAt: completedAt,
             statusCode: response.status,
+            requestParams: requestBody,
           });
         });
 
@@ -158,8 +198,9 @@
     return originalOpen.apply(this, arguments);
   };
 
-  XMLHttpRequest.prototype.send = function patchedSend() {
+  XMLHttpRequest.prototype.send = function patchedSend(body) {
     this.__quickCopyStartedAt__ = Date.now();
+    this.__quickCopyRequestBody__ = captureRequestBody(body);
 
     this.addEventListener(
       'loadend',
@@ -182,6 +223,7 @@
           completedAt: Date.now(),
           statusCode: this.status,
           response: responseBody,
+          requestParams: this.__quickCopyRequestBody__,
         });
       },
       { once: true },

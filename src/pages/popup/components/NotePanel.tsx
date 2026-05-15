@@ -2,16 +2,20 @@ interface NotePanelProps {
   note: string;
   copying: boolean;
   selectedCount: number;
+  includeRequestParams: boolean;
   onNoteChange: (value: string) => void;
   onCopy: () => void;
+  onToggleRequestParams: () => void;
 }
 
 export function NotePanel({
   note,
   copying,
   selectedCount,
+  includeRequestParams,
   onNoteChange,
   onCopy,
+  onToggleRequestParams,
 }: NotePanelProps) {
   return (
     <section className="panel">
@@ -30,6 +34,15 @@ export function NotePanel({
         rows={2}
         value={note}
       />
+
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={includeRequestParams}
+          onChange={onToggleRequestParams}
+        />
+        包含接口入参
+      </label>
 
       <button
         className="primary-button"

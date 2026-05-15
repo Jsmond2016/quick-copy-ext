@@ -533,6 +533,21 @@ input {
   text-align: center;
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 4px 0;
+  user-select: none;
+}
+
+.checkbox-row input[type="checkbox"] {
+  cursor: pointer;
+}
+
 .note-input {
   width: 100%;
   resize: vertical;

@@ -15,6 +15,7 @@ export interface CapturedResponsePayload {
   completedAt: number;
   statusCode?: number;
   response?: JsonValue;
+  requestParams?: JsonValue;
 }
 
 export interface NetworkRequestRecord {
@@ -35,6 +36,7 @@ export interface NetworkRequestRecord {
   responseRuleMatched?: boolean;
   responseMessage?: string;
   abnormalReasons?: string[];
+  requestParams?: Record<string, unknown>;
 }
 
 export interface PageSummary {
@@ -52,6 +54,7 @@ export interface CopyPayload extends PopupPayload {
   note: string;
   screenshotLabel: string;
   customFields: string[];
+  includeRequestParams: boolean;
 }
 
 export interface QuickCopySettings {
@@ -633,6 +636,14 @@ export function buildFeedbackText(payload: CopyPayload): string {
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
       sections.push(`- 耗时: ${formatDuration(request.startedAt, request.completedAt)}`);
       sections.push(`- apifox: ${request.apifoxUrl ?? 'N/A'}`);
+
+      if (payload.includeRequestParams && request.requestParams) {
+        sections.push('- 接口入参:');
+        const formatted = JSON.stringify(request.requestParams, null, 2);
+        formatted.split('\n').forEach((line) => {
+          sections.push(`  ${line}`);
+        });
+      }
 
       if (index < payload.requests.length - 1) {
         sections.push('');

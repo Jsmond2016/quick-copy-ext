@@ -54,6 +54,7 @@ export default function Popup() {
   const [errorText, setErrorText] = useState('');
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
+  const [includeRequestParams, setIncludeRequestParams] = useState(false);
   const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>(DEFAULT_APIFOX_STATUS);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configModalContent, setConfigModalContent] = useState('');
@@ -283,6 +284,7 @@ export default function Popup() {
         note,
         screenshotLabel: 'N/A',
         customFields: settings.customFields,
+        includeRequestParams,
       });
 
       await navigator.clipboard.writeText(text);
@@ -495,8 +497,10 @@ export default function Popup() {
             copying={copying}
             note={note}
             selectedCount={selectedRequests.length}
+            includeRequestParams={includeRequestParams}
             onCopy={() => void copyFeedback()}
             onNoteChange={setNote}
+            onToggleRequestParams={() => setIncludeRequestParams((v) => !v)}
           />
         </>
       )}
