@@ -473,7 +473,6 @@ export default function Popup() {
           <PageSummaryPanel
             page={page}
             pageMonitoringEnabled={pageMonitoringEnabled}
-            onRefresh={() => void loadData()}
           />
 
           {pageMonitoringEnabled ? (

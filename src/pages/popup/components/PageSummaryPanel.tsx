@@ -3,13 +3,11 @@ import { getDisplayPath, PageSummary } from '@src/lib/quick-copy';
 interface PageSummaryPanelProps {
   page: PageSummary;
   pageMonitoringEnabled: boolean;
-  onRefresh: () => void;
 }
 
 export function PageSummaryPanel({
   page,
   pageMonitoringEnabled,
-  onRefresh,
 }: PageSummaryPanelProps) {
   return (
     <section className="panel">
@@ -18,9 +16,6 @@ export function PageSummaryPanel({
           <span className="panel-kicker">当前页面</span>
           <h2>页面摘要</h2>
         </div>
-        <button className="ghost-button" type="button" onClick={onRefresh}>
-          刷新
-        </button>
       </div>
 
       <dl className="page-meta">
