@@ -62,6 +62,7 @@ export interface QuickCopySettings {
   monitoredOrigins: string[];
   apiPrefixes: string[];
   customFields: string[];
+  quickFillTemplates: string[];
   apifoxExportUrl: string;
   responseErrorRule: string;
 }
@@ -207,12 +208,25 @@ export function stringifyLines(values: string[]): string {
   return values.join('\n');
 }
 
+export function parseParagraphBlocks(value: string): string[] {
+  return value
+    .replace(/\r\n/g, '\n')
+    .split(/\n\s*\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function stringifyParagraphBlocks(values: string[]): string {
+  return values.join('\n\n');
+}
+
 export function getDefaultSettings(): QuickCopySettings {
   return {
     feedbackTitle: '页面接口信息如下',
     monitoredOrigins: ['localhost', '127.0.0.1'],
     apiPrefixes: ['/api/saas/'],
     customFields: [],
+    quickFillTemplates: [],
     apifoxExportUrl: '',
     responseErrorRule: DEFAULT_RESPONSE_ERROR_RULE,
   };
@@ -228,6 +242,8 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     settings.apiPrefixes.every((v, i) => v === defaults.apiPrefixes[i]) &&
     settings.customFields.length === defaults.customFields.length &&
     settings.customFields.every((v, i) => v === defaults.customFields[i]) &&
+    settings.quickFillTemplates.length === defaults.quickFillTemplates.length &&
+    settings.quickFillTemplates.every((v, i) => v === defaults.quickFillTemplates[i]) &&
     settings.apifoxExportUrl === defaults.apifoxExportUrl &&
     settings.responseErrorRule === defaults.responseErrorRule
   );
@@ -248,6 +264,9 @@ export async function loadSettings(): Promise<QuickCopySettings> {
       : defaults.monitoredOrigins,
     apiPrefixes: Array.isArray(current?.apiPrefixes) ? current.apiPrefixes.filter(Boolean) : defaults.apiPrefixes,
     customFields: Array.isArray(current?.customFields) ? current.customFields.filter(Boolean) : defaults.customFields,
+    quickFillTemplates: Array.isArray(current?.quickFillTemplates)
+      ? current.quickFillTemplates.filter(Boolean)
+      : defaults.quickFillTemplates,
     apifoxExportUrl:
       typeof current?.apifoxExportUrl === 'string'
         ? current.apifoxExportUrl.trim()

@@ -99,6 +99,18 @@ export function SettingsPanel({
         </label>
 
         <label className="field-block">
+          <span>快速填写配置</span>
+          <textarea
+            className="note-input"
+            onChange={handleChange('quickFillTemplatesInput')}
+            placeholder={'为什么接口出错了\n出参不对，xx 字段返回值错了'}
+            rows={3}
+            value={form.quickFillTemplatesInput}
+          />
+          <small>使用回车分割常用语。主面板会按每行内容展示为外部下拉选项，支持多选后自动填入备注内容。</small>
+        </label>
+
+        <label className="field-block">
           <span>本地 Apifox 导出地址</span>
           <textarea
             className="note-input"

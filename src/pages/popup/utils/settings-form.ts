@@ -10,6 +10,7 @@ export interface SettingsFormState {
   originInput: string;
   prefixInput: string;
   customFieldsInput: string;
+  quickFillTemplatesInput: string;
   apifoxExportUrlInput: string;
   responseErrorRuleInput: string;
 }
@@ -20,6 +21,7 @@ export function createSettingsFormState(settings: QuickCopySettings): SettingsFo
     originInput: stringifyLines(settings.monitoredOrigins),
     prefixInput: stringifyLines(settings.apiPrefixes),
     customFieldsInput: stringifyLines(settings.customFields),
+    quickFillTemplatesInput: stringifyLines(settings.quickFillTemplates),
     apifoxExportUrlInput: settings.apifoxExportUrl,
     responseErrorRuleInput: settings.responseErrorRule,
   };
@@ -37,6 +39,7 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     monitoredOrigins: parseLines(form.originInput),
     apiPrefixes: parseLines(form.prefixInput),
     customFields: parseLines(form.customFieldsInput),
+    quickFillTemplates: parseLines(form.quickFillTemplatesInput),
     apifoxExportUrl: form.apifoxExportUrlInput.trim(),
     responseErrorRule: form.responseErrorRuleInput.trim() || defaults.responseErrorRule,
   };

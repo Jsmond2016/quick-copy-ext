@@ -55,6 +55,8 @@ export default function Popup() {
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
   const [includeRequestParams, setIncludeRequestParams] = useState(false);
+  const [useQuickFill, setUseQuickFill] = useState(false);
+  const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>(DEFAULT_APIFOX_STATUS);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [configModalContent, setConfigModalContent] = useState('');
@@ -76,6 +78,7 @@ export default function Popup() {
     () => matchesMonitoredOrigins(page.url, settings.monitoredOrigins),
     [page.url, settings.monitoredOrigins],
   );
+  const quickFillOptions = settings.quickFillTemplates;
 
   async function attachApifoxUrls(
     nextRequests: NetworkRequestRecord[],
@@ -142,6 +145,7 @@ export default function Popup() {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
       setSettingsForm(createSettingsFormState(loadedSettings));
+      setUseQuickFill(loadedSettings.quickFillTemplates.length > 0);
       const currentApifoxStatus = loadedSettings.apifoxExportUrl
         ? await getApifoxStatus()
         : DEFAULT_APIFOX_STATUS;
@@ -155,6 +159,24 @@ export default function Popup() {
       current.filter((id) => filteredRequests.some((request) => request.id === id)),
     );
   }, [filteredRequests]);
+
+  useEffect(() => {
+    setSelectedQuickFillValues((current) => {
+      const nextValues = current.filter((item) => quickFillOptions.includes(item));
+
+      if (useQuickFill && nextValues.length !== current.length) {
+        setNote(nextValues.join('\n\n'));
+      }
+
+      return nextValues;
+    });
+  }, [quickFillOptions, useQuickFill]);
+
+  useEffect(() => {
+    if (quickFillOptions.length === 0 && useQuickFill) {
+      setUseQuickFill(false);
+    }
+  }, [quickFillOptions.length, useQuickFill]);
 
   function updateSettingsForm(field: keyof SettingsFormState, value: string) {
     setSettingsForm((current) => ({
@@ -175,6 +197,11 @@ export default function Popup() {
 
   function clearSelection() {
     setSelectedIds([]);
+  }
+
+  function updateNoteWithQuickFill(values: string[]) {
+    setSelectedQuickFillValues(values);
+    setNote(values.join('\n\n'));
   }
 
   async function runApifoxRefresh(
@@ -431,6 +458,7 @@ export default function Popup() {
         monitoredOrigins: Array.isArray(parsed.monitoredOrigins) ? parsed.monitoredOrigins : [],
         apiPrefixes: Array.isArray(parsed.apiPrefixes) ? parsed.apiPrefixes : [],
         customFields: Array.isArray(parsed.customFields) ? parsed.customFields : [],
+        quickFillTemplates: Array.isArray(parsed.quickFillTemplates) ? parsed.quickFillTemplates : [],
         apifoxExportUrl: typeof parsed.apifoxExportUrl === 'string' ? parsed.apifoxExportUrl : '',
         responseErrorRule: typeof parsed.responseErrorRule === 'string' ? parsed.responseErrorRule : getDefaultSettings().responseErrorRule,
       };
@@ -499,8 +527,15 @@ export default function Popup() {
             selectedCount={selectedRequests.length}
             includeRequestParams={includeRequestParams}
             onCopy={() => void copyFeedback()}
+            quickFillOptions={quickFillOptions}
+            useQuickFill={useQuickFill}
+            selectedQuickFillValues={selectedQuickFillValues}
             onNoteChange={setNote}
             onToggleRequestParams={() => setIncludeRequestParams((v) => !v)}
+            onToggleQuickFill={() => {
+              setUseQuickFill((current) => !current);
+            }}
+            onQuickFillSelectionChange={updateNoteWithQuickFill}
           />
         </>
       )}
