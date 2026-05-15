@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.30](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.30) (2026-05-15)
+
+
+### Bug Fixes
+
+* include request params in copied feedback ([7b2e066](https://github.com/Jsmond2016/quick-copy-ext/commit/7b2e0668df01eafe9eb79dcdff1df2d0a0f74e3d))
+
+
+### Features
+
+* 增加快速填写功能 ([5ab4a1e](https://github.com/Jsmond2016/quick-copy-ext/commit/5ab4a1e5522fea9710b011aa3ae5c3042929bed8))
+
 ## [1.4.29](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.29) (2026-05-15)
 
 
