@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.26](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.25...v1.4.26) (2026-05-15)
+
+
+### Bug Fixes
+
+* 去掉复制文本中「详细描述：N/A」默认值，异常原因仅在接口异常时展示 ([d189512](https://github.com/Jsmond2016/quick-copy-ext/commit/d189512eee6b7defe6a1593ed1927e92a367624d))
+
+## [1.4.25](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.24...v1.4.25) (2026-05-15)
+
+
+### Features
+
+* 配置导入/导出 & 重置 & 导出复制按钮 & 弹框主题色适配 ([b1993eb](https://github.com/Jsmond2016/quick-copy-ext/commit/b1993eb10d5e390f48a507b5ce33895263d1d2e8))
+
 ## [1.4.24](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.23...v1.4.24) (2026-05-13)
 
 
