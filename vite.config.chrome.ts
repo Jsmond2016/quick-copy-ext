@@ -9,8 +9,7 @@ const typedBaseManifest = baseManifest as ManifestV3Export & {
   permissions?: string[];
 };
 const { action: baseAction, permissions: basePermissions = [], ...chromeManifestBase } = typedBaseManifest;
-const { default_popup: _defaultPopup, ...chromeActionBase } = (baseAction ?? {}) as Record<string, unknown>;
-const chromePermissions = Array.from(new Set([...basePermissions, 'sidePanel']));
+const chromePermissions = Array.from(new Set([...basePermissions]));
 
 export default mergeConfig(
   baseConfig,
@@ -21,14 +20,11 @@ export default mergeConfig(
           ...chromeManifestBase,
           permissions: chromePermissions,
           action: {
-            ...chromeActionBase,
+            ...baseAction,
             default_title:
-              typeof chromeActionBase.default_title === 'string'
-                ? chromeActionBase.default_title
-                : '打开 Quick Copy 侧边栏',
-          },
-          side_panel: {
-            default_path: 'src/pages/sidepanel/index.html',
+              typeof baseAction?.default_title === 'string'
+                ? baseAction.default_title
+                : 'Quick Copy',
           },
           background: {
             service_worker: 'src/pages/background/index.ts',
