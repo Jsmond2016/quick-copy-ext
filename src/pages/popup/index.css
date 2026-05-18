@@ -570,6 +570,12 @@ input {
   text-align: center;
 }
 
+.checkbox-row-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;

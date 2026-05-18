@@ -5,12 +5,14 @@ interface NotePanelProps {
   copying: boolean;
   selectedCount: number;
   includeRequestParams: boolean;
+  includeResponseBody: boolean;
   quickFillOptions: string[];
   useQuickFill: boolean;
   selectedQuickFillValues: string[];
   onNoteChange: (value: string) => void;
   onCopy: () => void;
   onToggleRequestParams: () => void;
+  onToggleResponseBody: () => void;
   onToggleQuickFill: () => void;
   onQuickFillSelectionChange: (values: string[]) => void;
 }
@@ -20,12 +22,14 @@ export function NotePanel({
   copying,
   selectedCount,
   includeRequestParams,
+  includeResponseBody,
   quickFillOptions,
   useQuickFill,
   selectedQuickFillValues,
   onNoteChange,
   onCopy,
   onToggleRequestParams,
+  onToggleResponseBody,
   onToggleQuickFill,
   onQuickFillSelectionChange,
 }: NotePanelProps) {
@@ -111,14 +115,25 @@ export function NotePanel({
         value={note}
       />
 
-      <label className="checkbox-row">
-        <input
-          type="checkbox"
-          checked={includeRequestParams}
-          onChange={onToggleRequestParams}
-        />
-        包含接口入参
-      </label>
+      <div className="checkbox-row-group">
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={includeRequestParams}
+            onChange={onToggleRequestParams}
+          />
+          包含接口入参
+        </label>
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={includeResponseBody}
+            onChange={onToggleResponseBody}
+          />
+          包含接口出参
+        </label>
+      </div>
 
       <button
         className="primary-button"

@@ -118,6 +118,22 @@ export async function getApifoxMatches(
   }
 }
 
+const SESSION_STORAGE_QUOTA = 10_485_760;
+const STORAGE_WARNING_THRESHOLD = 0.8;
+
+export async function getSessionStorageUsage(): Promise<{ bytesInUse: number; quota: number; ratio: number }> {
+  const bytesInUse = await chrome.storage.session.getBytesInUse(null);
+  return {
+    bytesInUse,
+    quota: SESSION_STORAGE_QUOTA,
+    ratio: bytesInUse / SESSION_STORAGE_QUOTA,
+  };
+}
+
+export function isStorageNearCapacity(ratio: number): boolean {
+  return ratio >= STORAGE_WARNING_THRESHOLD;
+}
+
 export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) {
   const handleMessage = (message: unknown) => {
     const runtimeMessage = message as RuntimeEventMessage;

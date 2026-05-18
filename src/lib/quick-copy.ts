@@ -55,6 +55,7 @@ export interface CopyPayload extends PopupPayload {
   screenshotLabel: string;
   customFields: string[];
   includeRequestParams: boolean;
+  includeResponseBody: boolean;
 }
 
 export interface QuickCopySettings {
@@ -539,20 +540,20 @@ export function sanitizeResponseSnapshot(
     return Number.isFinite(value) ? value : undefined;
   }
 
-  if (depth >= 3) {
+  if (depth >= 6) {
     return undefined;
   }
 
   if (Array.isArray(value)) {
     return value
-      .slice(0, 10)
+      .slice(0, 50)
       .map((item) => sanitizeResponseSnapshot(item, depth + 1))
       .filter((item): item is JsonValue => item !== undefined);
   }
 
   if (value && typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>)
-      .slice(0, 20)
+      .slice(0, 30)
       .map(([key, item]) => [key, sanitizeResponseSnapshot(item, depth + 1)] as const)
       .filter((entry): entry is [string, JsonValue] => entry[1] !== undefined);
 
@@ -667,6 +668,18 @@ export function buildFeedbackText(payload: CopyPayload): string {
         formatted.split('\n').forEach((line) => {
           sections.push(`  ${line}`);
         });
+      }
+
+      if (payload.includeResponseBody) {
+        if (request.responseSnapshot) {
+          sections.push('- 接口出参:');
+          const formatted = JSON.stringify(request.responseSnapshot, null, 2);
+          formatted.split('\n').forEach((line) => {
+            sections.push(`  ${line}`);
+          });
+        } else {
+          sections.push('- 接口出参: 未捕获到响应体');
+        }
       }
 
       if (index < payload.requests.length - 1) {

@@ -27,7 +27,9 @@ import {
   getApifoxMatches,
   getApifoxStatus,
   getErrorMessage,
+  getSessionStorageUsage,
   getTabRequests,
+  isStorageNearCapacity,
   refreshApifoxData,
   subscribeToTabRequestUpdates,
 } from '@pages/popup/services/runtime';
@@ -55,6 +57,7 @@ export default function Popup() {
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
   const [includeRequestParams, setIncludeRequestParams] = useState(false);
+  const [includeResponseBody, setIncludeResponseBody] = useState(false);
   const [useQuickFill, setUseQuickFill] = useState(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const [apifoxStatus, setApifoxStatus] = useState<ApifoxCacheStatus>(DEFAULT_APIFOX_STATUS);
@@ -129,6 +132,15 @@ export default function Popup() {
             ? ''
             : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
       );
+
+      const storageUsage = await getSessionStorageUsage();
+      if (isStorageNearCapacity(storageUsage.ratio)) {
+        const percent = Math.round(storageUsage.ratio * 100);
+        setToast({
+          type: 'warning',
+          text: `缓存已使用 ${percent}%，建议清空历史记录释放空间。`,
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : '读取请求记录失败。';
       setRequests([]);
@@ -369,6 +381,7 @@ export default function Popup() {
         screenshotLabel: 'N/A',
         customFields: settings.customFields,
         includeRequestParams,
+        includeResponseBody,
       });
 
       await navigator.clipboard.writeText(text);
@@ -580,12 +593,14 @@ export default function Popup() {
             note={note}
             selectedCount={selectedRequests.length}
             includeRequestParams={includeRequestParams}
+            includeResponseBody={includeResponseBody}
             onCopy={() => void copyFeedback()}
             quickFillOptions={quickFillOptions}
             useQuickFill={useQuickFill}
             selectedQuickFillValues={selectedQuickFillValues}
             onNoteChange={setNote}
             onToggleRequestParams={() => setIncludeRequestParams((v) => !v)}
+            onToggleResponseBody={() => setIncludeResponseBody((v) => !v)}
             onToggleQuickFill={() => {
               setUseQuickFill((current) => !current);
             }}

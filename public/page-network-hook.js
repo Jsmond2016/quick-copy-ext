@@ -20,7 +20,7 @@
   }
 
   function sanitizeValue(value, depth) {
-    if (depth > 3) {
+    if (depth > 6) {
       return undefined;
     }
 
@@ -38,7 +38,7 @@
 
     if (Array.isArray(value)) {
       return value
-        .slice(0, 10)
+        .slice(0, 50)
         .map(function mapItem(item) {
           return sanitizeValue(item, depth + 1);
         })
@@ -48,7 +48,7 @@
     }
 
     if (value && typeof value === 'object') {
-      var entries = Object.entries(value).slice(0, 20);
+      var entries = Object.entries(value).slice(0, 30);
       var result = {};
 
       entries.forEach(function forEachEntry(entry) {

@@ -425,7 +425,7 @@ function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) 
         responseSnapshot:
           payload.response === undefined
             ? matchedRequest.responseSnapshot
-            : sanitizeResponseSnapshot(payload.response),
+            : (payload.response as import('@src/lib/quick-copy').JsonValue),
         requestParams,
       },
       responseErrorRule,
