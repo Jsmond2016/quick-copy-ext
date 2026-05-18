@@ -1,0 +1,16 @@
+html,
+body,
+#__root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  width: auto;
+  min-height: 100vh;
+}
+
+.popup-shell {
+  max-width: 560px;
+  margin: 0 auto;
+}

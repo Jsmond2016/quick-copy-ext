@@ -156,6 +156,12 @@ async function hydrateApifoxCache() {
 const apifoxCacheReadyPromise = hydrateApifoxCache().catch(() => undefined);
 const runtimeCacheReadyPromise = hydrateRuntimeCache().catch(() => undefined);
 
+if (chrome.sidePanel?.setPanelBehavior) {
+  void chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch(() => undefined);
+}
+
 async function ensureApifoxCacheReady() {
   await apifoxCacheReadyPromise;
 }
