@@ -4,6 +4,7 @@ import {
   ApifoxRefreshResponse,
   ApifoxStatusResponse,
   NetworkRequestRecord,
+  RuntimeEventMessage,
   RuntimeResponseMessage,
 } from '@src/lib/quick-copy';
 import { DEFAULT_APIFOX_STATUS } from '@pages/popup/constants';
@@ -115,4 +116,22 @@ export async function getApifoxMatches(
 
     throw new Error('当前扩展后台不支持 Apifox 匹配，请重新加载扩展。');
   }
+}
+
+export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) {
+  const handleMessage = (message: unknown) => {
+    const runtimeMessage = message as RuntimeEventMessage;
+
+    if (runtimeMessage?.type !== 'quick-copy/tab-requests-updated') {
+      return;
+    }
+
+    listener(runtimeMessage.tabId);
+  };
+
+  chrome.runtime.onMessage.addListener(handleMessage);
+
+  return () => {
+    chrome.runtime.onMessage.removeListener(handleMessage);
+  };
 }

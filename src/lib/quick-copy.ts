@@ -76,6 +76,11 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] }
   | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload };
 
+export type RuntimeEventMessage = {
+  type: 'quick-copy/tab-requests-updated';
+  tabId: number;
+};
+
 export type RuntimeResponseMessage =
   | { ok: true; data: NetworkRequestRecord[] }
   | { ok: false; error: string };

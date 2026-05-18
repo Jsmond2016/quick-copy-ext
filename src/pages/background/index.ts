@@ -9,6 +9,7 @@ import {
   MAX_REQUESTS_PER_TAB,
   matchesMonitoredOrigins,
   NetworkRequestRecord,
+  RuntimeEventMessage,
   QuickCopySettings,
   RuntimeRequestMessage,
   RuntimeResponseMessage,
@@ -170,12 +171,22 @@ async function ensureRuntimeCacheReady() {
   await runtimeCacheReadyPromise;
 }
 
+function notifyTabRequestsUpdated(tabId: number) {
+  const message: RuntimeEventMessage = {
+    type: 'quick-copy/tab-requests-updated',
+    tabId,
+  };
+
+  void chrome.runtime.sendMessage(message).catch(() => undefined);
+}
+
 function upsertRequest(record: NetworkRequestRecord) {
   const existing = requestsByTab.get(record.tabId) ?? [];
   const next = [record, ...existing.filter((item) => item.requestId !== record.requestId)];
   requestsByTab.set(record.tabId, next.slice(0, MAX_REQUESTS_PER_TAB));
   requestIndex.set(record.requestId, record);
   scheduleRuntimeCachePersist();
+  notifyTabRequestsUpdated(record.tabId);
 }
 
 function updateRequest(
@@ -194,6 +205,7 @@ function updateRequest(
   requestsByTab.set(current.tabId, updated);
   requestIndex.set(requestId, next);
   scheduleRuntimeCachePersist();
+  notifyTabRequestsUpdated(current.tabId);
 }
 
 function replaceRequestRecord(nextRecord: NetworkRequestRecord) {
@@ -203,6 +215,7 @@ function replaceRequestRecord(nextRecord: NetworkRequestRecord) {
   requestsByTab.set(nextRecord.tabId, updatedRecords);
   requestIndex.set(nextRecord.requestId, nextRecord);
   scheduleRuntimeCachePersist();
+  notifyTabRequestsUpdated(nextRecord.tabId);
 }
 
 function clearTabRequests(tabId: number) {
@@ -212,6 +225,7 @@ function clearTabRequests(tabId: number) {
   });
   requestsByTab.delete(tabId);
   scheduleRuntimeCachePersist();
+  notifyTabRequestsUpdated(tabId);
 }
 
 function shouldTrackTabUrl(tabUrl: string | undefined): boolean {
