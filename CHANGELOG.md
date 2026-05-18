@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.31](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.30...v1.4.31) (2026-05-18)
+
+
+### Features
+
+* use side panel for chrome entry ([9ead3db](https://github.com/Jsmond2016/quick-copy-ext/commit/9ead3dbda272d6c3c4b34f52acae6e9a696d2de7))
+* 实时同步接口变化到 sidepanel 接口列表中 ([2f1698e](https://github.com/Jsmond2016/quick-copy-ext/commit/2f1698e1fcca0203e5d39acae6e1032fa11b2572))
+
 ## [1.4.30](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.30) (2026-05-15)
 
 
