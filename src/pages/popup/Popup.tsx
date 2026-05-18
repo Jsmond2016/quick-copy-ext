@@ -14,7 +14,6 @@ import {
   saveSettings,
 } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
-import { PageSummaryPanel } from '@pages/popup/components/PageSummaryPanel';
 import { PopupHero } from '@pages/popup/components/PopupHero';
 import { RequestHistoryPanel } from '@pages/popup/components/RequestHistoryPanel';
 import { SettingsPanel } from '@pages/popup/components/SettingsPanel';
@@ -30,6 +29,7 @@ import {
   getErrorMessage,
   getTabRequests,
   refreshApifoxData,
+  subscribeToTabRequestUpdates,
 } from '@pages/popup/services/runtime';
 import {
   buildSettingsFromForm,
@@ -177,6 +177,63 @@ export default function Popup() {
       setUseQuickFill(false);
     }
   }, [quickFillOptions.length, useQuickFill]);
+
+  useEffect(() => {
+    if (tabId === null) {
+      return undefined;
+    }
+
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const refreshRequests = () => {
+      if (refreshTimer !== undefined) {
+        clearTimeout(refreshTimer);
+      }
+
+      refreshTimer = setTimeout(() => {
+        void (async () => {
+          try {
+            const nextRequests = await getTabRequests(tabId);
+            const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, apifoxStatus);
+
+            setRequests(nextRequestsWithApifox);
+            setSelectedIds((current) =>
+              current.filter((id) => nextRequestsWithApifox.some((request) => request.id === id)),
+            );
+
+            const isMonitoredPage = matchesMonitoredOrigins(page.url, settings.monitoredOrigins);
+            setStatusText(
+              nextRequestsWithApifox.length > 0
+                ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
+                : isMonitoredPage
+                  ? ''
+                  : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
+            );
+            setErrorText('');
+          } catch (error) {
+            const message = error instanceof Error ? error.message : '读取请求记录失败。';
+            setErrorText(message);
+            setStatusText(message);
+          }
+        })();
+      }, 120);
+    };
+
+    const unsubscribe = subscribeToTabRequestUpdates((updatedTabId) => {
+      if (updatedTabId !== tabId) {
+        return;
+      }
+
+      refreshRequests();
+    });
+
+    return () => {
+      if (refreshTimer !== undefined) {
+        clearTimeout(refreshTimer);
+      }
+      unsubscribe();
+    };
+  }, [apifoxStatus, page.url, settings.monitoredOrigins, tabId]);
 
   function updateSettingsForm(field: keyof SettingsFormState, value: string) {
     setSettingsForm((current) => ({
@@ -480,6 +537,8 @@ export default function Popup() {
       <PopupHero
         apifoxExportUrl={settings.apifoxExportUrl}
         apifoxStatus={apifoxStatus}
+        page={page}
+        pageMonitoringEnabled={pageMonitoringEnabled}
         refreshingApifox={refreshingApifox}
         showSettings={showSettings}
         onRefreshApifox={() => void handleRefreshApifox()}
@@ -500,11 +559,6 @@ export default function Popup() {
         />
       ) : (
         <>
-          <PageSummaryPanel
-            page={page}
-            pageMonitoringEnabled={pageMonitoringEnabled}
-          />
-
           {pageMonitoringEnabled ? (
             <RequestHistoryPanel
               errorText={errorText}

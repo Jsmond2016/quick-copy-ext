@@ -1,9 +1,11 @@
-import { ApifoxCacheStatus } from '@src/lib/quick-copy';
+import { ApifoxCacheStatus, getDisplayPath, PageSummary } from '@src/lib/quick-copy';
 
 interface PopupHeroProps {
   apifoxStatus: ApifoxCacheStatus;
   apifoxExportUrl: string;
   refreshingApifox: boolean;
+  page: PageSummary;
+  pageMonitoringEnabled: boolean;
   showSettings: boolean;
   onRefreshApifox: () => void;
   onToggleSettings: () => void;
@@ -13,6 +15,8 @@ export function PopupHero({
   apifoxStatus,
   apifoxExportUrl,
   refreshingApifox,
+  page,
+  pageMonitoringEnabled,
   showSettings,
   onRefreshApifox,
   onToggleSettings,
@@ -55,6 +59,19 @@ export function PopupHero({
             ? apifoxStatus.error || 'Apifox 尚未就绪，可点击右上角刷新重试。'
             : '未配置 Apifox 导出地址，复制时将不会补充 Apifox 链接。'}
       </div>
+      <dl className="hero-page-meta">
+        <div>
+          <dt>标题</dt>
+          <dd title={page.title}>{page.title || 'N/A'}</dd>
+        </div>
+        <div>
+          <dt>URL</dt>
+          <dd title={page.url}>{getDisplayPath(page.url) || 'N/A'}</dd>
+        </div>
+      </dl>
+      {page.url && !pageMonitoringEnabled ? (
+        <p className="hero-page-warning">当前页面不在监听 Origin 范围内，请修改设置 origin。</p>
+      ) : null}
     </section>
   );
 }

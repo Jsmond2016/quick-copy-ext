@@ -95,7 +95,7 @@ input {
 .hero-card {
   position: relative;
   overflow: hidden;
-  padding: 14px 16px;
+  padding: 12px 14px;
 }
 
 .hero-card::after {
@@ -144,22 +144,59 @@ input {
 }
 
 .hero-card h1 {
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.2;
 }
 
 .hero-card p {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--muted);
 }
 
 .hero-subline {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--muted);
+}
+
+.hero-page-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.hero-page-meta div {
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(31, 37, 32, 0.08);
+}
+
+.hero-page-meta dt {
+  margin-bottom: 2px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.hero-page-meta dd {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-page-warning {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #b42318;
 }
 
 .panel {
