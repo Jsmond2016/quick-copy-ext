@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import pkg from '../../../package.json';
 import {
   ApifoxCacheStatus,
@@ -64,6 +64,7 @@ export default function Popup() {
   const { toast, setToast } = useToast();
 
   const isDefaultConfig = useMemo(() => isDefaultSettings(settings), [settings]);
+  const lastClickedIndexRef = useRef<number | null>(null);
 
   const filteredRequests = useMemo(
     () => requests.filter((request) => matchesApiPrefixes(request.url, settings.apiPrefixes)),
@@ -246,10 +247,23 @@ export default function Popup() {
     }));
   }
 
-  function toggleRequest(id: string) {
-    setSelectedIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
+  function toggleRequest(id: string, index: number, shiftKey: boolean) {
+    if (shiftKey && lastClickedIndexRef.current !== null) {
+      const start = Math.min(lastClickedIndexRef.current, index);
+      const end = Math.max(lastClickedIndexRef.current, index);
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        for (let i = start; i <= end; i++) {
+          next.add(filteredRequests[i].id);
+        }
+        return Array.from(next);
+      });
+    } else {
+      setSelectedIds((current) =>
+        current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+      );
+    }
+    lastClickedIndexRef.current = index;
   }
 
   function selectAll() {

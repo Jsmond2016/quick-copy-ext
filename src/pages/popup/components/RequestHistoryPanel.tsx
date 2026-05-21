@@ -11,7 +11,7 @@ interface RequestHistoryPanelProps {
   onSelectAll: () => void;
   onClearSelection: () => void;
   onClearRequests: () => void;
-  onToggleRequest: (id: string) => void;
+  onToggleRequest: (id: string, index: number, shiftKey: boolean) => void;
 }
 
 function splitRequestPath(rawUrl: string) {
@@ -115,7 +115,7 @@ export function RequestHistoryPanel({
             <span>先在页面触发请求，或调整接口前缀后再点击“刷新”。</span>
           </div>
         ) : (
-          filteredRequests.map((request) => {
+          filteredRequests.map((request, index) => {
             const checked = selectedIds.includes(request.id);
             const { leaf, parentPath, title } = splitRequestPath(request.url);
             const isAbnormal = (request.abnormalReasons?.length ?? 0) > 0;
@@ -124,12 +124,14 @@ export function RequestHistoryPanel({
               <article
                 className={`request-card ${checked ? 'active' : ''} ${isAbnormal ? 'abnormal' : ''}`}
                 key={request.id}
-                onClick={() => onToggleRequest(request.id)}
+                onClick={(event) => onToggleRequest(request.id, index, event.shiftKey)}
               >
                 <input
                   checked={checked}
-                  onChange={() => onToggleRequest(request.id)}
-                  onClick={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onToggleRequest(request.id, index, event.shiftKey);
+                  }}
                   type="checkbox"
                 />
                 <div className="request-main">
