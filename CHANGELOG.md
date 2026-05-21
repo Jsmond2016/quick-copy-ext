@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.32](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.31...v1.4.32) (2026-05-21)
+
+
+### Features
+
+* 从 sidepanel 方案改回 popup 方案 ([52f1949](https://github.com/Jsmond2016/quick-copy-ext/commit/52f19494f68e686a00cfe367a86795d41cc4f461))
+* 按住 shift 可连续勾选多个接口 ([e0321d0](https://github.com/Jsmond2016/quick-copy-ext/commit/e0321d0d44178185a7e42d7a27bf5aeb74ba3a55))
+* 补充中文的接口名字 ([702c603](https://github.com/Jsmond2016/quick-copy-ext/commit/702c603e7eb868ab1bd95f81e444d29df06b1624))
+
 ## [1.4.31](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.30...v1.4.31) (2026-05-18)
 
 
