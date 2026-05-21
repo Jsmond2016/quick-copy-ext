@@ -1,5 +1,6 @@
 import {
   ApifoxCacheStatus,
+  ApifoxMatchResult,
   CapturedResponsePayload,
   buildApifoxLookupMaps,
   getApifoxPathCandidates,
@@ -25,6 +26,7 @@ const tabUrlMap = new Map<number, string>();
 const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest']);
 const apifoxEndpointMap = new Map<string, string>();
 const apifoxPathMap = new Map<string, string>();
+const apifoxNameMap = new Map<string, string>();
 const RUNTIME_SESSION_CACHE_KEY = 'quick-copy-runtime-session-cache';
 const APIFOX_SESSION_CACHE_KEY = 'quick-copy-apifox-session-cache';
 const defaultApifoxStatus: ApifoxCacheStatus = {
@@ -37,6 +39,7 @@ interface SerializedApifoxCache {
   status: ApifoxCacheStatus;
   endpointEntries: [string, string][];
   pathEntries: [string, string][];
+  nameEntries: [string, string][];
 }
 
 interface SerializedRuntimeCache {
@@ -110,6 +113,7 @@ async function persistApifoxCache() {
     status: apifoxStatus,
     endpointEntries: Array.from(apifoxEndpointMap.entries()),
     pathEntries: Array.from(apifoxPathMap.entries()),
+    nameEntries: Array.from(apifoxNameMap.entries()),
   };
 
   await chrome.storage.session.set({
@@ -127,6 +131,7 @@ async function hydrateApifoxCache() {
 
   apifoxEndpointMap.clear();
   apifoxPathMap.clear();
+  apifoxNameMap.clear();
 
   payload.endpointEntries?.forEach(([lookupKey, apifoxUrl]) => {
     if (typeof lookupKey === 'string' && typeof apifoxUrl === 'string') {
@@ -137,6 +142,12 @@ async function hydrateApifoxCache() {
   payload.pathEntries?.forEach(([path, apifoxUrl]) => {
     if (typeof path === 'string' && typeof apifoxUrl === 'string') {
       apifoxPathMap.set(path, apifoxUrl);
+    }
+  });
+
+  payload.nameEntries?.forEach(([lookupKey, apiName]) => {
+    if (typeof lookupKey === 'string' && typeof apiName === 'string') {
+      apifoxNameMap.set(lookupKey, apiName);
     }
   });
 
@@ -297,6 +308,7 @@ async function bootstrapTabs() {
 function resetApifoxCache(sourceUrl = '') {
   apifoxEndpointMap.clear();
   apifoxPathMap.clear();
+  apifoxNameMap.clear();
   apifoxStatus = {
     ready: false,
     sourceUrl,
@@ -337,11 +349,15 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
 
   apifoxEndpointMap.clear();
   apifoxPathMap.clear();
+  apifoxNameMap.clear();
   lookupMaps.endpointMap.forEach((apifoxUrl, lookupKey) => {
     apifoxEndpointMap.set(lookupKey, apifoxUrl);
   });
   lookupMaps.pathMap.forEach((apifoxUrl, path) => {
     apifoxPathMap.set(path, apifoxUrl);
+  });
+  lookupMaps.endpointNameMap.forEach((apiName, lookupKey) => {
+    apifoxNameMap.set(lookupKey, apiName);
   });
 
   apifoxStatus = {
@@ -356,21 +372,32 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
 }
 
 function getApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>[]) {
-  const result: Record<string, string> = {};
+  const result: Record<string, ApifoxMatchResult> = {};
 
   requests.forEach((request) => {
     const path = getUrlPath(request.url);
-    const matchedUrl = getApifoxPathCandidates(path).reduce<string | undefined>((currentMatch, candidatePath) => {
-      if (currentMatch) {
-        return currentMatch;
-      }
+    const candidates = getApifoxPathCandidates(path);
 
+    let matchedUrl: string | undefined;
+    let matchedName: string | undefined;
+
+    for (const candidatePath of candidates) {
       const exactKey = getApifoxLookupKey(candidatePath, request.method);
-      return apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(candidatePath);
-    }, undefined);
+
+      if (!matchedUrl) {
+        matchedUrl = apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(candidatePath);
+      }
+      if (!matchedName) {
+        matchedName = apifoxNameMap.get(exactKey);
+      }
+      if (matchedUrl && matchedName) break;
+    }
 
     if (matchedUrl) {
-      result[`${request.method.toUpperCase()} ${request.url}`] = matchedUrl;
+      result[`${request.method.toUpperCase()} ${request.url}`] = {
+        apifoxUrl: matchedUrl,
+        apiName: matchedName,
+      };
     }
   });
 

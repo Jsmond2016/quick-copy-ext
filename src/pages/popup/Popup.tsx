@@ -85,15 +85,19 @@ export default function Popup() {
     currentApifoxStatus = apifoxStatus,
   ): Promise<NetworkRequestRecord[]> {
     if (!currentApifoxStatus.ready || nextRequests.length === 0) {
-      return nextRequests.map(({ apifoxUrl: _apifoxUrl, ...request }) => request);
+      return nextRequests.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request);
     }
 
     const apifoxMatches = await getApifoxMatches(nextRequests.map(({ url, method }) => ({ url, method })));
 
-    return nextRequests.map((request) => ({
-      ...request,
-      apifoxUrl: apifoxMatches[`${request.method.toUpperCase()} ${request.url}`],
-    }));
+    return nextRequests.map((request) => {
+      const match = apifoxMatches[`${request.method.toUpperCase()} ${request.url}`];
+      return {
+        ...request,
+        apifoxUrl: match?.apifoxUrl,
+        apiName: match?.apiName,
+      };
+    });
   }
 
   async function loadData(currentSettings = settings, currentApifoxStatus = apifoxStatus) {
@@ -353,10 +357,14 @@ export default function Popup() {
         apifoxStatus.ready && latestSelectedRequests.length > 0
           ? await getApifoxMatches(latestSelectedRequests.map(({ url, method }) => ({ url, method })))
           : {};
-      const requestsWithApifox = latestSelectedRequests.map((request) => ({
-        ...request,
-        apifoxUrl: apifoxMatches[`${request.method.toUpperCase()} ${request.url}`],
-      }));
+      const requestsWithApifox = latestSelectedRequests.map((request) => {
+        const match = apifoxMatches[`${request.method.toUpperCase()} ${request.url}`];
+        return {
+          ...request,
+          apifoxUrl: match?.apifoxUrl,
+          apiName: match?.apiName,
+        };
+      });
       const hasAbnormalRequest = requestsWithApifox.some(
         (request) => (request.abnormalReasons?.length ?? 0) > 0,
       );
@@ -397,7 +405,7 @@ export default function Popup() {
       if (!nextSettings.apifoxExportUrl) {
         await clearApifoxData();
         setApifoxStatus(DEFAULT_APIFOX_STATUS);
-        setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, ...request }) => request));
+        setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request));
       } else {
         setApifoxStatus({
           ready: false,
@@ -486,7 +494,7 @@ export default function Popup() {
     setSettings(defaults);
     setSettingsForm(createSettingsFormState(defaults));
     setApifoxStatus(DEFAULT_APIFOX_STATUS);
-    setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, ...request }) => request));
+    setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request));
     setToast({ type: 'success', text: '配置已重置为默认值' });
   }
 

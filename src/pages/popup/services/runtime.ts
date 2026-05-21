@@ -1,5 +1,6 @@
 import {
   ApifoxCacheStatus,
+  ApifoxMatchResult,
   ApifoxMatchesResponse,
   ApifoxRefreshResponse,
   ApifoxStatusResponse,
@@ -97,7 +98,7 @@ export async function clearApifoxData(): Promise<void> {
 
 export async function getApifoxMatches(
   requests: Pick<NetworkRequestRecord, 'url' | 'method'>[],
-): Promise<Record<string, string>> {
+): Promise<Record<string, ApifoxMatchResult>> {
   try {
     const response = (await chrome.runtime.sendMessage({
       type: 'quick-copy/get-apifox-matches',

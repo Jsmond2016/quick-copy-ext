@@ -148,13 +148,13 @@ export function RequestHistoryPanel({
                         }}
                         rel="noreferrer"
                         target="_blank"
-                        title={`${title}\n点击跳转到 Apifox`}
+                        title={`${request.apiName ? `接口名: ${request.apiName}\n` : ''}${title}\n点击跳转到 Apifox`}
                       >
                         <span className="request-path-leaf">{leaf}</span>
                         <span className="request-path-parent">{parentPath}</span>
                       </a>
                     ) : (
-                      <span className="request-path" title={title}>
+                      <span className="request-path" title={request.apiName ? `接口名: ${request.apiName}\n${title}` : title}>
                         <span className="request-path-leaf">{leaf}</span>
                         <span className="request-path-parent">{parentPath}</span>
                       </span>

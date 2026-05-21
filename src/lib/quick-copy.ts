@@ -32,6 +32,7 @@ export interface NetworkRequestRecord {
   headers: HeaderRecord;
   error?: string;
   apifoxUrl?: string;
+  apiName?: string;
   responseSnapshot?: JsonValue;
   responseRuleMatched?: boolean;
   responseMessage?: string;
@@ -101,13 +102,19 @@ export type ApifoxRefreshResponse =
   | { ok: true; data: ApifoxCacheStatus }
   | { ok: false; error: string };
 
+export interface ApifoxMatchResult {
+  apifoxUrl: string;
+  apiName?: string;
+}
+
 export type ApifoxMatchesResponse =
-  | { ok: true; data: Record<string, string> }
+  | { ok: true; data: Record<string, ApifoxMatchResult> }
   | { ok: false; error: string };
 
 export interface ApifoxLookupMaps {
   endpointMap: Map<string, string>;
   pathMap: Map<string, string>;
+  endpointNameMap: Map<string, string>;
   endpointCount: number;
 }
 
@@ -651,6 +658,9 @@ export function buildFeedbackText(payload: CopyPayload): string {
     sections.push('- 未选择异常接口');
   } else {
     payload.requests.forEach((request, index) => {
+      if (request.apiName) {
+        sections.push(`- 接口名: ${request.apiName}`);
+      }
       sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
@@ -742,6 +752,7 @@ export function buildApifoxLookupMaps(schema: unknown): ApifoxLookupMaps {
 
   const endpointMap = new Map<string, string>();
   const pathMap = new Map<string, string>();
+  const endpointNameMap = new Map<string, string>();
   let endpointCount = 0;
 
   Object.entries(paths).forEach(([path, pathItem]) => {
@@ -765,10 +776,17 @@ export function buildApifoxLookupMaps(schema: unknown): ApifoxLookupMaps {
       }
 
       const normalizedMethod = normalizeApifoxMethod(method);
-      endpointMap.set(getApifoxLookupKey(path, normalizedMethod), apifoxUrl);
+      const lookupKey = getApifoxLookupKey(path, normalizedMethod);
+      endpointMap.set(lookupKey, apifoxUrl);
       if (!pathMap.has(path)) {
         pathMap.set(path, apifoxUrl);
       }
+
+      const summary = (operation as { summary?: unknown }).summary;
+      if (typeof summary === 'string' && summary.trim()) {
+        endpointNameMap.set(lookupKey, summary.trim());
+      }
+
       endpointCount += 1;
     });
   });
@@ -776,6 +794,7 @@ export function buildApifoxLookupMaps(schema: unknown): ApifoxLookupMaps {
   return {
     endpointMap,
     pathMap,
+    endpointNameMap,
     endpointCount,
   };
 }
