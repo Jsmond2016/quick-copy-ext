@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.33](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.32...v1.4.33) (2026-05-25)
+
+
+### Features
+
+* 补充预发布插件skill ([56a4aee](https://github.com/Jsmond2016/quick-copy-ext/commit/56a4aee6881580e2731c41b6ca07adf95e62a1c0))
+
 ## [1.4.32](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.31...v1.4.32) (2026-05-21)
 
 
