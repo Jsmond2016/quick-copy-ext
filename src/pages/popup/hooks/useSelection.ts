@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useUpdateEffect } from 'ahooks';
 import { NetworkRequestRecord } from '@src/lib/quick-copy';
 
 export function useSelection(filteredRequests: NetworkRequestRecord[]) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const lastClickedIndexRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     setSelectedIds((current) =>
       current.filter((id) => filteredRequests.some((request) => request.id === id)),
     );

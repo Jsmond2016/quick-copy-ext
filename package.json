@@ -26,6 +26,7 @@
   },
   "type": "module",
   "dependencies": {
+    "ahooks": "^3.9.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "webextension-polyfill": "^0.12.0"

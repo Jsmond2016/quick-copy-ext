@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useMount, useUpdateEffect } from 'ahooks';
 
 interface ConfigModalProps {
   mode: 'import' | 'export';
@@ -19,10 +20,18 @@ export function ConfigModal({
 }: ConfigModalProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
+  function focusImportTextarea() {
     if (mode === 'import' && textareaRef.current) {
       textareaRef.current.focus();
     }
+  }
+
+  useMount(() => {
+    focusImportTextarea();
+  });
+
+  useUpdateEffect(() => {
+    focusImportTextarea();
   }, [mode]);
 
   return (

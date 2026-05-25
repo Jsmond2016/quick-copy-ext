@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useBoolean, useUpdateEffect } from 'ahooks';
 
 interface NotePanelProps {
   note: string;
@@ -29,15 +30,15 @@ export function NotePanel({
   onToggleQuickFill,
   onQuickFillSelectionChange,
 }: NotePanelProps) {
-  const [showQuickFillOptions, setShowQuickFillOptions] = useState(false);
+  const [showQuickFillOptions, { toggle: toggleQuickFillOptions, setFalse: hideQuickFillOptions }] = useBoolean(false);
   const selectedQuickFillSet = useMemo(
     () => new Set(selectedQuickFillValues),
     [selectedQuickFillValues],
   );
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (!useQuickFill) {
-      setShowQuickFillOptions(false);
+      hideQuickFillOptions();
     }
   }, [useQuickFill]);
 
@@ -78,7 +79,7 @@ export function NotePanel({
         <div className="quick-fill-box">
           <button
             className="ghost-button quick-fill-trigger"
-            onClick={() => setShowQuickFillOptions((current) => !current)}
+            onClick={toggleQuickFillOptions}
             type="button"
           >
             {selectedQuickFillValues.length > 0

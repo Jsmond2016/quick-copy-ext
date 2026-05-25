@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useBoolean, useMount, useRequest, useUpdateEffect } from 'ahooks';
 import pkg from '../../../package.json';
 import {
   buildFeedbackText,
@@ -37,15 +38,15 @@ import {
 export default function Popup() {
   const versionText = `当前版本：v${pkg.version}`;
   const [note, setNote] = useState('');
-  const [copying, setCopying] = useState(false);
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [copying, { setTrue: startCopying, setFalse: stopCopying }] = useBoolean(false);
+  const [savingSettings, { setTrue: startSavingSettings, setFalse: stopSavingSettings }] = useBoolean(false);
+  const [showSettings, { toggle: toggleShowSettings, setTrue: openSettings, setFalse: closeSettings }] = useBoolean(false);
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
-  const [includeRequestParams, setIncludeRequestParams] = useState(false);
-  const [useQuickFill, setUseQuickFill] = useState(false);
+  const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(false);
+  const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
-  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [showConfigModal, { setTrue: openConfigModal, setFalse: closeConfigModal }] = useBoolean(false);
   const [configModalContent, setConfigModalContent] = useState('');
   const [configModalMode, setConfigModalMode] = useState<'import' | 'export'>('export');
   const {
@@ -93,8 +94,8 @@ export default function Popup() {
     setSelectedIds,
   } = useSelection(filteredRequests);
 
-  useEffect(() => {
-    void (async () => {
+  const { runAsync: initializePopup } = useRequest(
+    async () => {
       const loadedSettings = await loadSettings();
       setSettings(loadedSettings);
       setSettingsForm(createSettingsFormState(loadedSettings));
@@ -104,10 +105,23 @@ export default function Popup() {
         : DEFAULT_APIFOX_STATUS;
       setApifoxStatus(currentApifoxStatus);
       await load(loadedSettings, currentApifoxStatus);
-    })();
-  }, []);
+    },
+    {
+      manual: true,
+      onError: (error) => {
+        const message = getErrorMessage(error, '初始化插件失败。');
+        setErrorText(message);
+        setStatusText(message);
+        setToast({ type: 'error', text: message });
+      },
+    },
+  );
 
-  useEffect(() => {
+  useMount(() => {
+    void initializePopup();
+  });
+
+  useUpdateEffect(() => {
     setSelectedQuickFillValues((current) => {
       const nextValues = current.filter((item) => quickFillOptions.includes(item));
 
@@ -119,9 +133,9 @@ export default function Popup() {
     });
   }, [quickFillOptions, useQuickFill]);
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (quickFillOptions.length === 0 && useQuickFill) {
-      setUseQuickFill(false);
+      disableQuickFill();
     }
   }, [quickFillOptions.length, useQuickFill]);
 
@@ -138,7 +152,7 @@ export default function Popup() {
   }
 
   async function copyFeedback() {
-    setCopying(true);
+    startCopying();
     setErrorText('');
 
     try {
@@ -174,12 +188,12 @@ export default function Popup() {
       setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
-      setCopying(false);
+      stopCopying();
     }
   }
 
   async function handleSaveSettings(overrideForm?: SettingsFormState) {
-    setSavingSettings(true);
+    startSavingSettings();
     setErrorText('');
 
     try {
@@ -210,7 +224,7 @@ export default function Popup() {
           ? '配置已保存，Apifox 接口信息正在后台刷新。'
           : '配置已保存，监听范围已更新，且已清空 Apifox 缓存。',
       });
-      setShowSettings(false);
+      closeSettings();
       await load(nextSettings, DEFAULT_APIFOX_STATUS);
 
       if (nextSettings.apifoxExportUrl) {
@@ -237,7 +251,7 @@ export default function Popup() {
       setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
-      setSavingSettings(false);
+      stopSavingSettings();
     }
   }
 
@@ -247,7 +261,7 @@ export default function Popup() {
         type: 'info',
         text: '请先在设置中填写本地 Apifox 导出地址。',
       });
-      setShowSettings(true);
+      openSettings();
       return;
     }
 
@@ -276,7 +290,7 @@ export default function Popup() {
   function handleExport() {
     setConfigModalContent(JSON.stringify(settings, null, 2));
     setConfigModalMode('export');
-    setShowConfigModal(true);
+    openConfigModal();
   }
 
   async function handleReset() {
@@ -293,12 +307,12 @@ export default function Popup() {
   function handleImport() {
     setConfigModalContent('');
     setConfigModalMode('import');
-    setShowConfigModal(true);
+    openConfigModal();
   }
 
   function handleCopyExportConfig() {
     navigator.clipboard.writeText(configModalContent).catch(() => {});
-    setShowConfigModal(false);
+    closeConfigModal();
     setToast({ type: 'success', text: '配置已复制到剪贴板' });
   }
 
@@ -323,7 +337,7 @@ export default function Popup() {
       await saveSettings(nextSettings);
       setSettings(nextSettings);
       setSettingsForm(createSettingsFormState(nextSettings));
-      setShowConfigModal(false);
+      closeConfigModal();
       setToast({ type: 'success', text: '配置导入成功' });
     } catch {
       setToast({ type: 'error', text: '配置格式错误，请检查 JSON' });
@@ -342,7 +356,7 @@ export default function Popup() {
         refreshingApifox={refreshingApifox}
         showSettings={showSettings}
         onRefreshApifox={() => void handleRefreshApifox()}
-        onToggleSettings={() => setShowSettings((current) => !current)}
+        onToggleSettings={toggleShowSettings}
       />
 
       {showSettings ? (
@@ -350,7 +364,7 @@ export default function Popup() {
           form={settingsForm}
           savingSettings={savingSettings}
           isDefaultConfig={isDefaultConfig}
-          onCancel={() => setShowSettings(false)}
+          onCancel={closeSettings}
           onFieldChange={updateSettingsForm}
           onSave={() => void handleSaveSettings()}
           onReset={handleReset}
@@ -388,10 +402,8 @@ export default function Popup() {
             useQuickFill={useQuickFill}
             selectedQuickFillValues={selectedQuickFillValues}
             onNoteChange={setNote}
-            onToggleRequestParams={() => setIncludeRequestParams((v) => !v)}
-            onToggleQuickFill={() => {
-              setUseQuickFill((current) => !current);
-            }}
+            onToggleRequestParams={toggleIncludeRequestParams}
+            onToggleQuickFill={toggleUseQuickFill}
             onQuickFillSelectionChange={updateNoteWithQuickFill}
           />
         </>
@@ -404,7 +416,7 @@ export default function Popup() {
           onContentChange={setConfigModalContent}
           onConfirm={handleConfigModalConfirm}
           onCopyExport={handleCopyExportConfig}
-          onClose={() => setShowConfigModal(false)}
+          onClose={closeConfigModal}
         />
       )}
 

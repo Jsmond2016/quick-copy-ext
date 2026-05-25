@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useDebounceFn, useLatest, useUnmount } from 'ahooks';
 import {
   ApifoxCacheStatus,
   matchesMonitoredOrigins,
@@ -28,11 +29,8 @@ export function useTabRequests(
   const [loading, setLoading] = useState(true);
   const [statusText, setStatusText] = useState('正在读取当前页面请求记录...');
   const [errorText, setErrorText] = useState('');
-  const pageRef = useRef(page);
-  const settingsRef = useRef(settings);
-
-  pageRef.current = page;
-  settingsRef.current = settings;
+  const pageRef = useLatest(page);
+  const settingsRef = useLatest(settings);
 
   const load = useCallback(async (
     currentSettings: QuickCopySettings,
@@ -100,62 +98,55 @@ export function useTabRequests(
     }
   }, [tabId]);
 
+  const { run: refreshRequests, cancel: cancelRefreshRequests } = useDebounceFn(
+    async (currentTabId: number) => {
+      try {
+        const nextRequests = await getTabRequests(currentTabId);
+        const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, apifoxStatus);
+
+        setRequests(nextRequestsWithApifox);
+
+        const currentPage = pageRef.current;
+        const currentSettings = settingsRef.current;
+        const isMonitoredPage = matchesMonitoredOrigins(currentPage.url, currentSettings.monitoredOrigins);
+        setStatusText(
+          nextRequestsWithApifox.length > 0
+            ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
+            : isMonitoredPage
+              ? ''
+              : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
+        );
+        setErrorText('');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : '读取请求记录失败。';
+        setErrorText(message);
+        setStatusText(message);
+      }
+    },
+    { wait: 120 },
+  );
+
+  useUnmount(cancelRefreshRequests);
+
   useEffect(() => {
     const currentTabId = tabId;
     if (currentTabId === null) {
       return undefined;
     }
 
-    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const refreshRequests = () => {
-      if (refreshTimer !== undefined) {
-        clearTimeout(refreshTimer);
-      }
-
-      refreshTimer = setTimeout(() => {
-        void (async () => {
-          try {
-            const nextRequests = await getTabRequests(currentTabId);
-            const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, apifoxStatus);
-
-            setRequests(nextRequestsWithApifox);
-
-            const currentPage = pageRef.current;
-            const currentSettings = settingsRef.current;
-            const isMonitoredPage = matchesMonitoredOrigins(currentPage.url, currentSettings.monitoredOrigins);
-            setStatusText(
-              nextRequestsWithApifox.length > 0
-                ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
-                : isMonitoredPage
-                  ? ''
-                  : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
-            );
-            setErrorText('');
-          } catch (error) {
-            const message = error instanceof Error ? error.message : '读取请求记录失败。';
-            setErrorText(message);
-            setStatusText(message);
-          }
-        })();
-      }, 120);
-    };
-
     const unsubscribe = subscribeToTabRequestUpdates((updatedTabId) => {
       if (updatedTabId !== currentTabId) {
         return;
       }
 
-      refreshRequests();
+      refreshRequests(currentTabId);
     });
 
     return () => {
-      if (refreshTimer !== undefined) {
-        clearTimeout(refreshTimer);
-      }
+      cancelRefreshRequests();
       unsubscribe();
     };
-  }, [apifoxStatus, attachApifoxUrls, tabId]);
+  }, [cancelRefreshRequests, refreshRequests, tabId]);
 
   return {
     page,

@@ -1,22 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useTimeout } from 'ahooks';
 import { ToastState } from '@pages/popup/types';
 
 export function useToast() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
+  useTimeout(
+    () => {
       setToast(null);
-    }, 2400);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [toast]);
+    },
+    toast ? 2400 : undefined,
+  );
 
   return {
     toast,
