@@ -201,3 +201,14 @@ pnpm exec tsc --noEmit
 - `docs/code-style.md`
 - `docs/popup-apifox-performance.md`
 - `docs/popup-refactor-notes.md`
+
+## 发布相关
+
+使用 `/fe-chrome-ext-store-pre-publish` 调起发布流程 skill，按步骤完成 Chrome Web Store 和 Edge Add-ons 的发布。
+
+提交表单时所用的完整内容见以下文档：
+
+- `docs/chrome-web-store-listing.md` — Chrome Web Store 发布信息（中文）
+- `docs/chrome-web-store-listing.en.md` — Chrome Web Store 发布信息（英文）
+- `docs/edge-addons-listing.md` — Edge Add-ons 发布信息（中文）
+- `docs/edge-addons-listing.en.md` — Edge Add-ons 发布信息（英文）
