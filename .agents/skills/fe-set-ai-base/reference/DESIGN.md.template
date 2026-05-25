@@ -1,0 +1,58 @@
+# {{projectName}} — UI 设计与交互规范
+
+> 本文档规范项目的 UI 设计语言与交互行为，是前端开发与设计协作的依据。
+> 由 `fe-set-ai-base` 初始化生成，请根据实际设计系统补充完善。
+
+## 设计系统
+
+### 设计语言
+
+- **风格**: {{designStyle}}（如 Material Design / Ant Design / 自定义）
+- **品牌色**: {{brandColors}}
+- **字体**: {{typography}}（字体族、字号层级、行高）
+
+### 组件规范
+
+| 组件 | 规范 | 状态 |
+|:-----|:-----|:----:|
+| Button | {{buttonSpec}} | {{status}} |
+| Form | {{formSpec}} | {{status}} |
+| Table | {{tableSpec}} | {{status}} |
+| Modal | {{modalSpec}} | {{status}} |
+| Toast | {{toastSpec}} | {{status}} |
+
+### 布局
+
+- **栅格系统**: {{gridSystem}}（如 12 列 / 24 列 / 无栅格）
+- **断点**: {{breakpoints}}（如 sm/md/lg/xl/2xl）
+- **间距**: {{spacingScale}}（如 4px 基准递增）
+
+## 交互模式
+
+### 页面交互
+
+{{pageInteractionDescription}}
+
+### 交互动效
+
+- **过渡**: {{transitionSpec}}（如 300ms ease-in-out）
+- **反馈**: {{feedbackSpec}}（加载态、空态、错误态、成功态）
+- **手势**: {{gestureSpec}}（移动端手势支持）
+
+## 无障碍（Accessibility）
+
+- 颜色对比度不低于 WCAG AA 标准
+- 所有交互元素支持键盘导航
+- 图片和图标提供合适的 alt 文本 / aria-label
+- 表单输入关联 label 元素
+- 区域角色（landmark roles）标记页面结构
+
+## 主题定制
+
+- **亮色主题**: {{lightTheme}}
+- **暗色主题**: {{darkTheme}}
+- **主题切换**: {{themeToggleSpec}}
+
+---
+
+> **维护说明**: 设计团队维护此文档，每次 UI 迭代或设计系统变更时同步更新。
