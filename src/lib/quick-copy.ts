@@ -638,7 +638,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
   const normalizedNote = payload.note.trim() || 'N/A';
   const normalizedScreenshotLabel = payload.screenshotLabel.trim() || 'N/A';
   const abnormalRequestsTitle =
-    payload.requests.length > 1 ? `异常接口信息-${payload.requests.length}条接口` : '异常接口信息';
+    payload.requests.length > 1 ? `接口信息-${payload.requests.length}条接口` : '接口信息';
   const sections: string[] = [
     `- 问题：${normalizedNote}`,
     `- 截图：${normalizedScreenshotLabel}`,

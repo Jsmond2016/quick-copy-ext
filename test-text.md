@@ -5,7 +5,7 @@ Web 信息：
 - 页面 URL：https://github.com/JohnBra/vite-web-extension#
 - 页面标题：JohnBra/vite-web-extension: Web extension template to build Chrome and Firefox extensions quickly. Setup with React 19, Typescript and TailwindCSS
 
-异常接口信息：
+接口信息：
 
 - POST /ai-api/allow
 - traceId: N/A
