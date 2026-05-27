@@ -11,6 +11,14 @@ interface PopupHeroProps {
   onToggleSettings: () => void;
 }
 
+function getApifoxProjectId(exportUrl: string): string | null {
+  try {
+    return new URL(exportUrl).searchParams.get('projectId');
+  } catch {
+    return null;
+  }
+}
+
 export function PopupHero({
   apifoxStatus,
   apifoxExportUrl,
@@ -21,6 +29,19 @@ export function PopupHero({
   onRefreshApifox,
   onToggleSettings,
 }: PopupHeroProps) {
+  const apifoxProjectId = getApifoxProjectId(apifoxExportUrl);
+  const apifoxLabel = apifoxProjectId ? (
+    <a
+      href={`https://app.apifox.com/project/${apifoxProjectId}`}
+      rel="noreferrer"
+      target="_blank"
+    >
+      Apifox
+    </a>
+  ) : (
+    <span>Apifox</span>
+  );
+
   return (
     <section className="hero-card">
       <div className="hero-topbar">
@@ -31,7 +52,7 @@ export function PopupHero({
         <div className="hero-actions">
           <div className={`apifox-badge ${apifoxStatus.ready ? 'ready' : 'idle'}`}>
             <span className="apifox-badge-dot" />
-            <span>Apifox</span>
+            {apifoxLabel}
           </div>
           <button
             aria-label="刷新 Apifox 接口信息"
