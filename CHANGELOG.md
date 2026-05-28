@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.34](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.33...v1.4.34) (2026-05-28)
+
+
+### Bug Fixes
+
+* **utils:** 修复异常原因复制摘要内容 ([eb780bf](https://github.com/Jsmond2016/quick-copy-ext/commit/eb780bf7d0a70e5af3c99572186056735548a006))
+
+
+### Features
+
+* **pages:** Apifox 标签支持动态跳转项目链接 ([2dc8daf](https://github.com/Jsmond2016/quick-copy-ext/commit/2dc8dafc0a0bd3f2540c653b04430e55f917ee31))
+* **utils:** 支持自定义异常响应规则配置 ([6c8fe46](https://github.com/Jsmond2016/quick-copy-ext/commit/6c8fe468417b34300295ef73572d94bfe874c833))
+
 ## [1.4.33](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.32...v1.4.33) (2026-05-25)
 
 
