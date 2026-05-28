@@ -1,6 +1,58 @@
 import { formatDuration, formatTime, getTraceId, getUrlAfterOrigin } from './url';
 import { getResponseMessage, getResponseRtnValue } from './response-rules';
-import type { CopyPayload, NetworkRequestRecord } from './types';
+import type { CopyPayload, JsonValue, NetworkRequestRecord } from './types';
+
+function getJsonObjectValue(
+  value: JsonValue | undefined,
+  path: string[],
+): JsonValue | undefined {
+  let currentValue: unknown = value;
+
+  for (const segment of path) {
+    if (!currentValue || typeof currentValue !== 'object' || Array.isArray(currentValue)) {
+      return undefined;
+    }
+
+    currentValue = (currentValue as Record<string, unknown>)[segment];
+  }
+
+  return currentValue as JsonValue | undefined;
+}
+
+function stringifyInlineValue(value: JsonValue): string {
+  if (typeof value === 'string') {
+    return `"${value}"`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function buildMatchedRuleSnapshot(request: NetworkRequestRecord): string | undefined {
+  const responseSnapshot = request.responseSnapshot;
+  const responseRtn = getResponseRtnValue(responseSnapshot);
+  const responseMessage = request.responseMessage ?? getResponseMessage(responseSnapshot);
+  const responseList = getJsonObjectValue(responseSnapshot, ['data', 'list']);
+  const responsePagination = getJsonObjectValue(responseSnapshot, ['data', 'pagination']);
+  const fields: string[] = [];
+
+  if (responseRtn !== undefined) {
+    fields.push(`rtn: ${responseRtn}`);
+  }
+
+  if (responseList !== undefined) {
+    fields.push(`list: ${stringifyInlineValue(responseList)}`);
+  }
+
+  if (responsePagination !== undefined) {
+    fields.push(`pagination: ${stringifyInlineValue(responsePagination)}`);
+  }
+
+  if (responseMessage) {
+    fields.push(`msg: "${responseMessage}"`);
+  }
+
+  return fields.length > 0 ? `{${fields.join(', ')} }` : undefined;
+}
 
 function formatAbnormalReasonForCopy(request: NetworkRequestRecord): string {
   const abnormalReasons = request.abnormalReasons ?? [];
@@ -14,16 +66,12 @@ function formatAbnormalReasonForCopy(request: NetworkRequestRecord): string {
     return `status 状态为 {${request.statusCode}}`;
   }
 
-  if (matchedResponseRule && responseRtn && responseMessage) {
-    return `{rtn: ${responseRtn}, msg: "${responseMessage}" }`;
-  }
+  if (matchedResponseRule) {
+    const matchedRuleSnapshot = buildMatchedRuleSnapshot(request);
 
-  if (matchedResponseRule && responseRtn) {
-    return `{rtn: ${responseRtn}}`;
-  }
-
-  if (matchedResponseRule && responseMessage) {
-    return `{msg: "${responseMessage}" }`;
+    if (matchedRuleSnapshot) {
+      return matchedRuleSnapshot;
+    }
   }
 
   return abnormalReasons[0] ?? 'N/A';
