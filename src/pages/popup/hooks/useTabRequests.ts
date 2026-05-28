@@ -6,6 +6,7 @@ import {
   NetworkRequestRecord,
   PageSummary,
   QuickCopySettings,
+  withRequestAbnormalState,
 } from '@src/lib/quick-copy';
 import { DEFAULT_PAGE } from '@pages/popup/constants';
 import {
@@ -32,6 +33,15 @@ export function useTabRequests(
   const pageRef = useLatest(page);
   const settingsRef = useLatest(settings);
 
+  function applyCurrentResponseRules(
+    requestList: NetworkRequestRecord[],
+    currentSettings: QuickCopySettings,
+  ) {
+    return requestList.map((request) =>
+      withRequestAbnormalState(request, currentSettings.responseErrorRule),
+    );
+  }
+
   const load = useCallback(async (
     currentSettings: QuickCopySettings,
     currentApifoxStatus: ApifoxCacheStatus,
@@ -55,13 +65,17 @@ export function useTabRequests(
 
       const nextRequests = await getTabRequests(tab.id);
       const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, currentApifoxStatus);
-      setRequests(nextRequestsWithApifox);
+      const nextRequestsWithRules = applyCurrentResponseRules(
+        nextRequestsWithApifox,
+        currentSettings,
+      );
+      setRequests(nextRequestsWithRules);
 
       const nextPageUrl = tab.url ?? '';
       const isMonitoredPage = matchesMonitoredOrigins(nextPageUrl, currentSettings.monitoredOrigins);
       setStatusText(
-        nextRequestsWithApifox.length > 0
-          ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
+        nextRequestsWithRules.length > 0
+          ? `已加载 ${nextRequestsWithRules.length} 条接口记录，可勾选后复制。`
           : isMonitoredPage
             ? ''
             : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',
@@ -103,15 +117,19 @@ export function useTabRequests(
       try {
         const nextRequests = await getTabRequests(currentTabId);
         const nextRequestsWithApifox = await attachApifoxUrls(nextRequests, apifoxStatus);
+        const nextRequestsWithRules = applyCurrentResponseRules(
+          nextRequestsWithApifox,
+          settingsRef.current,
+        );
 
-        setRequests(nextRequestsWithApifox);
+        setRequests(nextRequestsWithRules);
 
         const currentPage = pageRef.current;
         const currentSettings = settingsRef.current;
         const isMonitoredPage = matchesMonitoredOrigins(currentPage.url, currentSettings.monitoredOrigins);
         setStatusText(
-          nextRequestsWithApifox.length > 0
-            ? `已加载 ${nextRequestsWithApifox.length} 条接口记录，可勾选后复制。`
+          nextRequestsWithRules.length > 0
+            ? `已加载 ${nextRequestsWithRules.length} 条接口记录，可勾选后复制。`
             : isMonitoredPage
               ? ''
               : '当前页面不在监听 Origin 范围内，插件不会记录接口请求。',

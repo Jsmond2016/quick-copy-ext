@@ -291,6 +291,7 @@ async function refreshMonitoredOrigins() {
     nextRecords.forEach((record) => {
       requestIndex.set(record.requestId, record);
     });
+    notifyTabRequestsUpdated(tabId);
   });
 
   scheduleRuntimeCachePersist();

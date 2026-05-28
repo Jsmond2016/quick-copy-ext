@@ -5,11 +5,13 @@ import {
   buildFeedbackText,
   getDefaultSettings,
   isDefaultSettings,
+  isValidResponseErrorRuleConfig,
   loadSettings,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
   QuickCopySettings,
   saveSettings,
+  withRequestAbnormalState,
 } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
 import { PopupHero } from '@pages/popup/components/PopupHero';
@@ -158,7 +160,9 @@ export default function Popup() {
     try {
       const latestRequests =
         tabId !== null
-          ? await attachApifoxUrls(await getTabRequests(tabId), apifoxStatus)
+          ? (await attachApifoxUrls(await getTabRequests(tabId), apifoxStatus)).map((request) =>
+              withRequestAbnormalState(request, settings.responseErrorRule),
+            )
           : requests;
       setRequests(latestRequests);
       const requestsWithApifox = latestRequests.filter((request) => selectedIds.includes(request.id));
@@ -198,6 +202,10 @@ export default function Popup() {
 
     try {
       const nextSettings = buildSettingsFromForm(overrideForm ?? settingsForm);
+
+      if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
+        throw new Error('异常响应规则格式错误，请检查 JSON 和表达式写法。');
+      }
 
       if (!nextSettings.apifoxExportUrl) {
         await clearApifoxData();
@@ -333,6 +341,10 @@ export default function Popup() {
         apifoxExportUrl: typeof parsed.apifoxExportUrl === 'string' ? parsed.apifoxExportUrl : '',
         responseErrorRule: typeof parsed.responseErrorRule === 'string' ? parsed.responseErrorRule : getDefaultSettings().responseErrorRule,
       };
+
+      if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
+        throw new Error('异常响应规则格式错误');
+      }
 
       await saveSettings(nextSettings);
       setSettings(nextSettings);

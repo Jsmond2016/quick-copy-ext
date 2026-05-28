@@ -6,8 +6,17 @@ interface ParsedResponseErrorRule {
   expected: JsonValue;
 }
 
-function isJsonObject(value: JsonValue | undefined): value is Record<string, JsonValue> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+interface ParsedResponseErrorRuleGroup {
+  conditions: ParsedResponseErrorRule[];
+}
+
+export interface ResponseErrorRuleEntry {
+  label: string;
+  expression: string;
+}
+
+function isJsonValue(value: unknown): value is JsonValue {
+  return value === null || ['string', 'number', 'boolean'].includes(typeof value) || Array.isArray(value) || typeof value === 'object';
 }
 
 function parseRuleLiteral(rawLiteral: string): JsonValue | undefined {
@@ -41,14 +50,14 @@ function parseRuleLiteral(rawLiteral: string): JsonValue | undefined {
   return undefined;
 }
 
-function parseResponseErrorRule(rule: string): ParsedResponseErrorRule | undefined {
+function parseResponseErrorRuleCondition(rule: string): ParsedResponseErrorRule | undefined {
   const normalizedRule = rule.trim();
   if (!normalizedRule) {
     return undefined;
   }
 
   const matchedRule = normalizedRule.match(
-    /^res((?:\.[A-Za-z_$][\w$]*)+)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+)$/,
+    /^res((?:(?:\??\.)[A-Za-z_$][\w$]*)+)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+)$/,
   );
 
   if (!matchedRule) {
@@ -61,27 +70,64 @@ function parseResponseErrorRule(rule: string): ParsedResponseErrorRule | undefin
   }
 
   return {
-    path: matchedRule[1].split('.').filter(Boolean),
+    path: matchedRule[1].replace(/\?\./g, '.').split('.').filter(Boolean),
     operator: matchedRule[2] as ParsedResponseErrorRule['operator'],
     expected,
   };
+}
+
+function parseResponseErrorRule(rule: string): ParsedResponseErrorRuleGroup | undefined {
+  const normalizedRule = rule.trim();
+
+  if (!normalizedRule) {
+    return undefined;
+  }
+
+  const conditions = normalizedRule
+    .split('&&')
+    .map((condition) => parseResponseErrorRuleCondition(condition))
+    .filter((condition): condition is ParsedResponseErrorRule => Boolean(condition));
+
+  if (conditions.length === 0) {
+    return undefined;
+  }
+
+  const rawConditions = normalizedRule
+    .split('&&')
+    .map((condition) => condition.trim())
+    .filter(Boolean);
+
+  if (conditions.length !== rawConditions.length) {
+    return undefined;
+  }
+
+  return { conditions };
 }
 
 function getResponseRuleActualValue(
   response: JsonValue | undefined,
   path: string[],
 ): JsonValue | undefined {
-  let currentValue = response;
+  let currentValue: unknown = response;
 
   for (const segment of path) {
-    if (!isJsonObject(currentValue) || !(segment in currentValue)) {
+    if (currentValue === null || currentValue === undefined) {
       return undefined;
     }
 
-    currentValue = currentValue[segment];
+    if ((Array.isArray(currentValue) || typeof currentValue === 'string') && segment === 'length') {
+      currentValue = currentValue.length;
+      continue;
+    }
+
+    if (typeof currentValue !== 'object' || !(segment in currentValue)) {
+      return undefined;
+    }
+
+    currentValue = (currentValue as Record<string, unknown>)[segment];
   }
 
-  return currentValue;
+  return isJsonValue(currentValue) ? currentValue : undefined;
 }
 
 function getResponseScalarString(
@@ -139,12 +185,90 @@ export function evaluateResponseErrorRule(
     return false;
   }
 
-  const actualValue = getResponseRuleActualValue(response, parsedRule.path);
-  if (actualValue === undefined) {
-    return false;
+  return parsedRule.conditions.every((condition) => {
+    const actualValue = getResponseRuleActualValue(response, condition.path);
+    if (
+      actualValue === undefined &&
+      !(
+        (condition.operator === '==' || condition.operator === '!=') &&
+        condition.expected === null
+      )
+    ) {
+      return false;
+    }
+
+    return compareRuleValues(actualValue, condition.expected, condition.operator);
+  });
+}
+
+export function parseResponseErrorRuleConfig(
+  ruleConfig: string,
+): ResponseErrorRuleEntry[] | undefined {
+  const normalizedConfig = ruleConfig.trim();
+
+  if (!normalizedConfig) {
+    return undefined;
   }
 
-  return compareRuleValues(actualValue, parsedRule.expected, parsedRule.operator);
+  try {
+    const parsed = JSON.parse(normalizedConfig) as unknown;
+
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+      return undefined;
+    }
+
+    const entries = Object.entries(parsed)
+      .map(([label, expression]) => ({
+        label: label.trim(),
+        expression: typeof expression === 'string' ? expression.trim() : '',
+      }))
+      .filter((entry) => entry.label && entry.expression);
+
+    return entries.length > 0 ? entries : undefined;
+  } catch {
+    return normalizedConfig ? [{ label: '接口异常', expression: normalizedConfig }] : undefined;
+  }
+}
+
+export function getMatchedResponseErrorRules(
+  response: JsonValue | undefined,
+  ruleConfig: string,
+): ResponseErrorRuleEntry[] {
+  const ruleEntries = parseResponseErrorRuleConfig(ruleConfig);
+
+  if (!ruleEntries) {
+    return [];
+  }
+
+  return ruleEntries
+    .map((entry, index) => {
+      const parsedRule = parseResponseErrorRule(entry.expression);
+
+      return {
+        entry,
+        index,
+        conditionCount: parsedRule?.conditions.length ?? 0,
+      };
+    })
+    .filter((item) => evaluateResponseErrorRule(response, item.entry.expression))
+    .sort((left, right) => {
+      if (left.conditionCount !== right.conditionCount) {
+        return right.conditionCount - left.conditionCount;
+      }
+
+      return right.index - left.index;
+    })
+    .map((item) => item.entry);
+}
+
+export function isValidResponseErrorRuleConfig(ruleConfig: string): boolean {
+  const ruleEntries = parseResponseErrorRuleConfig(ruleConfig);
+
+  return Boolean(
+    ruleEntries &&
+      ruleEntries.length > 0 &&
+      ruleEntries.every((entry) => Boolean(parseResponseErrorRule(entry.expression))),
+  );
 }
 
 export function getResponseMessage(response: JsonValue | undefined): string | undefined {
@@ -210,7 +334,7 @@ export function getRequestAbnormalReasons(
   responseErrorRule: string,
 ): string[] {
   const reasons: string[] = [];
-  const ruleMatched = evaluateResponseErrorRule(request.responseSnapshot, responseErrorRule);
+  const matchedRules = getMatchedResponseErrorRules(request.responseSnapshot, responseErrorRule);
 
   if (request.error) {
     reasons.push(request.error);
@@ -220,8 +344,10 @@ export function getRequestAbnormalReasons(
     reasons.push(`HTTP ${request.statusCode}`);
   }
 
-  if (request.statusCode === 200 && ruleMatched) {
-    reasons.push(`命中响应规则：${responseErrorRule}`);
+  if (request.statusCode === 200) {
+    matchedRules.forEach((matchedRule) => {
+      reasons.push(`命中响应规则：${matchedRule.label}（${matchedRule.expression}）`);
+    });
   }
 
   return reasons;

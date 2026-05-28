@@ -54,6 +54,28 @@ function splitRequestPath(rawUrl: string) {
   }
 }
 
+function getAbnormalBadgeText(request: NetworkRequestRecord): string {
+  const abnormalReasons = request.abnormalReasons ?? [];
+  const matchedRuleReason = abnormalReasons.find((reason) => reason.startsWith('命中响应规则：'));
+
+  if (matchedRuleReason) {
+    const matchedLabel = matchedRuleReason.match(/^命中响应规则：(.+?)（/);
+    if (matchedLabel?.[1]) {
+      return matchedLabel[1];
+    }
+  }
+
+  if (request.error) {
+    return '请求失败';
+  }
+
+  if (typeof request.statusCode === 'number' && request.statusCode !== 200) {
+    return `HTTP ${request.statusCode}`;
+  }
+
+  return '异常';
+}
+
 export function RequestHistoryPanel({
   requests,
   filteredRequests,
@@ -119,6 +141,7 @@ export function RequestHistoryPanel({
             const checked = selectedIds.includes(request.id);
             const { leaf, parentPath, title } = splitRequestPath(request.url);
             const isAbnormal = (request.abnormalReasons?.length ?? 0) > 0;
+            const abnormalBadgeText = isAbnormal ? getAbnormalBadgeText(request) : '';
 
             return (
               <article
@@ -137,7 +160,7 @@ export function RequestHistoryPanel({
                 <div className="request-main">
                   <div className="request-line">
                     <span className="method-pill">{request.method.toUpperCase()}</span>
-                    {isAbnormal ? <span className="request-badge request-badge-danger">异常</span> : null}
+                    {isAbnormal ? <span className="request-badge request-badge-danger">{abnormalBadgeText}</span> : null}
                     {request.apifoxUrl ? (
                       <a
                         className="request-path request-link"

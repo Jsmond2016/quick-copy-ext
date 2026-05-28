@@ -124,15 +124,16 @@ export function SettingsPanel({
 
         <label className="field-block">
           <span>异常响应规则</span>
-          <input
+          <textarea
             className="note-input"
             onChange={handleChange('responseErrorRuleInput')}
-            placeholder="res.rtn !== 0"
-            type="text"
+            placeholder={'{\n  "接口异常": "res.rtn !== 0",\n  "列表为空": "res.data?.list?.length === 0"\n}'}
+            rows={6}
             value={form.responseErrorRuleInput}
           />
           <small>接口状态码不是 200 时，直接标记为异常；接口状态码为 200 但命中规则时，也会标记为异常。</small>
-          <small>当前支持 res.xxx === value、!==、&gt;、&lt; 等简单比较，例如 res.rtn !== 0。</small>
+          <small>请使用 JSON 对象配置，key 为异常名称，value 为判断表达式；也兼容旧版单条表达式。</small>
+          <small>当前支持 `res.xxx === value`、`!==`、`&gt;`、`&lt;`，以及可选链形式，如 `res.data?.list?.length === 0`。</small>
         </label>
       </div>
 
