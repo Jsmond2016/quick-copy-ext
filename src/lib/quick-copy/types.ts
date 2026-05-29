@@ -60,6 +60,8 @@ export interface QuickCopySettings {
   quickFillTemplates: string[];
   apifoxExportUrl: string;
   responseErrorRule: string;
+  developerMode: boolean;
+  quickMockTargetExtensionId: string;
 }
 
 export type RuntimeRequestMessage =

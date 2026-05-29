@@ -9,6 +9,8 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   quickFillTemplates: [],
   apifoxExportUrl: '',
   responseErrorRule: DEFAULT_RESPONSE_ERROR_RULE,
+  developerMode: false,
+  quickMockTargetExtensionId: '',
 };
 
 function sanitizeStringArray(
@@ -58,7 +60,9 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     areStringArraysEqual(settings.customFields, defaults.customFields) &&
     areStringArraysEqual(settings.quickFillTemplates, defaults.quickFillTemplates) &&
     settings.apifoxExportUrl === defaults.apifoxExportUrl &&
-    settings.responseErrorRule === defaults.responseErrorRule
+    settings.responseErrorRule === defaults.responseErrorRule &&
+    settings.developerMode === defaults.developerMode &&
+    settings.quickMockTargetExtensionId === defaults.quickMockTargetExtensionId
   );
 }
 
@@ -78,6 +82,11 @@ export async function loadSettings(): Promise<QuickCopySettings> {
         ? current.apifoxExportUrl.trim()
         : defaults.apifoxExportUrl,
     responseErrorRule: sanitizeTrimmedString(current?.responseErrorRule, defaults.responseErrorRule),
+    developerMode: typeof current?.developerMode === 'boolean' ? current.developerMode : defaults.developerMode,
+    quickMockTargetExtensionId: sanitizeTrimmedString(
+      current?.quickMockTargetExtensionId,
+      defaults.quickMockTargetExtensionId,
+    ),
   };
 }
 

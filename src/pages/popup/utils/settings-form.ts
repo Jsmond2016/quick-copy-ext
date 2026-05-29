@@ -13,6 +13,8 @@ export interface SettingsFormState {
   quickFillTemplatesInput: string;
   apifoxExportUrlInput: string;
   responseErrorRuleInput: string;
+  developerMode: string;
+  quickMockTargetExtensionIdInput: string;
 }
 
 export function createSettingsFormState(settings: QuickCopySettings): SettingsFormState {
@@ -24,6 +26,8 @@ export function createSettingsFormState(settings: QuickCopySettings): SettingsFo
     quickFillTemplatesInput: stringifyLines(settings.quickFillTemplates),
     apifoxExportUrlInput: settings.apifoxExportUrl,
     responseErrorRuleInput: settings.responseErrorRule,
+    developerMode: settings.developerMode ? 'true' : 'false',
+    quickMockTargetExtensionIdInput: settings.quickMockTargetExtensionId,
   };
 }
 
@@ -42,5 +46,7 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     quickFillTemplates: parseLines(form.quickFillTemplatesInput),
     apifoxExportUrl: form.apifoxExportUrlInput.trim(),
     responseErrorRule: form.responseErrorRuleInput.trim() || defaults.responseErrorRule,
+    developerMode: form.developerMode === 'true',
+    quickMockTargetExtensionId: form.quickMockTargetExtensionIdInput.trim(),
   };
 }

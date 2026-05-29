@@ -188,3 +188,34 @@ export function getUrlPath(rawUrl: string): string {
     return path || '/';
   }
 }
+
+export function normalizeBatchQuickMockUrl(rawUrl: string): string {
+  const path = getUrlPath(rawUrl).trim().replace(/\/{2,}/g, '/');
+
+  if (!path) {
+    return '';
+  }
+
+  if (path === '/') {
+    return path;
+  }
+
+  const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash.slice(0, -1) : withLeadingSlash;
+}
+
+export function dedupeBatchQuickMockUrls(rawUrls: string[]): string[] {
+  const seen = new Set<string>();
+
+  return rawUrls.reduce<string[]>((result, rawUrl) => {
+    const normalizedUrl = normalizeBatchQuickMockUrl(rawUrl);
+
+    if (!normalizedUrl || seen.has(normalizedUrl)) {
+      return result;
+    }
+
+    seen.add(normalizedUrl);
+    result.push(normalizedUrl);
+    return result;
+  }, []);
+}

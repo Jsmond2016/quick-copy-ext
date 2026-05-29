@@ -4,13 +4,16 @@ import { useBoolean, useUpdateEffect } from 'ahooks';
 interface NotePanelProps {
   note: string;
   copying: boolean;
+  quickMocking: boolean;
   selectedCount: number;
   includeRequestParams: boolean;
   quickFillOptions: string[];
   useQuickFill: boolean;
   selectedQuickFillValues: string[];
+  developerMode: boolean;
   onNoteChange: (value: string) => void;
   onCopy: () => void;
+  onQuickMock: () => void;
   onToggleRequestParams: () => void;
   onToggleQuickFill: () => void;
   onQuickFillSelectionChange: (values: string[]) => void;
@@ -19,13 +22,16 @@ interface NotePanelProps {
 export function NotePanel({
   note,
   copying,
+  quickMocking,
   selectedCount,
   includeRequestParams,
   quickFillOptions,
   useQuickFill,
   selectedQuickFillValues,
+  developerMode,
   onNoteChange,
   onCopy,
+  onQuickMock,
   onToggleRequestParams,
   onToggleQuickFill,
   onQuickFillSelectionChange,
@@ -121,14 +127,35 @@ export function NotePanel({
         包含接口入参
       </label>
 
-      <button
-        className="primary-button"
-        disabled={copying || selectedCount === 0}
-        onClick={onCopy}
-        type="button"
-      >
-        {copying ? '复制中...' : '复制页面接口信息'}
-      </button>
+      {developerMode ? (
+        <div className="action-row">
+          <button
+            className="ghost-button action-button"
+            disabled={quickMocking || selectedCount === 0}
+            onClick={onQuickMock}
+            type="button"
+          >
+            {quickMocking ? '发送中...' : '快速 mock'}
+          </button>
+          <button
+            className="primary-button action-button inline-button"
+            disabled={copying || selectedCount === 0}
+            onClick={onCopy}
+            type="button"
+          >
+            {copying ? '复制中...' : '复制接口信息'}
+          </button>
+        </div>
+      ) : (
+        <button
+          className="primary-button"
+          disabled={copying || selectedCount === 0}
+          onClick={onCopy}
+          type="button"
+        >
+          {copying ? '复制中...' : '复制页面接口信息'}
+        </button>
+      )}
     </section>
   );
 }

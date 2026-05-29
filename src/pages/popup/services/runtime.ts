@@ -10,6 +10,22 @@ import {
 } from '@src/lib/quick-copy';
 import { DEFAULT_APIFOX_STATUS } from '@pages/popup/constants';
 
+interface ExternalBatchQuickMockRequest {
+  type: 'BATCH_QUICK_MOCK';
+  requestId: string;
+  urls: string[];
+}
+
+interface ExternalBatchQuickMockResponse {
+  success: boolean;
+  jobId?: string;
+  status: 'success' | 'partial_success' | 'failed';
+  total: number;
+  successCount: number;
+  failCount: number;
+  message: string;
+}
+
 function isUnknownMessageTypeError(error: unknown): boolean {
   return error instanceof Error && error.message === 'Unknown message type.';
 }
@@ -117,6 +133,56 @@ export async function getApifoxMatches(
 
     throw new Error('当前扩展后台不支持 Apifox 匹配，请重新加载扩展。');
   }
+}
+
+export async function sendBatchQuickMockToExtension(
+  extensionId: string,
+  urls: string[],
+): Promise<ExternalBatchQuickMockResponse> {
+  const normalizedExtensionId = extensionId.trim();
+  const request: ExternalBatchQuickMockRequest = {
+    type: 'BATCH_QUICK_MOCK',
+    requestId: crypto.randomUUID?.() ?? `${Date.now()}`,
+    urls,
+  };
+
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(
+      normalizedExtensionId,
+      request,
+      (response?: ExternalBatchQuickMockResponse) => {
+        const lastErrorMessage = chrome.runtime.lastError?.message?.trim();
+
+        if (lastErrorMessage) {
+          if (
+            lastErrorMessage.includes('Could not establish connection')
+            || lastErrorMessage.includes('Receiving end does not exist')
+          ) {
+            reject(
+              new Error(
+                `无法连接目标扩展（ID: ${normalizedExtensionId}）。Chrome 原始错误：${lastErrorMessage}`,
+              ),
+            );
+            return;
+          }
+
+          reject(
+            new Error(
+              `Quick Mock 调用失败（ID: ${normalizedExtensionId}）。Chrome 原始错误：${lastErrorMessage}`,
+            ),
+          );
+          return;
+        }
+
+        if (!response || typeof response.status !== 'string' || typeof response.message !== 'string') {
+          reject(new Error(`Quick Mock 调用失败（ID: ${normalizedExtensionId}）。未收到有效响应。`));
+          return;
+        }
+
+        resolve(response);
+      },
+    );
+  });
 }
 
 export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) {

@@ -3,6 +3,7 @@ import { useBoolean, useMount, useRequest, useUpdateEffect } from 'ahooks';
 import pkg from '../../../package.json';
 import {
   buildFeedbackText,
+  dedupeBatchQuickMockUrls,
   getDefaultSettings,
   isDefaultSettings,
   isValidResponseErrorRuleConfig,
@@ -29,6 +30,7 @@ import {
   getApifoxStatus,
   getErrorMessage,
   getTabRequests,
+  sendBatchQuickMockToExtension,
 } from '@pages/popup/services/runtime';
 import {
   buildSettingsFromForm,
@@ -41,6 +43,7 @@ export default function Popup() {
   const versionText = `当前版本：v${pkg.version}`;
   const [note, setNote] = useState('');
   const [copying, { setTrue: startCopying, setFalse: stopCopying }] = useBoolean(false);
+  const [quickMocking, { setTrue: startQuickMocking, setFalse: stopQuickMocking }] = useBoolean(false);
   const [savingSettings, { setTrue: startSavingSettings, setFalse: stopSavingSettings }] = useBoolean(false);
   const [showSettings, { toggle: toggleShowSettings, setTrue: openSettings, setFalse: closeSettings }] = useBoolean(false);
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
@@ -340,6 +343,11 @@ export default function Popup() {
         quickFillTemplates: Array.isArray(parsed.quickFillTemplates) ? parsed.quickFillTemplates : [],
         apifoxExportUrl: typeof parsed.apifoxExportUrl === 'string' ? parsed.apifoxExportUrl : '',
         responseErrorRule: typeof parsed.responseErrorRule === 'string' ? parsed.responseErrorRule : getDefaultSettings().responseErrorRule,
+        developerMode: typeof parsed.developerMode === 'boolean' ? parsed.developerMode : getDefaultSettings().developerMode,
+        quickMockTargetExtensionId:
+          typeof parsed.quickMockTargetExtensionId === 'string'
+            ? parsed.quickMockTargetExtensionId
+            : getDefaultSettings().quickMockTargetExtensionId,
       };
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
@@ -353,6 +361,41 @@ export default function Popup() {
       setToast({ type: 'success', text: '配置导入成功' });
     } catch {
       setToast({ type: 'error', text: '配置格式错误，请检查 JSON' });
+    }
+  }
+
+  async function handleQuickMock() {
+    startQuickMocking();
+    setErrorText('');
+
+    try {
+      if (!settings.quickMockTargetExtensionId) {
+        throw new Error('请先在设置中填写 Quick Mock 扩展 ID。');
+      }
+
+      const urls = dedupeBatchQuickMockUrls(selectedRequests.map((request) => request.url));
+
+      if (urls.length === 0) {
+        throw new Error('当前没有可发送的接口 URL。');
+      }
+
+      const response = await sendBatchQuickMockToExtension(
+        settings.quickMockTargetExtensionId,
+        urls,
+      );
+
+      setStatusText(response.message);
+      setToast({
+        type: response.status === 'failed' ? 'error' : 'success',
+        text: response.message,
+      });
+    } catch (error) {
+      const message = getErrorMessage(error, '快速 mock 失败。');
+      setErrorText(message);
+      setStatusText(message);
+      setToast({ type: 'error', text: message });
+    } finally {
+      stopQuickMocking();
     }
   }
 
@@ -406,10 +449,13 @@ export default function Popup() {
 
           <NotePanel
             copying={copying}
+            quickMocking={quickMocking}
             note={note}
             selectedCount={selectedRequests.length}
             includeRequestParams={includeRequestParams}
+            developerMode={settings.developerMode}
             onCopy={() => void copyFeedback()}
+            onQuickMock={() => void handleQuickMock()}
             quickFillOptions={quickFillOptions}
             useQuickFill={useQuickFill}
             selectedQuickFillValues={selectedQuickFillValues}

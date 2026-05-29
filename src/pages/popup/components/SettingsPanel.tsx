@@ -30,6 +30,8 @@ export function SettingsPanel({
     };
   }
 
+  const developerModeEnabled = form.developerMode === 'true';
+
   return (
     <section className="panel">
       <div className="panel-head">
@@ -50,6 +52,39 @@ export function SettingsPanel({
       </div>
 
       <div className="config-grid">
+        <label className="field-block">
+          <span>开发者模式</span>
+          <div className="switch-field">
+            <div className="switch-field-copy">
+              <strong>{developerModeEnabled ? '已开启' : '已关闭'}</strong>
+              <small>开启后，主面板会显示“快速 mock”按钮，并允许配置目标扩展 ID。</small>
+            </div>
+            <button
+              aria-pressed={developerModeEnabled}
+              className={`switch-button${developerModeEnabled ? ' active' : ''}`}
+              onClick={() => onFieldChange('developerMode', developerModeEnabled ? 'false' : 'true')}
+              type="button"
+            >
+              <span className="switch-thumb" />
+            </button>
+          </div>
+        </label>
+
+        {developerModeEnabled ? (
+          <label className="field-block">
+            <span>Quick Mock 扩展 ID</span>
+            <input
+              className="note-input"
+              onChange={handleChange('quickMockTargetExtensionIdInput')}
+              placeholder="填写 api_proxy_tool_ext 的扩展 ID"
+              type="text"
+              value={form.quickMockTargetExtensionIdInput}
+            />
+            <small>这里要填 `chrome://extensions` 页面里显示的实际扩展 ID，不是公钥，也不是仓库里的环境变量名。</small>
+            <small>开发联调时用于跨插件发送 `BATCH_QUICK_MOCK` 消息；未填写或 ID 对不上时无法触发快速 mock。</small>
+          </label>
+        ) : null}
+
         <label className="field-block">
           <span>复制标题</span>
           <input
