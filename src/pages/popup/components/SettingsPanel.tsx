@@ -52,7 +52,7 @@ export function SettingsPanel({
       </div>
 
       <div className="config-grid">
-        <label className="field-block">
+        <div className="field-block">
           <span>开发者模式</span>
           <div className="switch-field">
             <div className="switch-field-copy">
@@ -68,7 +68,7 @@ export function SettingsPanel({
               <span className="switch-thumb" />
             </button>
           </div>
-        </label>
+        </div>
 
         {developerModeEnabled ? (
           <label className="field-block">
