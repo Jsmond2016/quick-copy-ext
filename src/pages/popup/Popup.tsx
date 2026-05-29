@@ -10,6 +10,7 @@ import {
   loadSettings,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
+  normalizeSettings,
   QuickCopySettings,
   saveSettings,
   withRequestAbnormalState,
@@ -329,26 +330,13 @@ export default function Popup() {
 
   async function handleConfigModalConfirm() {
     try {
-      const parsed = JSON.parse(configModalContent) as QuickCopySettings;
+      const parsed = JSON.parse(configModalContent) as Partial<QuickCopySettings>;
 
       if (!parsed.monitoredOrigins || !parsed.apiPrefixes || !parsed.customFields) {
         throw new Error('缺少必要字段');
       }
 
-      const nextSettings: QuickCopySettings = {
-        feedbackTitle: parsed.feedbackTitle || getDefaultSettings().feedbackTitle,
-        monitoredOrigins: Array.isArray(parsed.monitoredOrigins) ? parsed.monitoredOrigins : [],
-        apiPrefixes: Array.isArray(parsed.apiPrefixes) ? parsed.apiPrefixes : [],
-        customFields: Array.isArray(parsed.customFields) ? parsed.customFields : [],
-        quickFillTemplates: Array.isArray(parsed.quickFillTemplates) ? parsed.quickFillTemplates : [],
-        apifoxExportUrl: typeof parsed.apifoxExportUrl === 'string' ? parsed.apifoxExportUrl : '',
-        responseErrorRule: typeof parsed.responseErrorRule === 'string' ? parsed.responseErrorRule : getDefaultSettings().responseErrorRule,
-        developerMode: typeof parsed.developerMode === 'boolean' ? parsed.developerMode : getDefaultSettings().developerMode,
-        quickMockTargetExtensionId:
-          typeof parsed.quickMockTargetExtensionId === 'string'
-            ? parsed.quickMockTargetExtensionId
-            : getDefaultSettings().quickMockTargetExtensionId,
-      };
+      const nextSettings = normalizeSettings(parsed);
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
         throw new Error('异常响应规则格式错误');

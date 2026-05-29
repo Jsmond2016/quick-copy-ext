@@ -40,6 +40,30 @@ function areStringArraysEqual(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
+export function normalizeSettings(
+  current?: Partial<QuickCopySettings>,
+): QuickCopySettings {
+  const defaults = getDefaultSettings();
+
+  return {
+    feedbackTitle: sanitizeTrimmedString(current?.feedbackTitle, defaults.feedbackTitle),
+    monitoredOrigins: sanitizeStringArray(current?.monitoredOrigins, defaults.monitoredOrigins),
+    apiPrefixes: sanitizeStringArray(current?.apiPrefixes, defaults.apiPrefixes),
+    customFields: sanitizeStringArray(current?.customFields, defaults.customFields),
+    quickFillTemplates: sanitizeStringArray(current?.quickFillTemplates, defaults.quickFillTemplates),
+    apifoxExportUrl:
+      typeof current?.apifoxExportUrl === 'string'
+        ? current.apifoxExportUrl.trim()
+        : defaults.apifoxExportUrl,
+    responseErrorRule: sanitizeTrimmedString(current?.responseErrorRule, defaults.responseErrorRule),
+    developerMode: typeof current?.developerMode === 'boolean' ? current.developerMode : defaults.developerMode,
+    quickMockTargetExtensionId: sanitizeTrimmedString(
+      current?.quickMockTargetExtensionId,
+      defaults.quickMockTargetExtensionId,
+    ),
+  };
+}
+
 export function getDefaultSettings(): QuickCopySettings {
   return {
     ...DEFAULT_SETTINGS,
@@ -69,25 +93,8 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
 export async function loadSettings(): Promise<QuickCopySettings> {
   const stored = await chrome.storage.sync.get(SETTINGS_STORAGE_KEY);
   const current = stored[SETTINGS_STORAGE_KEY] as Partial<QuickCopySettings> | undefined;
-  const defaults = getDefaultSettings();
 
-  return {
-    feedbackTitle: sanitizeTrimmedString(current?.feedbackTitle, defaults.feedbackTitle),
-    monitoredOrigins: sanitizeStringArray(current?.monitoredOrigins, defaults.monitoredOrigins),
-    apiPrefixes: sanitizeStringArray(current?.apiPrefixes, defaults.apiPrefixes),
-    customFields: sanitizeStringArray(current?.customFields, defaults.customFields),
-    quickFillTemplates: sanitizeStringArray(current?.quickFillTemplates, defaults.quickFillTemplates),
-    apifoxExportUrl:
-      typeof current?.apifoxExportUrl === 'string'
-        ? current.apifoxExportUrl.trim()
-        : defaults.apifoxExportUrl,
-    responseErrorRule: sanitizeTrimmedString(current?.responseErrorRule, defaults.responseErrorRule),
-    developerMode: typeof current?.developerMode === 'boolean' ? current.developerMode : defaults.developerMode,
-    quickMockTargetExtensionId: sanitizeTrimmedString(
-      current?.quickMockTargetExtensionId,
-      defaults.quickMockTargetExtensionId,
-    ),
-  };
+  return normalizeSettings(current);
 }
 
 export async function saveSettings(settings: QuickCopySettings): Promise<void> {
