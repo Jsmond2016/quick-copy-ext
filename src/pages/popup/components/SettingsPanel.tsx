@@ -229,15 +229,16 @@ export function SettingsPanel({
         </label>
 
         <label className="field-block">
-          <span>本地 Apifox 导出地址</span>
-          <textarea
+          <span>Apifox 项目 ID</span>
+          <input
             className="note-input"
-            onChange={handleChange('apifoxExportUrlInput')}
-            rows={3}
-            value={form.apifoxExportUrlInput}
+            onChange={handleChange('apifoxProjectIdInput')}
+            placeholder="例如：123456"
+            type="text"
+            value={form.apifoxProjectIdInput}
           />
-          <small>示例：http://127.0.0.1:4523/export/openapi?projectId=xxx&specialPurpose=openapi-generator</small>
-          <small>保存后会在后台异步刷新接口缓存；若未响应，通常是本地 Apifox 未打开。</small>
+          <small>这里只需要填写 Apifox 项目的数字 ID，系统会自动拼接本地导出地址。</small>
+          <small>保存后会在后台异步刷新接口缓存；若未响应，通常是本地 Apifox 未打开，或项目 ID 不正确。</small>
         </label>
 
         <label className="field-block">
@@ -274,7 +275,7 @@ export function SettingsPanel({
           {savingSettings ? '保存中...' : '保存配置'}
         </button>
       </div>
-      <p className="settings-hint">接口前缀与自定义字段保存后立即生效；Apifox 地址保存后会在后台异步刷新。</p>
+      <p className="settings-hint">接口前缀与自定义字段保存后立即生效；Apifox 项目 ID 保存后会在后台异步刷新。</p>
     </section>
   );
 }

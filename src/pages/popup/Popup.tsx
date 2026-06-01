@@ -10,7 +10,6 @@ import {
   loadSettings,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
-  normalizeSettings,
   QuickCopyMode,
   QuickCopySettings,
   TesterAioConfig,
@@ -38,8 +37,10 @@ import {
 } from '@pages/popup/services/runtime';
 import {
   buildSettingsFromForm,
+  createPortableSettingsConfig,
   createSettingsFormState,
   getDefaultSettingsFormState,
+  parsePortableSettingsConfig,
   SettingsFormState,
 } from '@pages/popup/utils/settings-form';
 
@@ -397,7 +398,7 @@ export default function Popup() {
     if (!settings.apifoxExportUrl) {
       setToast({
         type: 'info',
-        text: '请先在设置中填写本地 Apifox 导出地址。',
+        text: '请先在设置中填写 Apifox 项目 ID。',
       });
       openSettings();
       return;
@@ -426,7 +427,7 @@ export default function Popup() {
   }
 
   function handleExport() {
-    setConfigModalContent(JSON.stringify(settings, null, 2));
+    setConfigModalContent(JSON.stringify(createPortableSettingsConfig(settings), null, 2));
     setConfigModalMode('export');
     openConfigModal();
   }
@@ -457,26 +458,21 @@ export default function Popup() {
 
   async function handleConfigModalConfirm() {
     try {
-      const parsed = JSON.parse(configModalContent) as Partial<QuickCopySettings>;
-
-      if (!parsed.monitoredOrigins || !parsed.apiPrefixes || !parsed.customFields) {
-        throw new Error('缺少必要字段');
-      }
-
-      const nextSettings = normalizeSettings(parsed);
+      const parsed = JSON.parse(configModalContent);
+      const nextForm = parsePortableSettingsConfig(parsed);
+      const nextSettings = buildSettingsFromForm(nextForm);
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
         throw new Error('异常响应规则格式错误，请使用 JSON 数组格式');
       }
 
-      await saveSettings(nextSettings);
-      setSettings(nextSettings);
-      setSettingsForm(createSettingsFormState(nextSettings));
-      setSelectedTesterAioConfigId(nextSettings.testerAioConfigs[0]?.id ?? '');
       closeConfigModal();
-      setToast({ type: 'success', text: '配置导入成功' });
-    } catch {
-      setToast({ type: 'error', text: '配置格式错误，请检查 JSON' });
+      await handleSaveSettings(nextForm);
+    } catch (error) {
+      setToast({
+        type: 'error',
+        text: getErrorMessage(error, '配置格式错误，请检查 JSON'),
+      });
     }
   }
 

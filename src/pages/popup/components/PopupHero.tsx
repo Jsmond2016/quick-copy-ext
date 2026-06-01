@@ -1,4 +1,4 @@
-import { ApifoxCacheStatus, getDisplayPath, PageSummary } from '@src/lib/quick-copy';
+import { ApifoxCacheStatus, getApifoxProjectId, getDisplayPath, PageSummary } from '@src/lib/quick-copy';
 
 interface PopupHeroProps {
   apifoxStatus: ApifoxCacheStatus;
@@ -9,14 +9,6 @@ interface PopupHeroProps {
   showSettings: boolean;
   onRefreshApifox: () => void;
   onToggleSettings: () => void;
-}
-
-function getApifoxProjectId(exportUrl: string): string | null {
-  try {
-    return new URL(exportUrl).searchParams.get('projectId');
-  } catch {
-    return null;
-  }
 }
 
 export function PopupHero({
@@ -78,7 +70,7 @@ export function PopupHero({
           ? `Apifox 已就绪，已缓存 ${apifoxStatus.endpointCount} 条接口。`
           : apifoxExportUrl
             ? apifoxStatus.error || 'Apifox 尚未就绪，可点击右上角刷新重试。'
-            : '未配置 Apifox 导出地址，复制时将不会补充 Apifox 链接。'}
+            : '未配置 Apifox 项目 ID，复制时将不会补充 Apifox 链接。'}
       </div>
       <dl className="hero-page-meta">
         <div>
