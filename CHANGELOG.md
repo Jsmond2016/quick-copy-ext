@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.36](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.35...v1.4.36) (2026-06-01)
+
+
+### Features
+
+* **pages:** 新增测试者模式与 AIO 复制配置 ([caaa185](https://github.com/Jsmond2016/quick-copy-ext/commit/caaa18528e58c827cac0fb3ac01f35ea6ee31bdd))
+* **pages:** 简化 Apifox 配置与导入导出 ([d498f99](https://github.com/Jsmond2016/quick-copy-ext/commit/d498f9976ae31ff17113c4129c7b22a4328450c2))
+* **pages:** 调整复制选项面板布局 ([2373069](https://github.com/Jsmond2016/quick-copy-ext/commit/2373069af6be6379bd99d0b4b0a8acbe110a797a))
+
 ## [1.4.35](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.34...v1.4.35) (2026-06-01)
 
 
