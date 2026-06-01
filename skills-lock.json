@@ -5,7 +5,13 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/code-simplifier/SKILL.md",
-      "computedHash": "1689defbdf8d3ec4ddc1a4cca6da7a90dab73dc8391a0bcc3f6b9cf2ede28a22"
+      "computedHash": "fb10f840a03191d3fcac1211e868af0f4534481dc14e768b9a810fca80727a3e"
+    },
+    "diagnose": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/diagnose/SKILL.md",
+      "computedHash": "f7d243a7b831072ecdb5741d3fe9f3c46ae21e2d768d9865efe27b62fbec2de3"
     },
     "fe-chrome-ext-store-pre-publish": {
       "source": "jsmond2016/fe-skills",
@@ -29,7 +35,7 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/fe-doc-format/SKILL.md",
-      "computedHash": "0d68632c8261c09eec5193c58a789a9ddaa346b700acf8c06c69f4f5de42cdea"
+      "computedHash": "b4a1748bb996383051b2f373c5c3f4cd30b49de23ec521fbab41ad3acb558bad"
     },
     "fe-fullstack-dev": {
       "source": "jsmond2016/fe-skills",
@@ -65,7 +71,7 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/fe-set-ai-base/SKILL.md",
-      "computedHash": "2bbc068fd1fbf37596ac51ee5f59798960e603e5f35ceb8907a7360317a46b73"
+      "computedHash": "5e8af373b41eca0ce928863f0cfcdd63d63dea3dfe81eb4b4b2e5c89a03dab6f"
     },
     "fe-setup-basic-project-env": {
       "source": "jsmond2016/fe-skills",
@@ -89,7 +95,19 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "c0785df0e44d95dc11d8136bf502aa94971ae896462d8e7316e0de5909849af0"
+      "computedHash": "9d64906d8b0842c2304a22964d820221e6fb0ef3a2f6e6d551c32222ec7169d1"
+    },
+    "grill-me": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grill-me/SKILL.md",
+      "computedHash": "a4a7ceb4e0908fd7f23239b37523d5b49680f768307b8cbc20c6c134b63e9800"
+    },
+    "grill-with-docs": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/grill-with-docs/SKILL.md",
+      "computedHash": "6ff086599ca0c0cca37343c2e82d0d8bef1572fecbdeabcafdac71807c6cc1d4"
     },
     "sync-agent-skills": {
       "source": "jsmond2016/fe-skills",
@@ -102,6 +120,24 @@
       "sourceType": "github",
       "skillPath": "skills/sys-port-manager/SKILL.md",
       "computedHash": "e217700f412cfddb02b633893577cbe356b036e036c11690dbee3de6a1cc16c8"
+    },
+    "tdd": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tdd/SKILL.md",
+      "computedHash": "0da303091694fef83bae9f0053450b5b8cb018b1f8dbf5770509e15f96af3ea2"
+    },
+    "to-issues": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/to-issues/SKILL.md",
+      "computedHash": "94ecd59a97895af08ab429500429d9a87799be9fcef999d40dec6ea08c411e3f"
+    },
+    "write-a-skill": {
+      "source": "jsmond2016/fe-skills",
+      "sourceType": "github",
+      "skillPath": "skills/write-a-skill/SKILL.md",
+      "computedHash": "7db98d7cd36707360276f4261fb43481b17660fd9ea8710d7690c04013ba995b"
     }
   }
 }
