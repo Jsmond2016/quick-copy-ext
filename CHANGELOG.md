@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.35](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.34...v1.4.35) (2026-06-01)
+
+
+### Bug Fixes
+
+* **components:** 缩小开发者模式开关点击范围 ([c462c9a](https://github.com/Jsmond2016/quick-copy-ext/commit/c462c9a790e17ff23a15390f7e55d07d8f36eb5c))
+* **pages:** 修复配置导入遗漏开发者模式 ([7e9e4c3](https://github.com/Jsmond2016/quick-copy-ext/commit/7e9e4c36a77ff21e91de550ffca5dac6622c9e2e))
+* 修复后台响应采集匹配并补充评审文档 ([e397f6f](https://github.com/Jsmond2016/quick-copy-ext/commit/e397f6f8d496a16d9fc6878e4ca3c71c6563f615))
+
+
+### Features
+
+* **pages:** 添加开发者模式与快速 mock ([414a39c](https://github.com/Jsmond2016/quick-copy-ext/commit/414a39c9f4d3eefbaecccca91005e877c1c8adb6))
+
 ## [1.4.34](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.33...v1.4.34) (2026-05-28)
 
 
