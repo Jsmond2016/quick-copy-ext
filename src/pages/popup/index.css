@@ -15,7 +15,7 @@
 }
 
 body {
-  width: 420px;
+  width: 480px;
   min-height: 640px;
   margin: 0;
   font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
@@ -690,6 +690,24 @@ input {
 
 .checkbox-row input[type="checkbox"] {
   cursor: pointer;
+}
+
+.request-params-row {
+  padding: 10px 12px;
+  border: 1px solid rgba(31, 37, 32, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.request-params-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.request-params-select {
+  margin-top: 12px;
 }
 
 .select-row {

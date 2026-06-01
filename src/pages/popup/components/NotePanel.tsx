@@ -7,21 +7,17 @@ interface NotePanelProps {
   copying: boolean;
   quickMocking: boolean;
   selectedCount: number;
-  includeRequestParams: boolean;
   quickFillOptions: string[];
   useQuickFill: boolean;
   selectedQuickFillValues: string[];
   mode: QuickCopyMode;
   testerAioConfigs: TesterAioConfig[];
-  selectedTesterAioConfigId: string;
   onNoteChange: (value: string) => void;
   onCopy: () => void;
   onQuickMock: () => void;
   onCopyToAio: () => void;
-  onToggleRequestParams: () => void;
   onToggleQuickFill: () => void;
   onQuickFillSelectionChange: (values: string[]) => void;
-  onSelectedTesterAioConfigChange: (value: string) => void;
 }
 
 export function NotePanel({
@@ -29,21 +25,17 @@ export function NotePanel({
   copying,
   quickMocking,
   selectedCount,
-  includeRequestParams,
   quickFillOptions,
   useQuickFill,
   selectedQuickFillValues,
   mode,
   testerAioConfigs,
-  selectedTesterAioConfigId,
   onNoteChange,
   onCopy,
   onQuickMock,
   onCopyToAio,
-  onToggleRequestParams,
   onToggleQuickFill,
   onQuickFillSelectionChange,
-  onSelectedTesterAioConfigChange,
 }: NotePanelProps) {
   const [showQuickFillOptions, { toggle: toggleQuickFillOptions, setFalse: hideQuickFillOptions }] = useBoolean(false);
   const selectedQuickFillSet = useMemo(
@@ -126,32 +118,6 @@ export function NotePanel({
         rows={2}
         value={note}
       />
-
-      <label className="checkbox-row">
-        <input
-          type="checkbox"
-          checked={includeRequestParams}
-          onChange={onToggleRequestParams}
-        />
-        包含接口入参
-      </label>
-
-      {mode === 'tester' && testerAioConfigs.length > 0 ? (
-        <label className="select-row">
-          <span>迭代名称</span>
-          <select
-            className="note-select"
-            onChange={(event) => onSelectedTesterAioConfigChange(event.target.value)}
-            value={selectedTesterAioConfigId}
-          >
-            {testerAioConfigs.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.iterationName}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
 
       {mode === 'developer' ? (
         <div className="action-row">

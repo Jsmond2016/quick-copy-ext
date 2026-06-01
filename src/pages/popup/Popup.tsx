@@ -19,6 +19,7 @@ import {
 } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
 import { PopupHero } from '@pages/popup/components/PopupHero';
+import { RequestParamsPanel } from '@pages/popup/components/RequestParamsPanel';
 import { RequestHistoryPanel } from '@pages/popup/components/RequestHistoryPanel';
 import { SettingsPanel } from '@pages/popup/components/SettingsPanel';
 import { ConfigModal } from '@pages/popup/components/ConfigModal';
@@ -549,22 +550,31 @@ export default function Popup() {
       ) : (
         <>
           {pageMonitoringEnabled ? (
-            <RequestHistoryPanel
-              errorText={errorText}
-              filteredRequests={filteredRequests}
-              loading={loading}
-              requests={requests}
-              selectedIds={selectedIds}
-              settings={settings}
-              statusText={statusText}
-              onClearRequests={() => {
-                void clearCurrentTabRequests();
-                setSelectedIds([]);
-              }}
-              onClearSelection={clearSelection}
-              onSelectAll={selectAll}
-              onToggleRequest={toggleRequest}
-            />
+            <>
+              <RequestHistoryPanel
+                errorText={errorText}
+                filteredRequests={filteredRequests}
+                loading={loading}
+                requests={requests}
+                selectedIds={selectedIds}
+                settings={settings}
+                statusText={statusText}
+                onClearRequests={() => {
+                  void clearCurrentTabRequests();
+                  setSelectedIds([]);
+                }}
+                onClearSelection={clearSelection}
+                onSelectAll={selectAll}
+                onToggleRequest={toggleRequest}
+              />
+              <RequestParamsPanel
+                includeRequestParams={includeRequestParams}
+                testerAioConfigs={settings.mode === 'tester' ? settings.testerAioConfigs : []}
+                selectedTesterAioConfigId={selectedTesterAioConfigId}
+                onToggleRequestParams={toggleIncludeRequestParams}
+                onSelectedTesterAioConfigChange={setSelectedTesterAioConfigId}
+              />
+            </>
           ) : null}
 
           <NotePanel
@@ -572,10 +582,8 @@ export default function Popup() {
             quickMocking={quickMocking}
             note={note}
             selectedCount={selectedRequests.length}
-            includeRequestParams={includeRequestParams}
             mode={settings.mode}
             testerAioConfigs={settings.testerAioConfigs}
-            selectedTesterAioConfigId={selectedTesterAioConfigId}
             onCopy={() => void copyFeedback()}
             onQuickMock={() => void handleQuickMock()}
             onCopyToAio={() => void handleCopyToAio()}
@@ -583,10 +591,8 @@ export default function Popup() {
             useQuickFill={useQuickFill}
             selectedQuickFillValues={selectedQuickFillValues}
             onNoteChange={setNote}
-            onToggleRequestParams={toggleIncludeRequestParams}
             onToggleQuickFill={toggleUseQuickFill}
             onQuickFillSelectionChange={updateNoteWithQuickFill}
-            onSelectedTesterAioConfigChange={setSelectedTesterAioConfigId}
           />
         </>
       )}
