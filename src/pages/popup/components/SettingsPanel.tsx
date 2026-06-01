@@ -1,4 +1,5 @@
 import { ChangeEvent } from 'react';
+import { QuickCopyMode } from '@src/lib/quick-copy';
 import { SettingsFormState } from '@pages/popup/utils/settings-form';
 
 interface SettingsPanelProps {
@@ -6,6 +7,15 @@ interface SettingsPanelProps {
   savingSettings: boolean;
   isDefaultConfig: boolean;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
+  onModeChange: (mode: QuickCopyMode) => void;
+  onTesterAioConfigChange: (
+    index: number,
+    field: 'iterationName' | 'bugUrl',
+    value: string,
+  ) => void;
+  onMoveTesterAioConfig: (index: number, direction: 'up' | 'down') => void;
+  onAddTesterAioConfig: () => void;
+  onRemoveTesterAioConfig: (index: number) => void;
   onCancel: () => void;
   onSave: () => void;
   onReset: () => void;
@@ -18,6 +28,11 @@ export function SettingsPanel({
   savingSettings,
   isDefaultConfig,
   onFieldChange,
+  onModeChange,
+  onTesterAioConfigChange,
+  onMoveTesterAioConfig,
+  onAddTesterAioConfig,
+  onRemoveTesterAioConfig,
   onCancel,
   onSave,
   onReset,
@@ -30,7 +45,15 @@ export function SettingsPanel({
     };
   }
 
-  const developerModeEnabled = form.developerMode === 'true';
+  const modeOptions: Array<{
+    value: QuickCopyMode;
+    label: string;
+    description: string;
+  }> = [
+    { value: 'default', label: '默认', description: '无额外模式' },
+    { value: 'developer', label: '开发', description: '显示快速 mock' },
+    { value: 'tester', label: '测试', description: '复制并跳转 AIO' },
+  ];
 
   return (
     <section className="panel">
@@ -53,24 +76,25 @@ export function SettingsPanel({
 
       <div className="config-grid">
         <div className="field-block">
-          <span>开发者模式</span>
-          <div className="switch-field">
-            <div className="switch-field-copy">
-              <strong>{developerModeEnabled ? '已开启' : '已关闭'}</strong>
-              <small>开启后，主面板会显示“快速 mock”按钮，并允许配置目标扩展 ID。</small>
-            </div>
-            <button
-              aria-pressed={developerModeEnabled}
-              className={`switch-button${developerModeEnabled ? ' active' : ''}`}
-              onClick={() => onFieldChange('developerMode', developerModeEnabled ? 'false' : 'true')}
-              type="button"
-            >
-              <span className="switch-thumb" />
-            </button>
+          <span>模式</span>
+          <div className="mode-switcher" role="radiogroup" aria-label="模式切换">
+            {modeOptions.map((option) => (
+              <button
+                aria-checked={form.mode === option.value}
+                className={`mode-switch-option${form.mode === option.value ? ' active' : ''}`}
+                key={option.value}
+                onClick={() => onModeChange(option.value)}
+                role="radio"
+                type="button"
+              >
+                <strong>{option.label}</strong>
+                <small>{option.description}</small>
+              </button>
+            ))}
           </div>
         </div>
 
-        {developerModeEnabled ? (
+        {form.mode === 'developer' ? (
           <label className="field-block">
             <span>Quick Mock 扩展 ID</span>
             <input
@@ -83,6 +107,65 @@ export function SettingsPanel({
             <small>这里要填 `chrome://extensions` 页面里显示的实际扩展 ID，不是公钥，也不是仓库里的环境变量名。</small>
             <small>开发联调时用于跨插件发送 `BATCH_QUICK_MOCK` 消息；未填写或 ID 对不上时无法触发快速 mock。</small>
           </label>
+        ) : null}
+
+        {form.mode === 'tester' ? (
+          <div className="field-block">
+            <span>测试者模式配置</span>
+            <div className="tester-config-list">
+              {form.testerAioConfigs.map((item, index) => (
+                <div className="tester-config-row" key={item.id}>
+                  <input
+                    className="note-input"
+                    onChange={(event) => onTesterAioConfigChange(index, 'iterationName', event.target.value)}
+                    placeholder="迭代名称"
+                    type="text"
+                    value={item.iterationName}
+                  />
+                  <input
+                    className="note-input"
+                    onChange={(event) => onTesterAioConfigChange(index, 'bugUrl', event.target.value)}
+                    placeholder="AIO 链接"
+                    type="url"
+                    value={item.bugUrl}
+                  />
+                  <div className="tester-config-actions">
+                    <button
+                      aria-label="上移"
+                      className="ghost-button icon-only tester-config-icon"
+                      disabled={index === 0}
+                      onClick={() => onMoveTesterAioConfig(index, 'up')}
+                      type="button"
+                    >
+                      ^
+                    </button>
+                    <button
+                      aria-label="下移"
+                      className="ghost-button icon-only tester-config-icon"
+                      disabled={index === form.testerAioConfigs.length - 1}
+                      onClick={() => onMoveTesterAioConfig(index, 'down')}
+                      type="button"
+                    >
+                      v
+                    </button>
+                    <button
+                      aria-label="删除"
+                      className="ghost-button icon-only tester-config-icon tester-config-remove"
+                      disabled={form.testerAioConfigs.length === 1}
+                      onClick={() => onRemoveTesterAioConfig(index)}
+                      type="button"
+                    >
+                      -
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button className="ghost-button tester-config-add" onClick={onAddTesterAioConfig} type="button">
+              + 添加
+            </button>
+            <small>保存后，主面板会展示“复制至 AIO”按钮，并支持按迭代名称选择目标链接。</small>
+          </div>
         ) : null}
 
         <label className="field-block">

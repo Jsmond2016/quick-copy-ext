@@ -52,6 +52,14 @@ export interface CopyPayload extends PopupPayload {
   includeRequestParams: boolean;
 }
 
+export type QuickCopyMode = 'default' | 'developer' | 'tester';
+
+export interface TesterAioConfig {
+  id: string;
+  iterationName: string;
+  bugUrl: string;
+}
+
 export interface QuickCopySettings {
   feedbackTitle: string;
   monitoredOrigins: string[];
@@ -60,8 +68,9 @@ export interface QuickCopySettings {
   quickFillTemplates: string[];
   apifoxExportUrl: string;
   responseErrorRule: string;
-  developerMode: boolean;
+  mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
+  testerAioConfigs: TesterAioConfig[];
 }
 
 export type RuntimeRequestMessage =

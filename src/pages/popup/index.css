@@ -267,6 +267,80 @@ input {
   margin: 0;
 }
 
+.mode-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mode-switch-option {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(31, 37, 32, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.mode-switch-option strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.mode-switch-option small {
+  margin: 0;
+}
+
+.mode-switch-option.active {
+  border-color: rgba(184, 79, 44, 0.4);
+  background: rgba(184, 79, 44, 0.1);
+}
+
+.mode-switch-option:hover {
+  transform: translateY(-1px);
+}
+
+.tester-config-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tester-config-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) minmax(0, 1.4fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.tester-config-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tester-config-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.tester-config-remove {
+  color: var(--brand-deep);
+}
+
+.tester-config-add {
+  width: 100%;
+}
+
 .ghost-button,
 .icon-button,
 .primary-button {
@@ -616,6 +690,32 @@ input {
 
 .checkbox-row input[type="checkbox"] {
   cursor: pointer;
+}
+
+.select-row {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.select-row span {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.note-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 37, 32, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+}
+
+.note-select:focus {
+  outline: 2px solid rgba(184, 79, 44, 0.22);
+  border-color: rgba(184, 79, 44, 0.35);
 }
 
 .note-panel-head-actions {

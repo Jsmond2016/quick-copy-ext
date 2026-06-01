@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useBoolean, useUpdateEffect } from 'ahooks';
+import { QuickCopyMode, TesterAioConfig } from '@src/lib/quick-copy';
 
 interface NotePanelProps {
   note: string;
@@ -10,13 +11,17 @@ interface NotePanelProps {
   quickFillOptions: string[];
   useQuickFill: boolean;
   selectedQuickFillValues: string[];
-  developerMode: boolean;
+  mode: QuickCopyMode;
+  testerAioConfigs: TesterAioConfig[];
+  selectedTesterAioConfigId: string;
   onNoteChange: (value: string) => void;
   onCopy: () => void;
   onQuickMock: () => void;
+  onCopyToAio: () => void;
   onToggleRequestParams: () => void;
   onToggleQuickFill: () => void;
   onQuickFillSelectionChange: (values: string[]) => void;
+  onSelectedTesterAioConfigChange: (value: string) => void;
 }
 
 export function NotePanel({
@@ -28,13 +33,17 @@ export function NotePanel({
   quickFillOptions,
   useQuickFill,
   selectedQuickFillValues,
-  developerMode,
+  mode,
+  testerAioConfigs,
+  selectedTesterAioConfigId,
   onNoteChange,
   onCopy,
   onQuickMock,
+  onCopyToAio,
   onToggleRequestParams,
   onToggleQuickFill,
   onQuickFillSelectionChange,
+  onSelectedTesterAioConfigChange,
 }: NotePanelProps) {
   const [showQuickFillOptions, { toggle: toggleQuickFillOptions, setFalse: hideQuickFillOptions }] = useBoolean(false);
   const selectedQuickFillSet = useMemo(
@@ -127,7 +136,24 @@ export function NotePanel({
         包含接口入参
       </label>
 
-      {developerMode ? (
+      {mode === 'tester' && testerAioConfigs.length > 0 ? (
+        <label className="select-row">
+          <span>迭代名称</span>
+          <select
+            className="note-select"
+            onChange={(event) => onSelectedTesterAioConfigChange(event.target.value)}
+            value={selectedTesterAioConfigId}
+          >
+            {testerAioConfigs.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.iterationName}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {mode === 'developer' ? (
         <div className="action-row">
           <button
             className="ghost-button action-button"
@@ -136,6 +162,25 @@ export function NotePanel({
             type="button"
           >
             {quickMocking ? '发送中...' : '快速 mock'}
+          </button>
+          <button
+            className="primary-button action-button inline-button"
+            disabled={copying || selectedCount === 0}
+            onClick={onCopy}
+            type="button"
+          >
+            {copying ? '复制中...' : '复制接口信息'}
+          </button>
+        </div>
+      ) : mode === 'tester' && testerAioConfigs.length > 0 ? (
+        <div className="action-row">
+          <button
+            className="ghost-button action-button"
+            disabled={copying || selectedCount === 0}
+            onClick={onCopyToAio}
+            type="button"
+          >
+            {copying ? '复制中...' : '复制至 AIO'}
           </button>
           <button
             className="primary-button action-button inline-button"

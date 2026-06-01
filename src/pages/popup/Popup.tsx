@@ -11,7 +11,9 @@ import {
   matchesMonitoredOrigins,
   matchesApiPrefixes,
   normalizeSettings,
+  QuickCopyMode,
   QuickCopySettings,
+  TesterAioConfig,
   saveSettings,
   withRequestAbnormalState,
 } from '@src/lib/quick-copy';
@@ -52,6 +54,7 @@ export default function Popup() {
   const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(false);
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
+  const [selectedTesterAioConfigId, setSelectedTesterAioConfigId] = useState('');
   const [showConfigModal, { setTrue: openConfigModal, setFalse: closeConfigModal }] = useBoolean(false);
   const [configModalContent, setConfigModalContent] = useState('');
   const [configModalMode, setConfigModalMode] = useState<'import' | 'export'>('export');
@@ -90,6 +93,10 @@ export default function Popup() {
     [page.url, settings.monitoredOrigins],
   );
   const quickFillOptions = settings.quickFillTemplates;
+  const selectedTesterAioConfig = useMemo(
+    () => settings.testerAioConfigs.find((item) => item.id === selectedTesterAioConfigId) ?? null,
+    [selectedTesterAioConfigId, settings.testerAioConfigs],
+  );
 
   const {
     selectedIds,
@@ -106,6 +113,7 @@ export default function Popup() {
       setSettings(loadedSettings);
       setSettingsForm(createSettingsFormState(loadedSettings));
       setUseQuickFill(loadedSettings.quickFillTemplates.length > 0);
+      setSelectedTesterAioConfigId(loadedSettings.testerAioConfigs[0]?.id ?? '');
       const currentApifoxStatus = loadedSettings.apifoxExportUrl
         ? await getApifoxStatus()
         : DEFAULT_APIFOX_STATUS;
@@ -145,6 +153,20 @@ export default function Popup() {
     }
   }, [quickFillOptions.length, useQuickFill]);
 
+  useUpdateEffect(() => {
+    if (settings.mode !== 'tester' || settings.testerAioConfigs.length === 0) {
+      if (selectedTesterAioConfigId) {
+        setSelectedTesterAioConfigId('');
+      }
+      return;
+    }
+
+    const matchedConfig = settings.testerAioConfigs.some((item) => item.id === selectedTesterAioConfigId);
+    if (!matchedConfig) {
+      setSelectedTesterAioConfigId(settings.testerAioConfigs[0]?.id ?? '');
+    }
+  }, [selectedTesterAioConfigId, settings.mode, settings.testerAioConfigs]);
+
   function updateSettingsForm(field: keyof SettingsFormState, value: string) {
     setSettingsForm((current) => ({
       ...current,
@@ -152,29 +174,94 @@ export default function Popup() {
     }));
   }
 
+  function updateMode(mode: QuickCopyMode) {
+    setSettingsForm((current) => ({
+      ...current,
+      mode,
+      testerAioConfigs:
+        mode === 'tester' && current.testerAioConfigs.length === 0
+          ? [createEmptyTesterAioConfig()]
+          : current.testerAioConfigs,
+    }));
+  }
+
+  function createEmptyTesterAioConfig(): TesterAioConfig {
+    return {
+      id: crypto.randomUUID?.() ?? `aio-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+      iterationName: '',
+      bugUrl: '',
+    };
+  }
+
+  function updateTesterAioConfig(
+    index: number,
+    field: 'iterationName' | 'bugUrl',
+    value: string,
+  ) {
+    setSettingsForm((current) => ({
+      ...current,
+      testerAioConfigs: current.testerAioConfigs.map((item, currentIndex) => (
+        currentIndex === index
+          ? { ...item, [field]: value }
+          : item
+      )),
+    }));
+  }
+
+  function addTesterAioConfig() {
+    setSettingsForm((current) => ({
+      ...current,
+      testerAioConfigs: [...current.testerAioConfigs, createEmptyTesterAioConfig()],
+    }));
+  }
+
+  function removeTesterAioConfig(index: number) {
+    setSettingsForm((current) => ({
+      ...current,
+      testerAioConfigs: current.testerAioConfigs.filter((_, currentIndex) => currentIndex !== index),
+    }));
+  }
+
+  function moveTesterAioConfig(index: number, direction: 'up' | 'down') {
+    setSettingsForm((current) => {
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+      if (targetIndex < 0 || targetIndex >= current.testerAioConfigs.length) {
+        return current;
+      }
+
+      const nextConfigs = [...current.testerAioConfigs];
+      const [movedItem] = nextConfigs.splice(index, 1);
+      nextConfigs.splice(targetIndex, 0, movedItem);
+
+      return {
+        ...current,
+        testerAioConfigs: nextConfigs,
+      };
+    });
+  }
+
   function updateNoteWithQuickFill(values: string[]) {
     setSelectedQuickFillValues(values);
     setNote(values.join('\n\n'));
   }
 
-  async function copyFeedback() {
-    startCopying();
-    setErrorText('');
+  async function buildCopyText() {
+    const latestRequests =
+      tabId !== null
+        ? (await attachApifoxUrls(await getTabRequests(tabId), apifoxStatus)).map((request) =>
+            withRequestAbnormalState(request, settings.responseErrorRule),
+          )
+        : requests;
+    setRequests(latestRequests);
+    const requestsWithApifox = latestRequests.filter((request) => selectedIds.includes(request.id));
+    const hasAbnormalRequest = requestsWithApifox.some(
+      (request) => (request.abnormalReasons?.length ?? 0) > 0,
+    );
 
-    try {
-      const latestRequests =
-        tabId !== null
-          ? (await attachApifoxUrls(await getTabRequests(tabId), apifoxStatus)).map((request) =>
-              withRequestAbnormalState(request, settings.responseErrorRule),
-            )
-          : requests;
-      setRequests(latestRequests);
-      const requestsWithApifox = latestRequests.filter((request) => selectedIds.includes(request.id));
-      const hasAbnormalRequest = requestsWithApifox.some(
-        (request) => (request.abnormalReasons?.length ?? 0) > 0,
-      );
-
-      const text = buildFeedbackText({
+    return {
+      count: requestsWithApifox.length,
+      text: buildFeedbackText({
         page,
         requests: requestsWithApifox,
         feedbackTitle: hasAbnormalRequest ? '存在接口状态或返回异常' : settings.feedbackTitle,
@@ -182,16 +269,53 @@ export default function Popup() {
         screenshotLabel: 'N/A',
         customFields: settings.customFields,
         includeRequestParams,
-      });
+      }),
+    };
+  }
+
+  async function copyFeedback() {
+    startCopying();
+    setErrorText('');
+
+    try {
+      const { count, text } = await buildCopyText();
 
       await navigator.clipboard.writeText(text);
-      setStatusText(`复制成功，已写入 ${requestsWithApifox.length} 条接口信息。`);
+      setStatusText(`复制成功，已写入 ${count} 条接口信息。`);
       setToast({
         type: 'success',
-        text: `复制成功，已写入 ${requestsWithApifox.length} 条接口信息。`,
+        text: `复制成功，已写入 ${count} 条接口信息。`,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : '复制失败。';
+      setErrorText(message);
+      setStatusText(message);
+      setToast({ type: 'error', text: message });
+    } finally {
+      stopCopying();
+    }
+  }
+
+  async function handleCopyToAio() {
+    startCopying();
+    setErrorText('');
+
+    try {
+      if (!selectedTesterAioConfig) {
+        throw new Error('请先选择一个迭代名称。');
+      }
+
+      const { count, text } = await buildCopyText();
+      await navigator.clipboard.writeText(text);
+      await chrome.tabs.create({ url: selectedTesterAioConfig.bugUrl });
+      const successText = `复制成功，已写入 ${count} 条接口信息，并打开 ${selectedTesterAioConfig.iterationName}。`;
+      setStatusText(successText);
+      setToast({
+        type: 'success',
+        text: successText,
+      });
+    } catch (error) {
+      const message = getErrorMessage(error, '复制至 AIO 失败。');
       setErrorText(message);
       setStatusText(message);
       setToast({ type: 'error', text: message });
@@ -226,6 +350,7 @@ export default function Popup() {
       await saveSettings(nextSettings);
       setSettings(nextSettings);
       setSettingsForm(createSettingsFormState(nextSettings));
+      setSelectedTesterAioConfigId(nextSettings.testerAioConfigs[0]?.id ?? '');
       const savedStatusText = nextSettings.apifoxExportUrl
         ? '配置已保存，监听范围与筛选规则已生效，Apifox 接口信息正在后台刷新。'
         : '配置已保存，新的监听范围、过滤规则与 Apifox 设置已生效。';
@@ -311,6 +436,7 @@ export default function Popup() {
     await clearApifoxData();
     setSettings(defaults);
     setSettingsForm(createSettingsFormState(defaults));
+    setSelectedTesterAioConfigId('');
     clearApifoxStatus();
     setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request));
     setToast({ type: 'success', text: '配置已重置为默认值' });
@@ -345,6 +471,7 @@ export default function Popup() {
       await saveSettings(nextSettings);
       setSettings(nextSettings);
       setSettingsForm(createSettingsFormState(nextSettings));
+      setSelectedTesterAioConfigId(nextSettings.testerAioConfigs[0]?.id ?? '');
       closeConfigModal();
       setToast({ type: 'success', text: '配置导入成功' });
     } catch {
@@ -409,6 +536,11 @@ export default function Popup() {
           isDefaultConfig={isDefaultConfig}
           onCancel={closeSettings}
           onFieldChange={updateSettingsForm}
+          onModeChange={updateMode}
+          onTesterAioConfigChange={updateTesterAioConfig}
+          onMoveTesterAioConfig={moveTesterAioConfig}
+          onAddTesterAioConfig={addTesterAioConfig}
+          onRemoveTesterAioConfig={removeTesterAioConfig}
           onSave={() => void handleSaveSettings()}
           onReset={handleReset}
           onImport={handleImport}
@@ -441,9 +573,12 @@ export default function Popup() {
             note={note}
             selectedCount={selectedRequests.length}
             includeRequestParams={includeRequestParams}
-            developerMode={settings.developerMode}
+            mode={settings.mode}
+            testerAioConfigs={settings.testerAioConfigs}
+            selectedTesterAioConfigId={selectedTesterAioConfigId}
             onCopy={() => void copyFeedback()}
             onQuickMock={() => void handleQuickMock()}
+            onCopyToAio={() => void handleCopyToAio()}
             quickFillOptions={quickFillOptions}
             useQuickFill={useQuickFill}
             selectedQuickFillValues={selectedQuickFillValues}
@@ -451,6 +586,7 @@ export default function Popup() {
             onToggleRequestParams={toggleIncludeRequestParams}
             onToggleQuickFill={toggleUseQuickFill}
             onQuickFillSelectionChange={updateNoteWithQuickFill}
+            onSelectedTesterAioConfigChange={setSelectedTesterAioConfigId}
           />
         </>
       )}
