@@ -3,9 +3,11 @@ import {
   ApifoxMatchResult,
   CapturedResponsePayload,
   buildApifoxLookupMaps,
+  getMatchedResponseErrorRules,
   getApifoxPathCandidates,
   getApifoxLookupKey,
   getUrlPath,
+  JsonValue,
   loadSettings,
   MAX_REQUESTS_PER_TAB,
   matchesMonitoredOrigins,
@@ -23,12 +25,13 @@ import {
 const requestsByTab = new Map<number, NetworkRequestRecord[]>();
 const requestIndex = new Map<string, NetworkRequestRecord>();
 const tabUrlMap = new Map<number, string>();
-const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest']);
+const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest', 'fetch']);
 const apifoxEndpointMap = new Map<string, string>();
 const apifoxPathMap = new Map<string, string>();
 const apifoxNameMap = new Map<string, string>();
 const RUNTIME_SESSION_CACHE_KEY = 'quick-copy-runtime-session-cache';
 const APIFOX_SESSION_CACHE_KEY = 'quick-copy-apifox-session-cache';
+const RUNTIME_CACHE_VERSION = 2;
 const defaultApifoxStatus: ApifoxCacheStatus = {
   ready: false,
   sourceUrl: '',
@@ -43,6 +46,7 @@ interface SerializedApifoxCache {
 }
 
 interface SerializedRuntimeCache {
+  version: number;
   requestsByTab: [number, NetworkRequestRecord[]][];
   tabUrlEntries: [number, string][];
 }
@@ -54,6 +58,7 @@ let runtimePersistTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function persistRuntimeCache() {
   const payload: SerializedRuntimeCache = {
+    version: RUNTIME_CACHE_VERSION,
     requestsByTab: Array.from(requestsByTab.entries()),
     tabUrlEntries: Array.from(tabUrlMap.entries()),
   };
@@ -79,6 +84,11 @@ async function hydrateRuntimeCache() {
   const payload = stored[RUNTIME_SESSION_CACHE_KEY] as SerializedRuntimeCache | undefined;
 
   if (!payload || typeof payload !== 'object') {
+    return;
+  }
+
+  if (payload.version !== RUNTIME_CACHE_VERSION) {
+    await chrome.storage.session.remove(RUNTIME_SESSION_CACHE_KEY);
     return;
   }
 
@@ -174,6 +184,30 @@ async function ensureApifoxCacheReady() {
 
 async function ensureRuntimeCacheReady() {
   await runtimeCacheReadyPromise;
+}
+
+function getResponseDebugSummary(response: JsonValue | undefined) {
+  if (!response || typeof response !== 'object' || Array.isArray(response)) {
+    return null;
+  }
+
+  const data = (response as Record<string, JsonValue>).data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return null;
+  }
+
+  const list = (data as Record<string, JsonValue>).list;
+  if (!Array.isArray(list)) {
+    return null;
+  }
+
+  const pagination = (data as Record<string, JsonValue>).pagination;
+
+  return {
+    listLength: list.length,
+    paginationState:
+      pagination === undefined ? 'missing' : pagination === null ? 'null' : 'present',
+  };
 }
 
 function notifyTabRequestsUpdated(tabId: number) {
@@ -436,6 +470,18 @@ function findBestMatchingRequest(
 function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) {
   const matchedRequest = findBestMatchingRequest(tabId, payload);
   if (!matchedRequest) {
+    const unmatchedSummary = getResponseDebugSummary(payload.response);
+    if (unmatchedSummary) {
+      console.log('[Quick Copy Ext] response payload not matched', {
+        tabId,
+        url: payload.url,
+        method: payload.method,
+        startedAt: payload.startedAt,
+        completedAt: payload.completedAt,
+        summary: unmatchedSummary,
+        response: payload.response,
+      });
+    }
     return;
   }
 
@@ -444,16 +490,39 @@ function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) 
       ? (payload.requestParams as Record<string, unknown>)
       : matchedRequest.requestParams;
 
+  const responseSnapshot =
+    payload.response === undefined
+      ? matchedRequest.responseSnapshot
+      : sanitizeResponseSnapshot(payload.response);
+  const debugSummary = getResponseDebugSummary(responseSnapshot);
+  const matchedRules = getMatchedResponseErrorRules(responseSnapshot, responseErrorRule).map(
+    (rule) => rule.label,
+  );
+
+  if (debugSummary) {
+    console.log('[Quick Copy Ext] apply captured response', {
+      tabId,
+      requestId: matchedRequest.requestId,
+      recordId: matchedRequest.id,
+      url: payload.url,
+      method: payload.method,
+      startedAt: payload.startedAt,
+      completedAt: payload.completedAt,
+      statusCode: payload.statusCode ?? matchedRequest.statusCode,
+      summary: debugSummary,
+      matchedRules,
+      rawResponse: payload.response,
+      responseSnapshot,
+    });
+  }
+
   replaceRequestRecord(
     withRequestAbnormalState(
       {
         ...matchedRequest,
         statusCode: payload.statusCode ?? matchedRequest.statusCode,
         completedAt: payload.completedAt || matchedRequest.completedAt,
-        responseSnapshot:
-          payload.response === undefined
-            ? matchedRequest.responseSnapshot
-            : sanitizeResponseSnapshot(payload.response),
+        responseSnapshot,
         requestParams,
       },
       responseErrorRule,

@@ -37,7 +37,7 @@
     }
 
     if (Array.isArray(value)) {
-      return value
+      var sanitizedItems = value
         .slice(0, 10)
         .map(function mapItem(item) {
           return sanitizeValue(item, depth + 1);
@@ -45,6 +45,12 @@
         .filter(function filterUndefined(item) {
           return item !== undefined;
         });
+
+      if (sanitizedItems.length > 0) {
+        return sanitizedItems;
+      }
+
+      return value.length > 0 ? [null] : [];
     }
 
     if (value && typeof value === 'object') {

@@ -311,10 +311,16 @@ export function sanitizeResponseSnapshot(
   }
 
   if (Array.isArray(value)) {
-    return value
+    const sanitizedItems = value
       .slice(0, 10)
       .map((item) => sanitizeResponseSnapshot(item, depth + 1))
       .filter((item): item is JsonValue => item !== undefined);
+
+    if (sanitizedItems.length > 0) {
+      return sanitizedItems;
+    }
+
+    return value.length > 0 ? [null] : [];
   }
 
   if (value && typeof value === 'object') {
