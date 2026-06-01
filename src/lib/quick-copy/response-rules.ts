@@ -213,20 +213,37 @@ export function parseResponseErrorRuleConfig(
   try {
     const parsed = JSON.parse(normalizedConfig) as unknown;
 
-    if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+    if (!Array.isArray(parsed)) {
       return undefined;
     }
 
-    const entries = Object.entries(parsed)
-      .map(([label, expression]) => ({
+    const entries: ResponseErrorRuleEntry[] = [];
+
+    for (const item of parsed) {
+      if (!item || typeof item !== 'object') {
+        return undefined;
+      }
+
+      const { label, expression } = item as Record<string, unknown>;
+
+      if (
+        typeof label !== 'string' ||
+        !label.trim() ||
+        typeof expression !== 'string' ||
+        !expression.trim()
+      ) {
+        return undefined;
+      }
+
+      entries.push({
         label: label.trim(),
-        expression: typeof expression === 'string' ? expression.trim() : '',
-      }))
-      .filter((entry) => entry.label && entry.expression);
+        expression: expression.trim(),
+      });
+    }
 
     return entries.length > 0 ? entries : undefined;
   } catch {
-    return normalizedConfig ? [{ label: '接口异常', expression: normalizedConfig }] : undefined;
+    return undefined;
   }
 }
 
@@ -240,25 +257,18 @@ export function getMatchedResponseErrorRules(
     return [];
   }
 
-  return ruleEntries
-    .map((entry, index) => {
-      const parsedRule = parseResponseErrorRule(entry.expression);
+  const matchedRules: ResponseErrorRuleEntry[] = [];
 
-      return {
-        entry,
-        index,
-        conditionCount: parsedRule?.conditions.length ?? 0,
-      };
-    })
-    .filter((item) => evaluateResponseErrorRule(response, item.entry.expression))
-    .sort((left, right) => {
-      if (left.conditionCount !== right.conditionCount) {
-        return right.conditionCount - left.conditionCount;
-      }
+  for (const entry of ruleEntries) {
+    if (!evaluateResponseErrorRule(response, entry.expression)) {
+      continue;
+    }
 
-      return right.index - left.index;
-    })
-    .map((item) => item.entry);
+    matchedRules.push(entry);
+    break;
+  }
+
+  return matchedRules;
 }
 
 export function isValidResponseErrorRuleConfig(ruleConfig: string): boolean {
@@ -267,7 +277,14 @@ export function isValidResponseErrorRuleConfig(ruleConfig: string): boolean {
   return Boolean(
     ruleEntries &&
       ruleEntries.length > 0 &&
-      ruleEntries.every((entry) => Boolean(parseResponseErrorRule(entry.expression))),
+      ruleEntries.every(
+        (entry) =>
+          typeof entry.label === 'string' &&
+          entry.label.trim().length > 0 &&
+          typeof entry.expression === 'string' &&
+          entry.expression.trim().length > 0 &&
+          Boolean(parseResponseErrorRule(entry.expression)),
+      ),
   );
 }
 

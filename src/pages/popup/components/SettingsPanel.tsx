@@ -162,12 +162,15 @@ export function SettingsPanel({
           <textarea
             className="note-input"
             onChange={handleChange('responseErrorRuleInput')}
-            placeholder={'{\n  "接口异常": "res.rtn !== 0",\n  "列表为空": "res.data?.list?.length === 0"\n}'}
+            placeholder={
+              '[\n  {\n    "label": "无权限",\n    "expression": "res.rtn === 403"\n  },\n  {\n    "label": "接口异常",\n    "expression": "res.rtn !== 0"\n  }\n]'
+            }
             rows={6}
             value={form.responseErrorRuleInput}
           />
           <small>接口状态码不是 200 时，直接标记为异常；接口状态码为 200 但命中规则时，也会标记为异常。</small>
-          <small>请使用 JSON 对象配置，key 为异常名称，value 为判断表达式；也兼容旧版单条表达式。</small>
+          <small>请使用 JSON 数组配置，按书写顺序依次判断；一个接口只会命中第一条满足条件的规则。</small>
+          <small>当前仅支持 JSON 数组格式，每一项都需要包含 `label` 和 `expression`。</small>
           <small>当前支持 `res.xxx === value`、`!==`、`&gt;`、`&lt;`，以及可选链形式，如 `res.data?.list?.length === 0`。</small>
         </label>
       </div>

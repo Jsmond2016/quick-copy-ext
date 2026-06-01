@@ -208,7 +208,7 @@ export default function Popup() {
       const nextSettings = buildSettingsFromForm(overrideForm ?? settingsForm);
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
-        throw new Error('异常响应规则格式错误，请检查 JSON 和表达式写法。');
+        throw new Error('异常响应规则格式错误，请检查 JSON 数组和表达式写法。');
       }
 
       if (!nextSettings.apifoxExportUrl) {
@@ -339,7 +339,7 @@ export default function Popup() {
       const nextSettings = normalizeSettings(parsed);
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
-        throw new Error('异常响应规则格式错误');
+        throw new Error('异常响应规则格式错误，请使用 JSON 数组格式');
       }
 
       await saveSettings(nextSettings);

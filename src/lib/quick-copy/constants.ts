@@ -1,9 +1,12 @@
 export const MAX_REQUESTS_PER_TAB = 200;
 export const SETTINGS_STORAGE_KEY = 'quick-copy-settings';
 export const DEFAULT_RESPONSE_ERROR_RULE = JSON.stringify(
-  {
-    接口异常: 'res.rtn !== 0',
-  },
+  [
+    {
+      label: '接口异常',
+      expression: 'res.rtn !== 0',
+    },
+  ],
   null,
   2,
 );
