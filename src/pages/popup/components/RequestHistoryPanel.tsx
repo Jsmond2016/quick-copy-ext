@@ -127,7 +127,7 @@ export function RequestHistoryPanel({
         <strong> · </strong>
         异常 {abnormalCount} 条
         <strong> · </strong>
-        命中 {filteredRequests.length} / {requests.length} 条请求
+        命中 {filteredRequests.length} 条请求
       </div>
 
       <div className="request-list">

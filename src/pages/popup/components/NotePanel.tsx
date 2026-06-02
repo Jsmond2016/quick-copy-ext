@@ -146,7 +146,7 @@ export function NotePanel({
             onClick={onCopyToAio}
             type="button"
           >
-            {copying ? '复制中...' : '复制至 AIO'}
+            {copying ? '复制中...' : '复制并跳转至 AIO'}
           </button>
           <button
             className="primary-button action-button inline-button"

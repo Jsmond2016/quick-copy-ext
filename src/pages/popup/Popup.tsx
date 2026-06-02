@@ -53,7 +53,7 @@ export default function Popup() {
   const [showSettings, { toggle: toggleShowSettings, setTrue: openSettings, setFalse: closeSettings }] = useBoolean(false);
   const [settings, setSettings] = useState<QuickCopySettings>(getDefaultSettings());
   const [settingsForm, setSettingsForm] = useState<SettingsFormState>(getDefaultSettingsFormState());
-  const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(false);
+  const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(true);
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const [selectedTesterAioConfigId, setSelectedTesterAioConfigId] = useState('');
