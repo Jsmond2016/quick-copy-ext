@@ -4,6 +4,11 @@
 
 它可以采集当前页面的基础信息与接口请求记录，支持按接口前缀过滤、勾选目标请求，并一键复制标准化的异常反馈内容，减少前后端之间反复补充信息的沟通成本。
 
+## 安装使用
+> 说明：插件市场审核慢，安装的可能不是最新版本
+
+- Edge 插件市场：[Quick Copy Ext](https://microsoftedge.microsoft.com/addons/detail/quick-copy-ext/fnmgpnhfffhkfdfpmnncngaoffpapcfn)
+
 ## 功能特性
 
 - 自动读取当前页面 URL 与标题
