@@ -90,13 +90,10 @@ export default function Popup() {
     page,
     requests,
     tabId,
-    loading,
-    statusText,
     errorText,
     load,
     clear: clearCurrentTabRequests,
     setRequests,
-    setStatusText,
     setErrorText,
   } = useTabRequests(settings, apifoxStatus, attachApifoxUrls);
   const { toast, setToast } = useToast();
@@ -145,7 +142,6 @@ export default function Popup() {
       onError: (error) => {
         const message = getErrorMessage(error, '初始化插件失败。');
         setErrorText(message);
-        setStatusText(message);
         setToast({ type: 'error', text: message });
       },
     },
@@ -301,7 +297,6 @@ export default function Popup() {
       const { count, text } = await buildCopyText();
 
       await navigator.clipboard.writeText(text);
-      setStatusText(`复制成功，已写入 ${count} 条接口信息。`);
       setToast({
         type: 'success',
         text: `复制成功，已写入 ${count} 条接口信息。`,
@@ -309,7 +304,6 @@ export default function Popup() {
     } catch (error) {
       const message = error instanceof Error ? error.message : '复制失败。';
       setErrorText(message);
-      setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
       stopCopying();
@@ -329,7 +323,6 @@ export default function Popup() {
       await navigator.clipboard.writeText(text);
       await chrome.tabs.create({ url: selectedTesterAioConfig.bugUrl });
       const successText = `复制成功，已写入 ${count} 条接口信息，并打开 ${selectedTesterAioConfig.iterationName}。`;
-      setStatusText(successText);
       setToast({
         type: 'success',
         text: successText,
@@ -337,7 +330,6 @@ export default function Popup() {
     } catch (error) {
       const message = getErrorMessage(error, '复制至 AIO 失败。');
       setErrorText(message);
-      setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
       stopCopying();
@@ -371,10 +363,6 @@ export default function Popup() {
       setSettings(nextSettings);
       setSettingsForm(createSettingsFormState(nextSettings));
       setSelectedTesterAioConfigId(nextSettings.testerAioConfigs[0]?.id ?? '');
-      const savedStatusText = nextSettings.apifoxExportUrl
-        ? '配置已保存，监听范围与筛选规则已生效，Apifox 接口信息正在后台刷新。'
-        : '配置已保存，新的监听范围、过滤规则与 Apifox 设置已生效。';
-      setStatusText(savedStatusText);
       setToast({
         type: 'info',
         text: nextSettings.apifoxExportUrl
@@ -392,10 +380,8 @@ export default function Popup() {
             fallbackErrorText: '后台刷新 Apifox 数据失败。',
             toastOnSuccess: true,
             toastOnError: true,
-            preserveStatusTextOnError: true,
           },
           {
-            onStatusText: setStatusText,
             onToast: setToast,
             onErrorText: setErrorText,
           },
@@ -405,7 +391,6 @@ export default function Popup() {
     } catch (error) {
       const message = getErrorMessage(error, '保存配置失败。');
       setErrorText(message);
-      setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
       stopSavingSettings();
@@ -423,7 +408,6 @@ export default function Popup() {
     }
 
     setErrorText('');
-    setStatusText('正在刷新 Apifox 接口信息...');
 
     try {
       const nextStatus = await refreshApifox(
@@ -433,7 +417,6 @@ export default function Popup() {
       );
       await load(settings, nextStatus);
       const successText = `Apifox 接口信息已刷新，共加载 ${nextStatus.endpointCount} 条接口。`;
-      setStatusText(successText);
       setToast({
         type: 'success',
         text: successText,
@@ -514,7 +497,6 @@ export default function Popup() {
         urls,
       );
 
-      setStatusText(response.message);
       setToast({
         type: response.status === 'failed' ? 'error' : 'success',
         text: response.message,
@@ -522,7 +504,6 @@ export default function Popup() {
     } catch (error) {
       const message = getErrorMessage(error, '快速 mock 失败。');
       setErrorText(message);
-      setStatusText(message);
       setToast({ type: 'error', text: message });
     } finally {
       stopQuickMocking();
@@ -566,13 +547,10 @@ export default function Popup() {
           {pageMonitoringEnabled ? (
             <>
               <RequestHistoryPanel
-                errorText={errorText}
                 filteredRequests={filteredRequests}
-                loading={loading}
                 requests={requests}
                 selectedIds={selectedIds}
                 settings={settings}
-                statusText={statusText}
                 onClearRequests={() => {
                   void clearCurrentTabRequests();
                   setSelectedIds([]);

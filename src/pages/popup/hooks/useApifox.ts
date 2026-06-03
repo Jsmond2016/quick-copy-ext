@@ -10,13 +10,11 @@ import {
 interface RefreshOptions {
   successText?: string;
   fallbackErrorText?: string;
-  preserveStatusTextOnError?: boolean;
   toastOnSuccess?: boolean;
   toastOnError?: boolean;
 }
 
 interface StatusCallbacks {
-  onStatusText?: (text: string) => void;
   onErrorText?: (text: string) => void;
   onToast?: (toast: { type: 'success' | 'info' | 'error'; text: string }) => void;
 }
@@ -56,10 +54,6 @@ export function useApifox() {
       const nextStatus = await refreshApifoxService(exportUrl);
       setApifoxStatus(nextStatus);
 
-      if (options?.successText) {
-        callbacks?.onStatusText?.(options.successText);
-      }
-
       if (options?.toastOnSuccess && options.successText) {
         callbacks?.onToast?.({ type: 'success', text: options.successText });
       }
@@ -75,10 +69,6 @@ export function useApifox() {
       });
 
       callbacks?.onErrorText?.(message);
-
-      if (!options?.preserveStatusTextOnError) {
-        callbacks?.onStatusText?.(message);
-      }
 
       if (options?.toastOnError) {
         callbacks?.onToast?.({ type: 'error', text: message });

@@ -462,17 +462,6 @@ input {
   word-break: break-word;
 }
 
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--muted);
-}
-
 .apifox-badge {
   display: inline-flex;
   align-items: center;
@@ -516,17 +505,42 @@ input {
   box-shadow: 0 0 0 4px rgba(47, 138, 95, 0.14);
 }
 
-.status-row p {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
+.filter-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.filter-summary {
-  margin-bottom: 12px;
-  font-size: 12px;
-  line-height: 1.5;
+.filter-summary-item {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(31, 37, 32, 0.08);
+}
+
+.filter-summary-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  line-height: 1.4;
   color: var(--muted);
+}
+
+.filter-summary-value {
+  display: block;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-summary-value-danger {
+  color: #a12e24;
 }
 
 .settings-actions {
@@ -547,25 +561,6 @@ input {
   font-size: 12px;
   line-height: 1.5;
   color: var(--muted);
-}
-
-.status-dot {
-  width: 9px;
-  height: 9px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-}
-
-.status-dot.pending {
-  background: #f0a33b;
-}
-
-.status-dot.success {
-  background: #2f8a5f;
-}
-
-.status-dot.danger {
-  background: #d5483b;
 }
 
 .request-list {
