@@ -158,10 +158,8 @@ function compareRuleValues(
     case '!==':
       return actual !== expected;
     case '==':
-      // eslint-disable-next-line eqeqeq
       return actual == expected;
     case '!=':
-      // eslint-disable-next-line eqeqeq
       return actual != expected;
     case '>=':
       return typeof actual === 'number' && typeof expected === 'number' && actual >= expected;

@@ -1,31 +1,23 @@
 import {
   ApifoxCacheStatus,
-  ApifoxMatchResult,
   CapturedResponsePayload,
   buildApifoxLookupMaps,
-  getMatchedResponseErrorRules,
-  getApifoxPathCandidates,
-  getApifoxLookupKey,
-  getUrlPath,
-  JsonValue,
   loadSettings,
   MAX_REQUESTS_PER_TAB,
   matchesMonitoredOrigins,
   NetworkRequestRecord,
-  RuntimeEventMessage,
   QuickCopySettings,
-  RuntimeRequestMessage,
-  RuntimeResponseMessage,
   SETTINGS_STORAGE_KEY,
-  normalizeHeaders,
-  sanitizeResponseSnapshot,
   withRequestAbnormalState,
 } from '@src/lib/quick-copy';
+import { getApifoxMatches as buildApifoxMatches } from '@pages/background/apifox-matches';
+import { registerRequestTrackingListeners } from '@pages/background/request-events';
+import { applyCapturedResponse as applyCapturedResponseToRequest } from '@pages/background/response-capture';
+import { registerRuntimeMessageListener } from '@pages/background/runtime-messages';
 
 const requestsByTab = new Map<number, NetworkRequestRecord[]>();
 const requestIndex = new Map<string, NetworkRequestRecord>();
 const tabUrlMap = new Map<number, string>();
-const TRACKED_RESOURCE_TYPES = new Set(['xmlhttprequest', 'fetch']);
 const apifoxEndpointMap = new Map<string, string>();
 const apifoxPathMap = new Map<string, string>();
 const apifoxNameMap = new Map<string, string>();
@@ -186,32 +178,8 @@ async function ensureRuntimeCacheReady() {
   await runtimeCacheReadyPromise;
 }
 
-function getResponseDebugSummary(response: JsonValue | undefined) {
-  if (!response || typeof response !== 'object' || Array.isArray(response)) {
-    return null;
-  }
-
-  const data = (response as Record<string, JsonValue>).data;
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    return null;
-  }
-
-  const list = (data as Record<string, JsonValue>).list;
-  if (!Array.isArray(list)) {
-    return null;
-  }
-
-  const pagination = (data as Record<string, JsonValue>).pagination;
-
-  return {
-    listLength: list.length,
-    paginationState:
-      pagination === undefined ? 'missing' : pagination === null ? 'null' : 'present',
-  };
-}
-
 function notifyTabRequestsUpdated(tabId: number) {
-  const message: RuntimeEventMessage = {
+  const message = {
     type: 'quick-copy/tab-requests-updated',
     tabId,
   };
@@ -407,205 +375,28 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
 }
 
 function getApifoxMatches(requests: Pick<NetworkRequestRecord, 'url' | 'method'>[]) {
-  const result: Record<string, ApifoxMatchResult> = {};
-
-  requests.forEach((request) => {
-    const path = getUrlPath(request.url);
-    const candidates = getApifoxPathCandidates(path);
-
-    let matchedUrl: string | undefined;
-    let matchedName: string | undefined;
-
-    for (const candidatePath of candidates) {
-      const exactKey = getApifoxLookupKey(candidatePath, request.method);
-
-      if (!matchedUrl) {
-        matchedUrl = apifoxEndpointMap.get(exactKey) ?? apifoxPathMap.get(candidatePath);
-      }
-      if (!matchedName) {
-        matchedName = apifoxNameMap.get(exactKey);
-      }
-      if (matchedUrl && matchedName) break;
-    }
-
-    if (matchedUrl) {
-      result[`${request.method.toUpperCase()} ${request.url}`] = {
-        apifoxUrl: matchedUrl,
-        apiName: matchedName,
-      };
-    }
+  return buildApifoxMatches(requests, {
+    endpointMap: apifoxEndpointMap,
+    nameMap: apifoxNameMap,
+    pathMap: apifoxPathMap,
   });
-
-  return result;
-}
-
-function findBestMatchingRequest(
-  tabId: number,
-  payload: CapturedResponsePayload,
-): NetworkRequestRecord | undefined {
-  const records = requestsByTab.get(tabId) ?? [];
-  const normalizedMethod = payload.method.toUpperCase();
-
-  return records
-    .filter(
-      (record) =>
-        record.url === payload.url &&
-        record.method.toUpperCase() === normalizedMethod &&
-        Math.abs(record.startedAt - payload.startedAt) <= 15000,
-    )
-    .sort((left, right) => {
-      const leftDiff = Math.abs(left.startedAt - payload.startedAt);
-      const rightDiff = Math.abs(right.startedAt - payload.startedAt);
-
-      if (leftDiff !== rightDiff) {
-        return leftDiff - rightDiff;
-      }
-
-      const leftHasResponse = left.responseSnapshot !== undefined ? 1 : 0;
-      const rightHasResponse = right.responseSnapshot !== undefined ? 1 : 0;
-      return leftHasResponse - rightHasResponse;
-    })[0];
 }
 
 function applyCapturedResponse(tabId: number, payload: CapturedResponsePayload) {
-  const matchedRequest = findBestMatchingRequest(tabId, payload);
-  if (!matchedRequest) {
-    const unmatchedSummary = getResponseDebugSummary(payload.response);
-    if (unmatchedSummary) {
-      console.log('[Quick Copy Ext] response payload not matched', {
-        tabId,
-        url: payload.url,
-        method: payload.method,
-        startedAt: payload.startedAt,
-        completedAt: payload.completedAt,
-        summary: unmatchedSummary,
-        response: payload.response,
-      });
-    }
-    return;
-  }
-
-  const requestParams: Record<string, unknown> | undefined =
-    payload.requestParams !== undefined
-      ? (payload.requestParams as Record<string, unknown>)
-      : matchedRequest.requestParams;
-
-  const responseSnapshot =
-    payload.response === undefined
-      ? matchedRequest.responseSnapshot
-      : sanitizeResponseSnapshot(payload.response);
-  const debugSummary = getResponseDebugSummary(responseSnapshot);
-  const matchedRules = getMatchedResponseErrorRules(responseSnapshot, responseErrorRule).map(
-    (rule) => rule.label,
-  );
-
-  if (debugSummary) {
-    console.log('[Quick Copy Ext] apply captured response', {
-      tabId,
-      requestId: matchedRequest.requestId,
-      recordId: matchedRequest.id,
-      url: payload.url,
-      method: payload.method,
-      startedAt: payload.startedAt,
-      completedAt: payload.completedAt,
-      statusCode: payload.statusCode ?? matchedRequest.statusCode,
-      summary: debugSummary,
-      matchedRules,
-      rawResponse: payload.response,
-      responseSnapshot,
-    });
-  }
-
-  replaceRequestRecord(
-    withRequestAbnormalState(
-      {
-        ...matchedRequest,
-        statusCode: payload.statusCode ?? matchedRequest.statusCode,
-        completedAt: payload.completedAt || matchedRequest.completedAt,
-        responseSnapshot,
-        requestParams,
-      },
-      responseErrorRule,
-    ),
-  );
+  applyCapturedResponseToRequest(tabId, payload, {
+    getRecordsByTabId: (currentTabId) => requestsByTab.get(currentTabId) ?? [],
+    replaceRequestRecord,
+    responseErrorRule,
+  });
 }
 
-chrome.webRequest.onBeforeRequest.addListener(
-  (details) => {
-    if (details.tabId < 0 || !TRACKED_RESOURCE_TYPES.has(details.type)) {
-      return undefined;
-    }
-
-    if (!shouldTrackRequest(details.tabId, details.initiator)) {
-      return undefined;
-    }
-
-    upsertRequest({
-      id: `${details.requestId}-${details.timeStamp}`,
-      requestId: details.requestId,
-      tabId: details.tabId,
-      url: details.url,
-      method: details.method,
-      type: details.type,
-      initiator: details.initiator,
-      startedAt: Math.round(details.timeStamp),
-      headers: {},
-    });
-
-    return undefined;
-  },
-  { urls: ['<all_urls>'] },
-);
-
-chrome.webRequest.onCompleted.addListener(
-  (details) => {
-    if (details.tabId < 0 || !TRACKED_RESOURCE_TYPES.has(details.type)) {
-      return;
-    }
-
-    if (!requestIndex.has(details.requestId)) {
-      return;
-    }
-
-    updateRequest(details.requestId, (record) =>
-      withRequestAbnormalState(
-        {
-          ...record,
-          statusCode: details.statusCode,
-          completedAt: Math.round(details.timeStamp),
-          headers: normalizeHeaders(details.responseHeaders),
-        },
-        responseErrorRule,
-      ),
-    );
-  },
-  { urls: ['<all_urls>'] },
-  ['responseHeaders'],
-);
-
-chrome.webRequest.onErrorOccurred.addListener(
-  (details) => {
-    if (details.tabId < 0 || !TRACKED_RESOURCE_TYPES.has(details.type)) {
-      return;
-    }
-
-    if (!requestIndex.has(details.requestId)) {
-      return;
-    }
-
-    updateRequest(details.requestId, (record) =>
-      withRequestAbnormalState(
-        {
-          ...record,
-          completedAt: Math.round(details.timeStamp),
-          error: details.error,
-        },
-        responseErrorRule,
-      ),
-    );
-  },
-  { urls: ['<all_urls>'] },
-);
+registerRequestTrackingListeners({
+  requestIndex,
+  shouldTrackRequest,
+  upsertRequest,
+  updateRequest,
+  getResponseErrorRule: () => responseErrorRule,
+});
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrlMap.delete(tabId);
@@ -640,101 +431,18 @@ void refreshMonitoredOrigins()
     monitoredOrigins = [];
   });
 
-chrome.runtime.onMessage.addListener(
-  (
-    message: RuntimeRequestMessage,
-    sender,
-    sendResponse: (response: RuntimeResponseMessage | { ok: true; data: unknown } | { ok: false; error: string }) => void,
-  ) => {
-    if (message.type === 'quick-copy/get-tab-requests') {
-      void ensureRuntimeCacheReady()
-        .then(() => {
-          const requests = requestsByTab.get(message.tabId) ?? [];
-          sendResponse({ ok: true, data: requests });
-        })
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '读取请求记录失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/clear-tab-requests') {
-      void ensureRuntimeCacheReady()
-        .then(() => {
-          clearTabRequests(message.tabId);
-          sendResponse({ ok: true, data: [] });
-        })
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '清空请求记录失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/get-apifox-status') {
-      void ensureApifoxCacheReady()
-        .then(() => {
-          sendResponse({ ok: true, data: apifoxStatus });
-        })
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '读取 Apifox 状态失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/clear-apifox-data') {
-      void ensureApifoxCacheReady()
-        .then(async () => {
-          resetApifoxCache('');
-          await persistApifoxCache();
-          sendResponse({ ok: true, data: apifoxStatus });
-        })
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '清空 Apifox 数据失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/get-apifox-matches') {
-      void ensureApifoxCacheReady()
-        .then(() => {
-          sendResponse({ ok: true, data: getApifoxMatches(message.requests) });
-        })
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '读取 Apifox 匹配失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/refresh-apifox-data') {
-      void ensureApifoxCacheReady()
-        .then(() => refreshApifoxData(message.exportUrl))
-        .then((status) => sendResponse({ ok: true, data: status }))
-        .catch((error: unknown) => {
-          const messageText = error instanceof Error ? error.message : '刷新 Apifox 数据失败。';
-          sendResponse({ ok: false, error: messageText });
-        });
-      return true;
-    }
-
-    if (message.type === 'quick-copy/report-response-body') {
-      const tabId = sender.tab?.id;
-
-      if (typeof tabId === 'number') {
-        void ensureRuntimeCacheReady().then(() => {
-          applyCapturedResponse(tabId, message.payload);
-        });
-      }
-
-      sendResponse({ ok: true, data: null });
-      return false;
-    }
-
-    sendResponse({ ok: false, error: 'Unknown message type.' });
-    return false;
+registerRuntimeMessageListener({
+  applyCapturedResponse,
+  clearTabRequests,
+  ensureApifoxCacheReady,
+  ensureRuntimeCacheReady,
+  getApifoxMatches,
+  getApifoxStatus: () => apifoxStatus,
+  getRequestsByTabId: (tabId) => requestsByTab.get(tabId) ?? [],
+  persistClearedApifoxCache: async () => {
+    resetApifoxCache('');
+    await persistApifoxCache();
+    return apifoxStatus;
   },
-);
+  refreshApifoxData,
+});
