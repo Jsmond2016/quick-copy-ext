@@ -43,11 +43,36 @@ input {
 }
 
 .popup-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   padding: 2px 0 6px;
   font-size: 12px;
   line-height: 1.4;
   color: var(--muted);
   text-align: center;
+}
+
+.popup-version-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.popup-version-divider {
+  color: rgba(109, 106, 100, 0.72);
+}
+
+.popup-version-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.popup-version-link:hover {
+  color: var(--brand-deep);
+  text-decoration: underline;
 }
 
 .toast {

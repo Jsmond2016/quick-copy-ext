@@ -44,6 +44,24 @@ import {
   SettingsFormState,
 } from '@pages/popup/utils/settings-form';
 
+const POPUP_FOOTER_LINKS = [
+  {
+    label: '更新日志',
+    href: 'https://github.com/Jsmond2016/quick-copy-ext/blob/main/CHANGELOG.md',
+    title: 'quick-copy-ext/CHANGELOG.md at main · Jsmond2016/quick-copy-ext',
+  },
+  {
+    label: 'quick-copy-ext',
+    href: 'https://github.com/Jsmond2016/quick-copy-ext',
+    title: 'GitHub - Jsmond2016/quick-copy-ext: 在 web 页面中快速复制接口信息，用于反馈给开发和测试',
+  },
+  {
+    label: 'Jsmond2016',
+    href: 'https://github.com/Jsmond2016',
+    title: 'Jsmond2016 - Overview',
+  },
+] as const;
+
 export default function Popup() {
   const versionText = `当前版本：v${pkg.version}`;
   const [note, setNote] = useState('');
@@ -604,7 +622,23 @@ export default function Popup() {
         />
       )}
 
-      <div className="popup-version">{versionText}</div>
+      <div className="popup-version">
+        <span>{versionText}</span>
+        {POPUP_FOOTER_LINKS.map((link) => (
+          <span key={link.href} className="popup-version-segment">
+            <span className="popup-version-divider" aria-hidden="true">|</span>
+            <a
+              className="popup-version-link"
+              href={link.href}
+              target="_blank"
+              rel="noreferrer"
+              title={link.title}
+            >
+              {link.label}
+            </a>
+          </span>
+        ))}
+      </div>
     </main>
   );
 }
