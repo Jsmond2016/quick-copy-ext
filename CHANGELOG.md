@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.37](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.36...v1.4.37) (2026-06-04)
+
+
+### Features
+
+* 文案调整，不显示总接口数量；默认选中接口入参 ([996d3bc](https://github.com/Jsmond2016/quick-copy-ext/commit/996d3bc31ddf6f10490bbe0d062c7da641622834))
+
 ## [1.4.36](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.35...v1.4.36) (2026-06-01)
 
 
