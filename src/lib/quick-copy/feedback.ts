@@ -2,6 +2,17 @@ import { formatDuration, formatTime, getTraceId, getUrlAfterOrigin } from './url
 import { getResponseMessage, getResponseRtnValue } from './response-rules';
 import type { CopyPayload, JsonValue, NetworkRequestRecord } from './types';
 
+function getUrlPathname(url: string | undefined): string {
+  if (!url) return '-';
+
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname + parsed.search;
+  } catch {
+    return '-';
+  }
+}
+
 function getJsonObjectValue(
   value: JsonValue | undefined,
   path: string[],
@@ -74,13 +85,13 @@ function formatAbnormalReasonForCopy(request: NetworkRequestRecord): string {
     }
   }
 
-  return abnormalReasons[0] ?? 'N/A';
+  return abnormalReasons[0] ?? '-';
 }
 
 export function buildFeedbackText(payload: CopyPayload): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
-  const normalizedNote = payload.note.trim() || 'N/A';
-  const normalizedScreenshotLabel = payload.screenshotLabel.trim() || 'N/A';
+  const normalizedNote = payload.note.trim() || '-';
+  const normalizedScreenshotLabel = payload.screenshotLabel.trim() || '-';
   const abnormalRequestsTitle =
     payload.requests.length > 1 ? `接口信息-${payload.requests.length}条接口` : '接口信息';
   const sections: string[] = [
@@ -91,8 +102,9 @@ export function buildFeedbackText(payload: CopyPayload): string {
     '',
     'Web 信息：',
     '',
-    `- 页面 URL：${payload.page.url || 'N/A'}`,
-    `- 页面标题：${payload.page.title || 'N/A'}`,
+    `- 页面 URL：${payload.page.url || '-'}`,
+    `- URL-pathname：${getUrlPathname(payload.page.url)}`,
+    `- 页面标题：${payload.page.title || '-'}`,
     '',
     `${abnormalRequestsTitle}：`,
     '',
@@ -108,7 +120,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
 
       sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
-      sections.push(`- 状态码: ${request.statusCode ?? 'N/A'}`);
+      sections.push(`- 状态码: ${request.statusCode ?? '-'}`);
 
       if (request.abnormalReasons && request.abnormalReasons.length > 0) {
         sections.push(`- 异常原因: ${formatAbnormalReasonForCopy(request)}`);
@@ -116,7 +128,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
 
       sections.push(`- 请求时间: ${formatTime(request.startedAt)}`);
       sections.push(`- 耗时: ${formatDuration(request.startedAt, request.completedAt)}`);
-      sections.push(`- apifox: ${request.apifoxUrl ?? 'N/A'}`);
+      sections.push(`- apifox: ${request.apifoxUrl ?? '-'}`);
 
       if (payload.includeRequestParams && request.requestParams) {
         sections.push('- 接口入参:');

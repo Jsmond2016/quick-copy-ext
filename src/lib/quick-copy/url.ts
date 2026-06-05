@@ -64,12 +64,12 @@ export function getTraceId(headers: HeaderRecord): string {
     }
   }
 
-  return 'N/A';
+  return '-';
 }
 
 export function getCompactText(value: string, head = 8, tail = 6): string {
   if (!value) {
-    return 'N/A';
+    return '-';
   }
 
   if (value.length <= head + tail + 3) {

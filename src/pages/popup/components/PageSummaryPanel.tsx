@@ -21,11 +21,11 @@ export function PageSummaryPanel({
       <dl className="page-meta">
         <div>
           <dt>标题</dt>
-          <dd title={page.title}>{page.title || 'N/A'}</dd>
+          <dd title={page.title}>{page.title || '-'}</dd>
         </div>
         <div>
           <dt>URL</dt>
-          <dd title={page.url}>{getDisplayPath(page.url) || 'N/A'}</dd>
+          <dd title={page.url}>{getDisplayPath(page.url) || '-'}</dd>
         </div>
         {page.url && !pageMonitoringEnabled && (
           <div>

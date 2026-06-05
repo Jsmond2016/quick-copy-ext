@@ -95,7 +95,7 @@ export function usePopupFeedbackActions({
         requests: requestsWithApifox,
         feedbackTitle: hasAbnormalRequest ? '存在接口状态或返回异常' : settings.feedbackTitle,
         note,
-        screenshotLabel: 'N/A',
+        screenshotLabel: '-',
         customFields: settings.customFields,
         includeRequestParams,
       }),
