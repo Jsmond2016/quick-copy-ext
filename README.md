@@ -8,7 +8,7 @@
 > 说明：插件市场审核慢，安装的可能不是最新版本
 
 - Edge 插件市场：[Quick Copy Ext](https://microsoftedge.microsoft.com/addons/detail/quick-copy-ext/fnmgpnhfffhkfdfpmnncngaoffpapcfn)
-
+- Chrome 插件市场：[Quick Copy Ext](https://chromewebstore.google.com/detail/quick-copy-ext/okaggkbgnihmpaonaonhlcjcedbfbjcg?hl=zh-CN&utm_source=ext_sidebar)
 ## 功能特性
 
 - 自动读取当前页面 URL 与标题
