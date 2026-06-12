@@ -137,15 +137,9 @@ export function RequestHistoryPanel({
           <strong className="filter-summary-value">{apiPrefixSummary}</strong>
         </div>
         <div className="filter-summary-item">
-          <span className="filter-summary-label">命中接口 / 总接口</span>
+          <span className="filter-summary-label">命中 / 异常 / 总数</span>
           <strong className="filter-summary-value">
-            {filteredRequests.length} / {requests.length}
-          </strong>
-        </div>
-        <div className="filter-summary-item">
-          <span className="filter-summary-label">异常接口</span>
-          <strong className="filter-summary-value filter-summary-value-danger">
-            {abnormalCount} 条
+            {filteredRequests.length} / <span className="filter-summary-value-danger">{abnormalCount}</span> / {requests.length}
           </strong>
         </div>
         <div className="filter-summary-item">
