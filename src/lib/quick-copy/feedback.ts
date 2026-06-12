@@ -1,6 +1,6 @@
 import { formatDuration, formatTime, getTraceId, getUrlAfterOrigin } from './url';
 import { getResponseMessage, getResponseRtnValue } from './response-rules';
-import type { CopyPayload, JsonValue, NetworkRequestRecord } from './types';
+import type { CopyPayload, JsonValue, NetworkRequestRecord, PageSummary } from './types';
 
 function getUrlPathname(url: string | undefined): string {
   if (!url) return '-';
@@ -86,6 +86,42 @@ function formatAbnormalReasonForCopy(request: NetworkRequestRecord): string {
   }
 
   return abnormalReasons[0] ?? '-';
+}
+
+export function buildWebOnlyText(payload: {
+  page: PageSummary;
+  feedbackTitle: string;
+  note: string;
+  customFields: string[];
+}): string {
+  const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
+  const normalizedNote = payload.note.trim() || '-';
+  const sections: string[] = [
+    `- 问题：${normalizedNote}`,
+    `- 截图：-`,
+    '',
+    `=== ${normalizedTitle}`,
+    '',
+    'Web 信息：',
+    '',
+    `- 页面 URL：${payload.page.url || '-'}`,
+    `- URL-pathname：${getUrlPathname(payload.page.url)}`,
+    `- 页面标题：${payload.page.title || '-'}`,
+    '',
+  ];
+
+  if (payload.customFields.length !== 0) {
+    sections.push('---');
+    sections.push('');
+    payload.customFields.forEach((field) => {
+      sections.push(`- ${field}`);
+    });
+  }
+
+  sections.push('');
+  sections.push('=== From Quick Copy Ext');
+
+  return sections.join('\n');
 }
 
 export function buildFeedbackText(payload: CopyPayload): string {

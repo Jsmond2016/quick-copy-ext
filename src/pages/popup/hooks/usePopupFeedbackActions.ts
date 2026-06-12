@@ -2,6 +2,7 @@ import { useBoolean } from 'ahooks';
 import {
   ApifoxCacheStatus,
   buildFeedbackText,
+  buildWebOnlyText,
   dedupeBatchQuickMockUrls,
   NetworkRequestRecord,
   PageSummary,
@@ -107,12 +108,26 @@ export function usePopupFeedbackActions({
     setErrorText('');
 
     try {
-      const { count, text } = await buildCopyText();
-      await navigator.clipboard.writeText(text);
-      setToast({
-        type: 'success',
-        text: `复制成功，已写入 ${count} 条接口信息。`,
-      });
+      if (selectedIds.length === 0) {
+        const text = buildWebOnlyText({
+          page,
+          feedbackTitle: settings.feedbackTitle,
+          note,
+          customFields: settings.customFields,
+        });
+        await navigator.clipboard.writeText(text);
+        setToast({
+          type: 'success',
+          text: '复制成功，已写入 Web 信息。',
+        });
+      } else {
+        const { count, text } = await buildCopyText();
+        await navigator.clipboard.writeText(text);
+        setToast({
+          type: 'success',
+          text: `复制成功，已写入 ${count} 条接口信息。`,
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : '复制失败。';
       setErrorText(message);

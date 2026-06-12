@@ -131,11 +131,11 @@ export function NotePanel({
           </button>
           <button
             className="primary-button action-button inline-button"
-            disabled={copying || selectedCount === 0}
+            disabled={copying}
             onClick={onCopy}
             type="button"
           >
-            {copying ? '复制中...' : '复制接口信息'}
+            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制接口信息')}
           </button>
         </div>
       ) : mode === 'tester' && testerAioConfigs.length > 0 ? (
@@ -150,21 +150,21 @@ export function NotePanel({
           </button>
           <button
             className="primary-button action-button inline-button"
-            disabled={copying || selectedCount === 0}
+            disabled={copying}
             onClick={onCopy}
             type="button"
           >
-            {copying ? '复制中...' : '复制接口信息'}
+            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制接口信息')}
           </button>
         </div>
       ) : (
         <button
           className="primary-button"
-          disabled={copying || selectedCount === 0}
+          disabled={copying}
           onClick={onCopy}
           type="button"
         >
-          {copying ? '复制中...' : '复制页面接口信息'}
+          {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制页面接口信息')}
         </button>
       )}
     </section>
