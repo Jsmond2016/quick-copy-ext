@@ -78,7 +78,6 @@ export function NotePanel({
               </button>
             </label>
           ) : null}
-          <span className="counter">{selectedCount} 项已选</span>
         </div>
       </div>
 
@@ -135,7 +134,7 @@ export function NotePanel({
             onClick={onCopy}
             type="button"
           >
-            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制接口信息')}
+            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : `复制 ${selectedCount} 条接口信息`)}
           </button>
         </div>
       ) : mode === 'tester' && testerAioConfigs.length > 0 ? (
@@ -154,7 +153,7 @@ export function NotePanel({
             onClick={onCopy}
             type="button"
           >
-            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制接口信息')}
+            {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : `复制${selectedCount}条接口信息`)}
           </button>
         </div>
       ) : (
@@ -164,7 +163,7 @@ export function NotePanel({
           onClick={onCopy}
           type="button"
         >
-          {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : '复制页面接口信息')}
+          {copying ? '复制中...' : (selectedCount === 0 ? '复制 Web 信息' : `复制${selectedCount}条接口信息`)}
         </button>
       )}
     </section>

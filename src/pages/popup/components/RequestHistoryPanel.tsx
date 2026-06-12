@@ -148,6 +148,12 @@ export function RequestHistoryPanel({
             {abnormalCount} 条
           </strong>
         </div>
+        <div className="filter-summary-item">
+          <span className="filter-summary-label">已选接口</span>
+          <strong className="filter-summary-value">
+            {selectedIds.length} 条
+          </strong>
+        </div>
       </div>
 
       <div className="request-list">
