@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.38](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.37...v1.4.38) (2026-06-15)
+
+
+### Features
+
+* **popup:** 新增已选接口列并优化复制按钮 ([d153e7f](https://github.com/Jsmond2016/quick-copy-ext/commit/d153e7f238e011b4d779c6af7a74b337ad5a82c0))
+* **popup:** 无选中接口时支持复制 Web 信息 ([78fc184](https://github.com/Jsmond2016/quick-copy-ext/commit/78fc1847f22ffacd5c05f57a1f53a386b3566c2e))
+* **utils:** 复制接口信息增加 URL-pathname 字段，统一空值占位符为 - ([d4b5068](https://github.com/Jsmond2016/quick-copy-ext/commit/d4b5068de39260755bf98028be05a65d913f2509))
+
 ## [1.4.37](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.36...v1.4.37) (2026-06-04)
 
 
