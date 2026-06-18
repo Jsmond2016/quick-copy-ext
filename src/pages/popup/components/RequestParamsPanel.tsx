@@ -1,19 +1,25 @@
-import { TesterAioConfig } from '@src/lib/quick-copy';
+import { EnvironmentConfig, TesterAioConfig } from '@src/lib/quick-copy';
 
 interface RequestParamsPanelProps {
   includeRequestParams: boolean;
   testerAioConfigs: TesterAioConfig[];
   selectedTesterAioConfigId: string;
+  environments: EnvironmentConfig[];
+  includeEnvironment: boolean;
   onToggleRequestParams: () => void;
   onSelectedTesterAioConfigChange: (value: string) => void;
+  onToggleEnvironment: () => void;
 }
 
 export function RequestParamsPanel({
   includeRequestParams,
   testerAioConfigs,
   selectedTesterAioConfigId,
+  environments,
+  includeEnvironment,
   onToggleRequestParams,
   onSelectedTesterAioConfigChange,
+  onToggleEnvironment,
 }: RequestParamsPanelProps) {
   return (
     <section className="panel">
@@ -31,7 +37,17 @@ export function RequestParamsPanel({
         />
         包含接口入参
       </label>
-      <p className="request-params-hint">开启后，复制内容会附带已捕获到的接口入参信息。</p>
+
+      {environments.length > 0 ? (
+        <label className="checkbox-row request-params-row">
+          <input
+            type="checkbox"
+            checked={includeEnvironment}
+            onChange={onToggleEnvironment}
+          />
+          环境 {environments[0].name}
+        </label>
+      ) : null}
 
       {testerAioConfigs.length > 0 ? (
         <label className="field-block request-params-select">

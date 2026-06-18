@@ -224,6 +224,36 @@ input {
   color: #b42318;
 }
 
+.hero-env-links {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hero-env-label {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.hero-env-link {
+  color: var(--brand-deep);
+  text-decoration: none;
+  transition: opacity 0.18s ease;
+}
+
+.hero-env-link:hover {
+  opacity: 0.7;
+  text-decoration: underline;
+}
+
+.hero-env-separator {
+  color: var(--muted);
+}
+
 .panel {
   padding: 14px;
 }
@@ -505,6 +535,24 @@ input {
   box-shadow: 0 0 0 4px rgba(47, 138, 95, 0.14);
 }
 
+.env-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  background: rgba(219, 234, 254, 0.9);
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e40af;
+  text-decoration: none;
+  transition: opacity 0.18s ease;
+}
+
+.env-badge:hover {
+  opacity: 0.8;
+}
+
 .filter-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -717,6 +765,10 @@ input {
   border: 1px solid rgba(31, 37, 32, 0.08);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.62);
+}
+
+.request-params-row + .request-params-row {
+  margin-top: 8px;
 }
 
 .request-params-hint {

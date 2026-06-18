@@ -93,6 +93,10 @@ export function buildWebOnlyText(payload: {
   feedbackTitle: string;
   note: string;
   customFields: string[];
+  selectedEnvironment?: {
+    name: string;
+    url: string;
+  };
 }): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || '-';
@@ -105,10 +109,14 @@ export function buildWebOnlyText(payload: {
     'Web 信息：',
     '',
     `- 页面 URL：${payload.page.url || '-'}`,
-    `- URL-pathname：${getUrlPathname(payload.page.url)}`,
     `- 页面标题：${payload.page.title || '-'}`,
-    '',
   ];
+
+  if (payload.selectedEnvironment) {
+    sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+  }
+
+  sections.push('');
 
   if (payload.customFields.length !== 0) {
     sections.push('---');
@@ -139,12 +147,16 @@ export function buildFeedbackText(payload: CopyPayload): string {
     'Web 信息：',
     '',
     `- 页面 URL：${payload.page.url || '-'}`,
-    `- URL-pathname：${getUrlPathname(payload.page.url)}`,
     `- 页面标题：${payload.page.title || '-'}`,
-    '',
-    `${abnormalRequestsTitle}：`,
-    '',
   ];
+
+  if (payload.selectedEnvironment) {
+    sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+  }
+
+  sections.push('');
+  sections.push(`${abnormalRequestsTitle}：`);
+  sections.push('');
 
   if (payload.requests.length === 0) {
     sections.push('- 未选择异常接口');

@@ -1,9 +1,11 @@
 import { useBoolean } from 'ahooks';
 import {
   ApifoxCacheStatus,
+  buildEnvironmentUrl,
   buildFeedbackText,
   buildWebOnlyText,
   dedupeBatchQuickMockUrls,
+  EnvironmentConfig,
   NetworkRequestRecord,
   PageSummary,
   QuickCopySettings,
@@ -29,6 +31,7 @@ interface UsePopupFeedbackActionsOptions {
   selectedIds: string[];
   selectedRequests: NetworkRequestRecord[];
   selectedTesterAioConfig: { bugUrl: string; iterationName: string } | null;
+  selectedEnvironment: EnvironmentConfig | null;
   setApifoxStatus: (status: ApifoxCacheStatus) => void;
   setErrorText: (value: string) => void;
   setRequests: (
@@ -66,6 +69,7 @@ export function usePopupFeedbackActions({
   selectedIds,
   selectedRequests,
   selectedTesterAioConfig,
+  selectedEnvironment,
   setApifoxStatus,
   setErrorText,
   setRequests,
@@ -99,6 +103,12 @@ export function usePopupFeedbackActions({
         screenshotLabel: '-',
         customFields: settings.customFields,
         includeRequestParams,
+        selectedEnvironment: selectedEnvironment
+          ? {
+              name: selectedEnvironment.name,
+              url: buildEnvironmentUrl(selectedEnvironment.url, page.url),
+            }
+          : undefined,
       }),
     };
   }
@@ -114,6 +124,12 @@ export function usePopupFeedbackActions({
           feedbackTitle: settings.feedbackTitle,
           note,
           customFields: settings.customFields,
+          selectedEnvironment: selectedEnvironment
+            ? {
+                name: selectedEnvironment.name,
+                url: buildEnvironmentUrl(selectedEnvironment.url, page.url),
+              }
+            : undefined,
         });
         await navigator.clipboard.writeText(text);
         setToast({

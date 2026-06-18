@@ -50,6 +50,10 @@ export interface CopyPayload extends PopupPayload {
   screenshotLabel: string;
   customFields: string[];
   includeRequestParams: boolean;
+  selectedEnvironment?: {
+    name: string;
+    url: string;
+  };
 }
 
 export type QuickCopyMode = 'default' | 'developer' | 'tester';
@@ -58,6 +62,12 @@ export interface TesterAioConfig {
   id: string;
   iterationName: string;
   bugUrl: string;
+}
+
+export interface EnvironmentConfig {
+  id: string;
+  name: string;
+  url: string;
 }
 
 export interface QuickCopySettings {
@@ -71,6 +81,7 @@ export interface QuickCopySettings {
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];
+  environments: EnvironmentConfig[];
 }
 
 export type RuntimeRequestMessage =

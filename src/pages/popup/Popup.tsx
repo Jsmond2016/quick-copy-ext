@@ -6,6 +6,7 @@ import {
   isDefaultSettings,
   isValidResponseErrorRuleConfig,
   loadSettings,
+  matchCurrentEnvironment,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
   QuickCopyMode,
@@ -42,18 +43,22 @@ export default function Popup() {
   const [note, setNote] = useState('');
   const [savingSettings, { setTrue: startSavingSettings, setFalse: stopSavingSettings }] = useBoolean(false);
   const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(true);
+  const [includeEnvironment, { toggle: toggleIncludeEnvironment }] = useBoolean(true);
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const {
     addTesterAioConfig,
+    addEnvironment,
     closeConfigModal,
     closeSettings,
     configModalContent,
     configModalMode,
     moveTesterAioConfig,
+    moveEnvironment,
     openConfigModal,
     openSettings,
     removeTesterAioConfig,
+    removeEnvironment,
     selectedTesterAioConfigId,
     setConfigModalContent,
     setConfigModalMode,
@@ -68,6 +73,7 @@ export default function Popup() {
     updateMode,
     updateSettingsForm,
     updateTesterAioConfig,
+    updateEnvironment,
   } = usePopupSettingsState();
   const {
     apifoxStatus,
@@ -106,6 +112,11 @@ export default function Popup() {
     [selectedTesterAioConfigId, settings.testerAioConfigs],
   );
 
+  const selectedEnvironment = useMemo(
+    () => (includeEnvironment && settings.environments.length > 0 ? settings.environments[0] : null),
+    [includeEnvironment, settings.environments],
+  );
+
   const {
     selectedIds,
     selectedRequests,
@@ -133,6 +144,7 @@ export default function Popup() {
     selectedIds,
     selectedRequests,
     selectedTesterAioConfig,
+    selectedEnvironment,
     setApifoxStatus,
     setErrorText,
     setRequests,
@@ -148,6 +160,7 @@ export default function Popup() {
       setSettingsForm(createSettingsFormState(loadedSettings));
       setUseQuickFill(loadedSettings.quickFillTemplates.length > 0);
       setSelectedTesterAioConfigId(loadedSettings.testerAioConfigs[0]?.id ?? '');
+
       const currentApifoxStatus = loadedSettings.apifoxExportUrl
         ? await getApifoxStatus()
         : DEFAULT_APIFOX_STATUS;
@@ -327,6 +340,7 @@ export default function Popup() {
         pageMonitoringEnabled={pageMonitoringEnabled}
         refreshingApifox={refreshingApifox}
         showSettings={showSettings}
+        environments={settings.environments}
         onRefreshApifox={() => {
           if (!settings.apifoxExportUrl) {
             openSettings();
@@ -357,6 +371,7 @@ export default function Popup() {
         settingsForm={settingsForm}
         showSettings={showSettings}
         useQuickFill={useQuickFill}
+        includeEnvironment={includeEnvironment}
         onAddTesterAioConfig={addTesterAioConfig}
         onCancelSettings={closeSettings}
         onClearRequests={() => {
@@ -379,10 +394,15 @@ export default function Popup() {
         onSaveSettings={() => void handleSaveSettings()}
         onSelectAll={selectAll}
         onSelectedTesterAioConfigChange={setSelectedTesterAioConfigId}
+        onToggleEnvironment={toggleIncludeEnvironment}
         onToggleQuickFill={toggleUseQuickFill}
         onToggleRequest={toggleRequest}
         onToggleRequestParams={toggleIncludeRequestParams}
         onTesterAioConfigChange={updateTesterAioConfig}
+        onEnvironmentChange={updateEnvironment}
+        onMoveEnvironment={moveEnvironment}
+        onAddEnvironment={addEnvironment}
+        onRemoveEnvironment={removeEnvironment}
       />
 
       {showConfigModal && (

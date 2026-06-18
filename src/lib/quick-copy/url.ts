@@ -243,3 +243,94 @@ export function dedupeBatchQuickMockUrls(rawUrls: string[]): string[] {
     return result;
   }, []);
 }
+
+const LOCALHOST_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]']);
+
+/**
+ * 将用户填写的环境网址（可能缺少协议，如 `www.fat.baidu.com`）补全为完整 URL 对象。
+ * 解析失败时返回 null。
+ */
+function parseEnvironmentUrl(rawUrl: string): URL | null {
+  const trimmed = rawUrl.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    return parsed.hostname ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 当前页面是否运行在本地（hostname 完全等于 localhost 或 127.0.0.1）。 */
+export function isLocalhostUrl(rawUrl: string): boolean {
+  try {
+    const hostname = new URL(rawUrl).hostname.toLowerCase();
+    return LOCALHOST_HOSTNAMES.has(hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 校验环境网址是否可用（补全协议后能解析出 hostname）。
+ */
+export function isValidEnvironmentUrl(rawUrl: string): boolean {
+  return parseEnvironmentUrl(rawUrl) !== null;
+}
+
+/**
+ * 构建环境跳转地址：
+ * - 无论是 localhost 还是其他环境，都把当前页面的 pathname + search + hash 拼到目标环境域名上
+ * 解析失败时返回空字符串。
+ */
+export function buildEnvironmentUrl(envUrl: string, currentUrl: string): string {
+  const target = parseEnvironmentUrl(envUrl);
+
+  if (!target) {
+    return '';
+  }
+
+  try {
+    const current = new URL(currentUrl);
+    target.pathname = current.pathname;
+    target.search = current.search;
+    target.hash = current.hash;
+    return target.toString();
+  } catch {
+    return target.toString();
+  }
+}
+
+/**
+ * 匹配当前页面 URL 属于哪个环境配置。
+ * 通过对比 origin 来判断。
+ */
+export function matchCurrentEnvironment(
+  currentUrl: string,
+  environments: Array<{ name: string; url: string }>,
+): { name: string; url: string } | null {
+  if (!currentUrl || environments.length === 0) {
+    return null;
+  }
+
+  try {
+    const currentOrigin = new URL(currentUrl).origin.toLowerCase();
+
+    for (const env of environments) {
+      const envParsed = parseEnvironmentUrl(env.url);
+      if (envParsed && envParsed.origin.toLowerCase() === currentOrigin) {
+        return env;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}

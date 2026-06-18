@@ -2,7 +2,9 @@ import {
   buildApifoxExportUrl,
   getDefaultSettings,
   getApifoxProjectId,
+  isValidEnvironmentUrl,
   parseLines,
+  EnvironmentConfig,
   QuickCopyMode,
   QuickCopySettings,
   TesterAioConfig,
@@ -20,6 +22,7 @@ export interface SettingsFormState {
   mode: QuickCopyMode;
   quickMockTargetExtensionIdInput: string;
   testerAioConfigs: TesterAioConfig[];
+  environments: EnvironmentConfig[];
 }
 
 export interface PortableSettingsConfig {
@@ -33,6 +36,7 @@ export interface PortableSettingsConfig {
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];
+  environments: EnvironmentConfig[];
 }
 
 export function createSettingsFormState(settings: QuickCopySettings): SettingsFormState {
@@ -47,6 +51,7 @@ export function createSettingsFormState(settings: QuickCopySettings): SettingsFo
     mode: settings.mode,
     quickMockTargetExtensionIdInput: settings.quickMockTargetExtensionId,
     testerAioConfigs: settings.testerAioConfigs.map((item) => ({ ...item })),
+    environments: settings.environments.map((item) => ({ ...item })),
   };
 }
 
@@ -66,6 +71,7 @@ export function createPortableSettingsConfig(settings: QuickCopySettings): Porta
     mode: settings.mode,
     quickMockTargetExtensionId: settings.quickMockTargetExtensionId,
     testerAioConfigs: settings.testerAioConfigs.map((item) => ({ ...item })),
+    environments: settings.environments.map((item) => ({ ...item })),
   };
 }
 
@@ -83,6 +89,7 @@ export function createSettingsFormStateFromPortableConfig(
     mode: config.mode,
     quickMockTargetExtensionIdInput: config.quickMockTargetExtensionId,
     testerAioConfigs: config.testerAioConfigs.map((item) => ({ ...item })),
+    environments: config.environments.map((item) => ({ ...item })),
   };
 }
 
@@ -133,6 +140,15 @@ function sanitizePortableSettingsConfig(
             bugUrl: typeof item.bugUrl === 'string' ? item.bugUrl : '',
           }))
       : [],
+    environments: Array.isArray(current.environments)
+      ? current.environments
+          .filter((item): item is EnvironmentConfig => Boolean(item) && typeof item === 'object')
+          .map((item, index) => ({
+            id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `env-${index + 1}`,
+            name: typeof item.name === 'string' ? item.name : '',
+            url: typeof item.url === 'string' ? item.url : '',
+          }))
+      : [],
   };
 }
 
@@ -175,6 +191,24 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     throw new Error('Apifox 项目 ID 只能填写数字。');
   }
 
+  const environments = form.environments
+    .map((item) => ({
+      id: item.id,
+      name: item.name.trim(),
+      url: item.url.trim(),
+    }))
+    .filter((item) => item.name || item.url);
+
+  if (environments.some((item) => !item.name || !item.url)) {
+    throw new Error('环境配置请完整填写环境类型和网址。');
+  }
+
+  environments.forEach((item) => {
+    if (!isValidEnvironmentUrl(item.url)) {
+      throw new Error(`环境「${item.name}」的网址格式不正确。`);
+    }
+  });
+
   return {
     feedbackTitle: form.feedbackTitle.trim() || defaults.feedbackTitle,
     monitoredOrigins: parseLines(form.originInput),
@@ -186,5 +220,6 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     mode: form.mode,
     quickMockTargetExtensionId: form.quickMockTargetExtensionIdInput.trim(),
     testerAioConfigs,
+    environments,
   };
 }

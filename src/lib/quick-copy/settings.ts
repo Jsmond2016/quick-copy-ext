@@ -1,5 +1,5 @@
 import { DEFAULT_RESPONSE_ERROR_RULE, SETTINGS_STORAGE_KEY } from './constants';
-import type { QuickCopyMode, QuickCopySettings, TesterAioConfig } from './types';
+import type { EnvironmentConfig, QuickCopyMode, QuickCopySettings, TesterAioConfig } from './types';
 
 const DEFAULT_SETTINGS: QuickCopySettings = {
   feedbackTitle: '页面接口信息如下',
@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   mode: 'default',
   quickMockTargetExtensionId: '',
   testerAioConfigs: [],
+  environments: [],
 };
 
 function sanitizeStringArray(
@@ -64,6 +65,29 @@ function sanitizeTesterAioConfigs(value: unknown): TesterAioConfig[] {
   });
 }
 
+function sanitizeEnvironments(value: unknown): EnvironmentConfig[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item, index) => {
+    if (!item || typeof item !== 'object') {
+      return [];
+    }
+
+    const name = typeof item.name === 'string' ? item.name.trim() : '';
+    const url = typeof item.url === 'string' ? item.url.trim() : '';
+
+    if (!name || !url) {
+      return [];
+    }
+
+    const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `env-${index + 1}`;
+
+    return [{ id, name, url }];
+  });
+}
+
 function areStringArraysEqual(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
@@ -74,6 +98,15 @@ function areTesterAioConfigsEqual(left: TesterAioConfig[], right: TesterAioConfi
       (value, index) => value.id === right[index]?.id
         && value.iterationName === right[index]?.iterationName
         && value.bugUrl === right[index]?.bugUrl,
+    );
+}
+
+function areEnvironmentsEqual(left: EnvironmentConfig[], right: EnvironmentConfig[]): boolean {
+  return left.length === right.length
+    && left.every(
+      (value, index) => value.id === right[index]?.id
+        && value.name === right[index]?.name
+        && value.url === right[index]?.url,
     );
 }
 
@@ -108,6 +141,7 @@ export function normalizeSettings(
       defaults.quickMockTargetExtensionId,
     ),
     testerAioConfigs: sanitizeTesterAioConfigs(current?.testerAioConfigs),
+    environments: sanitizeEnvironments(current?.environments),
   };
 }
 
@@ -119,6 +153,7 @@ export function getDefaultSettings(): QuickCopySettings {
     customFields: [...DEFAULT_SETTINGS.customFields],
     quickFillTemplates: [...DEFAULT_SETTINGS.quickFillTemplates],
     testerAioConfigs: [...DEFAULT_SETTINGS.testerAioConfigs],
+    environments: [...DEFAULT_SETTINGS.environments],
   };
 }
 
@@ -135,7 +170,8 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     settings.responseErrorRule === defaults.responseErrorRule &&
     settings.mode === defaults.mode &&
     settings.quickMockTargetExtensionId === defaults.quickMockTargetExtensionId &&
-    areTesterAioConfigsEqual(settings.testerAioConfigs, defaults.testerAioConfigs)
+    areTesterAioConfigsEqual(settings.testerAioConfigs, defaults.testerAioConfigs) &&
+    areEnvironmentsEqual(settings.environments, defaults.environments)
   );
 }
 

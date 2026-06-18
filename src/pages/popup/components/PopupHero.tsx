@@ -1,4 +1,4 @@
-import { ApifoxCacheStatus, getApifoxProjectId, getDisplayPath, PageSummary } from '@src/lib/quick-copy';
+import { ApifoxCacheStatus, buildEnvironmentUrl, EnvironmentConfig, getApifoxProjectId, getDisplayPath, PageSummary } from '@src/lib/quick-copy';
 
 interface PopupHeroProps {
   apifoxStatus: ApifoxCacheStatus;
@@ -7,6 +7,7 @@ interface PopupHeroProps {
   page: PageSummary;
   pageMonitoringEnabled: boolean;
   showSettings: boolean;
+  environments: EnvironmentConfig[];
   onRefreshApifox: () => void;
   onToggleSettings: () => void;
 }
@@ -18,6 +19,7 @@ export function PopupHero({
   page,
   pageMonitoringEnabled,
   showSettings,
+  environments,
   onRefreshApifox,
   onToggleSettings,
 }: PopupHeroProps) {
@@ -42,6 +44,17 @@ export function PopupHero({
           <h1>页面信息一键复制</h1>
         </div>
         <div className="hero-actions">
+          {environments.length > 0 && (
+            <a
+              href={buildEnvironmentUrl(environments[0].url, page.url) || '#'}
+              rel="noreferrer"
+              target="_blank"
+              className="env-badge"
+              title={`跳转到 ${environments[0].name}: ${environments[0].url}`}
+            >
+              {environments[0].name.toUpperCase()}
+            </a>
+          )}
           <div className={`apifox-badge ${apifoxStatus.ready ? 'ready' : 'idle'}`}>
             <span className="apifox-badge-dot" />
             {apifoxLabel}
