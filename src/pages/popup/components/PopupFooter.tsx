@@ -11,12 +11,12 @@ const POPUP_FOOTER_LINKS: PopupFooterLink[] = [
     title: 'quick-copy-ext/CHANGELOG.md at main · Jsmond2016/quick-copy-ext',
   },
   {
-    label: 'quick-copy-ext',
+    label: 'Github',
     href: 'https://github.com/Jsmond2016/quick-copy-ext',
     title: 'GitHub - Jsmond2016/quick-copy-ext: 在 web 页面中快速复制接口信息，用于反馈给开发和测试',
   },
   {
-    label: 'Jsmond2016',
+    label: '作者-Jsmond2016',
     href: 'https://github.com/Jsmond2016',
     title: 'Jsmond2016 - Overview',
   },
