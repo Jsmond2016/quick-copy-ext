@@ -1,6 +1,7 @@
 import { ChangeEvent } from 'react';
 import { EnvironmentConfig, QuickCopyMode } from '@src/lib/quick-copy';
 import { SettingsFormState } from '@pages/popup/utils/settings-form';
+import { ScrollNavFab } from '@pages/popup/components/ScrollNavFab';
 
 interface SettingsPanelProps {
   form: SettingsFormState;
@@ -68,6 +69,7 @@ export function SettingsPanel({
   ];
 
   return (
+    <>
     <section className="panel">
       <div className="panel-head">
         <div>
@@ -352,5 +354,7 @@ export function SettingsPanel({
       </div>
       <p className="settings-hint">接口前缀与自定义字段保存后立即生效；Apifox 项目 ID 保存后会在后台异步刷新。</p>
     </section>
+    <ScrollNavFab />
+    </>
   );
 }
