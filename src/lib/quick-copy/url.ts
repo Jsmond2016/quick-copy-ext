@@ -308,6 +308,36 @@ export function buildEnvironmentUrl(envUrl: string, currentUrl: string): string 
 }
 
 /**
+ * 返回当前域名之外的其他环境配置，最多 max 个（默认 2）。
+ * 用于顶部导航 badge：在当前环境以外展示可跳转的其他环境。
+ */
+export function getOtherEnvironments(
+  currentUrl: string,
+  environments: Array<{ name: string; url: string }>,
+  max = 2,
+): Array<{ name: string; url: string }> {
+  if (environments.length === 0) {
+    return [];
+  }
+
+  let currentOrigin = '';
+  try {
+    currentOrigin = new URL(currentUrl).origin.toLowerCase();
+  } catch {
+    // 无法解析则不过滤，全部保留
+  }
+
+  const others = currentOrigin
+    ? environments.filter((env) => {
+        const parsed = parseEnvironmentUrl(env.url);
+        return !parsed || parsed.origin.toLowerCase() !== currentOrigin;
+      })
+    : environments.slice();
+
+  return others.slice(0, max);
+}
+
+/**
  * 匹配当前页面 URL 属于哪个环境配置。
  * 通过对比 origin 来判断。
  */
