@@ -39,9 +39,10 @@ export function PopupHero({
   return (
     <section className="hero-card">
       <div className="hero-topbar">
-        <div>
+        <div className="hero-title-group">
           <div className="hero-label">Quick Copy Ext</div>
           <h1>页面信息一键复制</h1>
+          <p>自动汇总页面与接口请求，便于快速复制反馈。</p>
         </div>
         <div className="hero-actions">
           {getOtherEnvironments(page.url, environments).map((env) => (
@@ -78,7 +79,6 @@ export function PopupHero({
           </button>
         </div>
       </div>
-      <p>自动汇总页面与接口请求，便于快速复制反馈。</p>
       <div className="hero-subline">
         {apifoxStatus.ready
           ? `Apifox 已就绪，已缓存 ${apifoxStatus.endpointCount} 条接口。`
