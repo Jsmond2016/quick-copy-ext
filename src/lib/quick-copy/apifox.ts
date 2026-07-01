@@ -33,7 +33,21 @@ export function normalizeApifoxUrl(rawUrl: string): string {
     return '';
   }
 
-  return trimmedUrl.replace(/-run(?=[?#]|$)/, '');
+  let url = trimmedUrl.replace(/-run(?=[?#]|$)/, '');
+
+  // Apifox 在线 API 返回的 x-run-in-apifox URL 含 /web/ 路径片段（如 /web/project/...），
+  // 但实际可访问的链接不带 /web/，需要去除
+  try {
+    const parsed = new URL(url);
+    if (parsed.pathname.startsWith('/web/')) {
+      parsed.pathname = parsed.pathname.replace(/^\/web/, '');
+      url = parsed.toString();
+    }
+  } catch {
+    // 非标准 URL 不处理
+  }
+
+  return url;
 }
 
 export function buildApifoxLookupMaps(schema: unknown): ApifoxLookupMaps {
