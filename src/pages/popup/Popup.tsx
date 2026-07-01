@@ -113,8 +113,8 @@ export default function Popup() {
   );
 
   const selectedEnvironment = useMemo(
-    () => (includeEnvironment && settings.environments.length > 0 ? settings.environments[0] : null),
-    [includeEnvironment, settings.environments],
+    () => (includeEnvironment ? matchCurrentEnvironment(page.url, settings.environments) : null),
+    [includeEnvironment, page.url, settings.environments],
   );
 
   const {
