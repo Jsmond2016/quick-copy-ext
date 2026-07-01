@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.39](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.38...v1.4.39) (2026-07-01)
+
+
+### Bug Fixes
+
+* **popup:** 环境字段改为根据当前页面 URL 动态匹配，不再固定取第一个环境 ([bded24f](https://github.com/Jsmond2016/quick-copy-ext/commit/bded24fdf1e14e7a87c50417536d65c065ff84e9))
+
+
+### Features
+
+* **popup:** 新增接口面板悬浮滚动导航按钮 ([a48679d](https://github.com/Jsmond2016/quick-copy-ext/commit/a48679d08971fb9fe1ca47695cb5d7d0a9d7ff8e))
+* **popup:** 顶部环境 badge 展示当前域名以外的其他环境 ([ee2e3df](https://github.com/Jsmond2016/quick-copy-ext/commit/ee2e3dfe32c048738c0891cbae8a49eb3184ccd3))
+* 新增环境配置功能，支持自定义环境类型与切换 ([42f11b1](https://github.com/Jsmond2016/quick-copy-ext/commit/42f11b1d64a3df7d3c9d37f8a6f6e6e8364f3787))
+
 ## [1.4.38](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.37...v1.4.38) (2026-06-15)
 
 
