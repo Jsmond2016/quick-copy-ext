@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.40](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.39...v1.4.40) (2026-07-01)
+
+
+### Features
+
+* **apifox:** 在线 API 替代本地接口，支持配置授权令牌 ([2b4bf61](https://github.com/Jsmond2016/quick-copy-ext/commit/2b4bf61d1a7ff08b7efd2bd3e5b1dff9b1002722))
+
 ## [1.4.39](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.38...v1.4.39) (2026-07-01)
 
 
