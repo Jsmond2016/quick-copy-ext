@@ -8,6 +8,7 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   customFields: [],
   quickFillTemplates: [],
   apifoxExportUrl: '',
+  apifoxAuthToken: '',
   responseErrorRule: DEFAULT_RESPONSE_ERROR_RULE,
   mode: 'default',
   quickMockTargetExtensionId: '',
@@ -134,6 +135,10 @@ export function normalizeSettings(
       typeof current?.apifoxExportUrl === 'string'
         ? current.apifoxExportUrl.trim()
         : defaults.apifoxExportUrl,
+    apifoxAuthToken:
+      typeof current?.apifoxAuthToken === 'string'
+        ? current.apifoxAuthToken.trim()
+        : defaults.apifoxAuthToken,
     responseErrorRule: sanitizeTrimmedString(current?.responseErrorRule, defaults.responseErrorRule),
     mode: normalizedMode,
     quickMockTargetExtensionId: sanitizeTrimmedString(
@@ -167,6 +172,7 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     areStringArraysEqual(settings.customFields, defaults.customFields) &&
     areStringArraysEqual(settings.quickFillTemplates, defaults.quickFillTemplates) &&
     settings.apifoxExportUrl === defaults.apifoxExportUrl &&
+    settings.apifoxAuthToken === defaults.apifoxAuthToken &&
     settings.responseErrorRule === defaults.responseErrorRule &&
     settings.mode === defaults.mode &&
     settings.quickMockTargetExtensionId === defaults.quickMockTargetExtensionId &&

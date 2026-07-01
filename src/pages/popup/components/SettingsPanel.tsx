@@ -1,4 +1,4 @@
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { EnvironmentConfig, QuickCopyMode } from '@src/lib/quick-copy';
 import { SettingsFormState } from '@pages/popup/utils/settings-form';
 import { ScrollNavFab } from '@pages/popup/components/ScrollNavFab';
@@ -57,6 +57,8 @@ export function SettingsPanel({
       onFieldChange(field, event.target.value);
     };
   }
+
+  const [showToken, setShowToken] = useState(false);
 
   const modeOptions: Array<{
     value: QuickCopyMode;
@@ -314,8 +316,31 @@ export function SettingsPanel({
             type="text"
             value={form.apifoxProjectIdInput}
           />
-          <small>这里只需要填写 Apifox 项目的数字 ID，系统会自动拼接本地导出地址。</small>
-          <small>保存后会在后台异步刷新接口缓存；若未响应，通常是本地 Apifox 未打开，或项目 ID 不正确。</small>
+          <small>填写 Apifox 项目的数字 ID，保存后通过在线接口自动导出 OpenAPI 数据。</small>
+          <small>保存后会在后台异步刷新接口缓存；若未响应，请检查项目 ID 和授权令牌是否正确。</small>
+        </label>
+
+        <label className="field-block">
+          <span>Apifox 授权令牌</span>
+          <div className="password-input-wrap">
+            <input
+              className="note-input"
+              onChange={handleChange('apifoxAuthTokenInput')}
+              placeholder="Bearer Token"
+              type={showToken ? 'text' : 'password'}
+              value={form.apifoxAuthTokenInput}
+            />
+            <button
+              aria-label={showToken ? '隐藏令牌' : '显示令牌'}
+              className="password-toggle"
+              onClick={() => setShowToken(!showToken)}
+              type="button"
+            >
+              {showToken ? '🙈' : '👁'}
+            </button>
+          </div>
+          <small>Apifox 个人访问令牌（Access Token），可在 Apifox 个人设置中创建。</small>
+          <small>必须与上方项目 ID 同时填写才能正常拉取接口信息。</small>
         </label>
 
         <label className="field-block">

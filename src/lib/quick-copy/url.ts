@@ -1,9 +1,6 @@
 import { TRACE_HEADER_KEYS } from './constants';
 import type { HeaderRecord } from './types';
 
-const APIFOX_EXPORT_BASE_URL = 'http://127.0.0.1:4523/export/openapi';
-const APIFOX_EXPORT_SPECIAL_PURPOSE = 'openapi-generator';
-
 function getLastVisiblePath(rawPath: string): string {
   const segments = rawPath.split('/').filter(Boolean);
 
@@ -139,24 +136,23 @@ export function stringifyParagraphBlocks(values: string[]): string {
 }
 
 export function getApifoxProjectId(exportUrl: string): string {
-  try {
-    return new URL(exportUrl).searchParams.get('projectId')?.trim() ?? '';
-  } catch {
-    return '';
+  const trimmed = exportUrl.trim();
+  if (!trimmed) return '';
+
+  // 兼容旧版本存储的完整本地 URL 格式（http://127.0.0.1:4523/export/openapi?projectId=...）
+  if (trimmed.includes('://')) {
+    try {
+      return new URL(trimmed).searchParams.get('projectId')?.trim() ?? '';
+    } catch {
+      return '';
+    }
   }
+
+  return trimmed;
 }
 
 export function buildApifoxExportUrl(projectId: string): string {
-  const trimmedProjectId = projectId.trim();
-
-  if (!trimmedProjectId) {
-    return '';
-  }
-
-  const url = new URL(APIFOX_EXPORT_BASE_URL);
-  url.searchParams.set('projectId', trimmedProjectId);
-  url.searchParams.set('specialPurpose', APIFOX_EXPORT_SPECIAL_PURPOSE);
-  return url.toString();
+  return projectId.trim();
 }
 
 export function matchesApiPrefixes(url: string, prefixes: string[]): boolean {

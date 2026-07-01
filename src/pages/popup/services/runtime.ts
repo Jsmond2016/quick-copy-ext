@@ -79,11 +79,15 @@ export async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
   }
 }
 
-export async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> {
+export async function refreshApifoxData(
+  exportUrl: string,
+  authToken: string,
+): Promise<ApifoxCacheStatus> {
   try {
     const response = (await chrome.runtime.sendMessage({
       type: 'quick-copy/refresh-apifox-data',
       exportUrl,
+      authToken,
     })) as ApifoxRefreshResponse;
 
     if (!response.ok) {

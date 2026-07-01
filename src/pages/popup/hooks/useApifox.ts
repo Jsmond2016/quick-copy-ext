@@ -45,13 +45,14 @@ export function useApifox() {
 
   async function refresh(
     exportUrl: string,
+    authToken: string,
     options?: RefreshOptions,
     callbacks?: StatusCallbacks,
   ): Promise<ApifoxCacheStatus> {
     setRefreshingApifox(true);
 
     try {
-      const nextStatus = await refreshApifoxService(exportUrl);
+      const nextStatus = await refreshApifoxService(exportUrl, authToken);
       setApifoxStatus(nextStatus);
 
       if (options?.toastOnSuccess && options.successText) {

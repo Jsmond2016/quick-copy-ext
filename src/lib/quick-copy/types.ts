@@ -77,6 +77,7 @@ export interface QuickCopySettings {
   customFields: string[];
   quickFillTemplates: string[];
   apifoxExportUrl: string;
+  apifoxAuthToken: string;
   responseErrorRule: string;
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
@@ -88,7 +89,7 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-tab-requests'; tabId: number }
   | { type: 'quick-copy/clear-tab-requests'; tabId: number }
   | { type: 'quick-copy/get-apifox-status' }
-  | { type: 'quick-copy/refresh-apifox-data'; exportUrl: string }
+  | { type: 'quick-copy/refresh-apifox-data'; exportUrl: string; authToken: string }
   | { type: 'quick-copy/clear-apifox-data' }
   | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] }
   | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload };

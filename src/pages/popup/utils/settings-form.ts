@@ -18,6 +18,7 @@ export interface SettingsFormState {
   customFieldsInput: string;
   quickFillTemplatesInput: string;
   apifoxProjectIdInput: string;
+  apifoxAuthTokenInput: string;
   responseErrorRuleInput: string;
   mode: QuickCopyMode;
   quickMockTargetExtensionIdInput: string;
@@ -32,6 +33,7 @@ export interface PortableSettingsConfig {
   customFields: string[];
   quickFillTemplates: string[];
   apifoxProjectId: string;
+  apifoxAuthToken: string;
   responseErrorRule: string;
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
@@ -47,6 +49,7 @@ export function createSettingsFormState(settings: QuickCopySettings): SettingsFo
     customFieldsInput: stringifyLines(settings.customFields),
     quickFillTemplatesInput: stringifyLines(settings.quickFillTemplates),
     apifoxProjectIdInput: getApifoxProjectId(settings.apifoxExportUrl),
+    apifoxAuthTokenInput: settings.apifoxAuthToken,
     responseErrorRuleInput: settings.responseErrorRule,
     mode: settings.mode,
     quickMockTargetExtensionIdInput: settings.quickMockTargetExtensionId,
@@ -67,6 +70,7 @@ export function createPortableSettingsConfig(settings: QuickCopySettings): Porta
     customFields: [...settings.customFields],
     quickFillTemplates: [...settings.quickFillTemplates],
     apifoxProjectId: getApifoxProjectId(settings.apifoxExportUrl),
+    apifoxAuthToken: settings.apifoxAuthToken,
     responseErrorRule: settings.responseErrorRule,
     mode: settings.mode,
     quickMockTargetExtensionId: settings.quickMockTargetExtensionId,
@@ -85,6 +89,7 @@ export function createSettingsFormStateFromPortableConfig(
     customFieldsInput: stringifyLines(config.customFields),
     quickFillTemplatesInput: stringifyLines(config.quickFillTemplates),
     apifoxProjectIdInput: config.apifoxProjectId,
+    apifoxAuthTokenInput: config.apifoxAuthToken,
     responseErrorRuleInput: config.responseErrorRule,
     mode: config.mode,
     quickMockTargetExtensionIdInput: config.quickMockTargetExtensionId,
@@ -124,6 +129,7 @@ function sanitizePortableSettingsConfig(
       ? current.quickFillTemplates.filter((item): item is string => typeof item === 'string')
       : defaults.quickFillTemplates,
     apifoxProjectId: typeof current.apifoxProjectId === 'string' ? current.apifoxProjectId.trim() : '',
+    apifoxAuthToken: typeof current.apifoxAuthToken === 'string' ? current.apifoxAuthToken.trim() : '',
     responseErrorRule: typeof current.responseErrorRule === 'string'
       ? current.responseErrorRule
       : defaults.responseErrorRule,
@@ -216,6 +222,7 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     customFields: parseLines(form.customFieldsInput),
     quickFillTemplates: parseLines(form.quickFillTemplatesInput),
     apifoxExportUrl: buildApifoxExportUrl(apifoxProjectId),
+    apifoxAuthToken: form.apifoxAuthTokenInput.trim(),
     responseErrorRule: form.responseErrorRuleInput.trim() || defaults.responseErrorRule,
     mode: form.mode,
     quickMockTargetExtensionId: form.quickMockTargetExtensionIdInput.trim(),

@@ -257,6 +257,7 @@ export default function Popup() {
       if (nextSettings.apifoxExportUrl) {
         void refreshApifox(
           nextSettings.apifoxExportUrl,
+          nextSettings.apifoxAuthToken,
           {
             successText: 'Apifox 接口信息已在后台刷新完成。',
             fallbackErrorText: '后台刷新 Apifox 数据失败。',

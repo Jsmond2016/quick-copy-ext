@@ -18,7 +18,7 @@ interface RegisterRuntimeMessageListenerOptions {
   getApifoxStatus: () => ApifoxCacheStatus;
   getRequestsByTabId: (tabId: number) => NetworkRequestRecord[];
   persistClearedApifoxCache: () => Promise<ApifoxCacheStatus>;
-  refreshApifoxData: (exportUrl: string) => Promise<ApifoxCacheStatus>;
+  refreshApifoxData: (exportUrl: string, authToken: string) => Promise<ApifoxCacheStatus>;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -106,7 +106,7 @@ export function registerRuntimeMessageListener({
 
       if (message.type === 'quick-copy/refresh-apifox-data') {
         void ensureApifoxCacheReady()
-          .then(() => refreshApifoxData(message.exportUrl))
+          .then(() => refreshApifoxData(message.exportUrl, message.authToken))
           .then((status) => sendResponse({ ok: true, data: status }))
           .catch((error: unknown) => {
             sendResponse({ ok: false, error: getErrorMessage(error, '刷新 Apifox 数据失败。') });

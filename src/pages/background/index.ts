@@ -162,7 +162,12 @@ async function hydrateApifoxCache() {
             typeof payload.status.endpointCount === 'number' ? payload.status.endpointCount : 0,
           updatedAt:
             typeof payload.status.updatedAt === 'number' ? payload.status.updatedAt : undefined,
-          error: typeof payload.status.error === 'string' ? payload.status.error : undefined,
+          error:
+            typeof payload.status.error === 'string' &&
+            !payload.status.error.includes('本地') &&
+            !payload.status.error.includes('127.0.0.1')
+              ? payload.status.error
+              : undefined,
         }
       : defaultApifoxStatus;
 }
@@ -319,32 +324,62 @@ function resetApifoxCache(sourceUrl = '') {
   };
 }
 
-async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> {
-  const normalizedUrl = exportUrl.trim();
-  if (!normalizedUrl) {
+const APIFOX_ONLINE_API_URL = 'https://api.apifox.com/v1/projects';
+const APIFOX_API_VERSION = '2024-03-28';
+
+function buildApifoxOnlineExportBody() {
+  return JSON.stringify({
+    scope: { type: 'ALL' },
+    options: { includeApifoxExtensionProperties: true },
+    oasVersion: '3.1',
+    exportFormat: 'JSON',
+  });
+}
+
+async function refreshApifoxData(
+  exportUrl: string,
+  authToken: string,
+): Promise<ApifoxCacheStatus> {
+  const projectId = exportUrl.trim();
+  if (!projectId) {
     resetApifoxCache('');
     await persistApifoxCache();
     return apifoxStatus;
   }
 
+  if (!authToken) {
+    resetApifoxCache(projectId);
+    apifoxStatus.error = '未配置 Apifox 授权令牌，请在设置中填写。';
+    await persistApifoxCache();
+    throw new Error('未配置 Apifox 授权令牌，请在设置中填写。');
+  }
+
+  const apiUrl = `${APIFOX_ONLINE_API_URL}/${projectId}/export-openapi?locale=zh-CN`;
+
   let response: Response;
   try {
-    response = await fetch(normalizedUrl, {
-      method: 'GET',
+    response = await fetch(apiUrl, {
+      method: 'POST',
       cache: 'no-store',
+      headers: {
+        'X-Apifox-Api-Version': APIFOX_API_VERSION,
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: buildApifoxOnlineExportBody(),
     });
   } catch {
-    resetApifoxCache(normalizedUrl);
-    apifoxStatus.error = '未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。';
+    resetApifoxCache(projectId);
+    apifoxStatus.error = '无法连接 Apifox 在线服务，请检查网络或授权令牌是否正确。';
     await persistApifoxCache();
-    throw new Error('未能连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出。');
+    throw new Error('无法连接 Apifox 在线服务，请检查网络或授权令牌是否正确。');
   }
 
   if (!response.ok) {
-    resetApifoxCache(normalizedUrl);
-    apifoxStatus.error = `Apifox 导出地址请求失败：HTTP ${response.status}`;
+    resetApifoxCache(projectId);
+    apifoxStatus.error = `Apifox 在线导出请求失败：HTTP ${response.status}`;
     await persistApifoxCache();
-    throw new Error(`Apifox 导出地址请求失败：HTTP ${response.status}`);
+    throw new Error(`Apifox 在线导出请求失败：HTTP ${response.status}`);
   }
 
   const schema = (await response.json()) as unknown;
@@ -365,7 +400,7 @@ async function refreshApifoxData(exportUrl: string): Promise<ApifoxCacheStatus> 
 
   apifoxStatus = {
     ready: true,
-    sourceUrl: normalizedUrl,
+    sourceUrl: projectId,
     endpointCount: lookupMaps.endpointCount,
     updatedAt: Date.now(),
   };

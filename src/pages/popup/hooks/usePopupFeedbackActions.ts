@@ -43,6 +43,7 @@ interface UsePopupFeedbackActionsOptions {
   includeRequestParams: boolean;
   refreshApifox: (
     exportUrl: string,
+    authToken: string,
     messages: { fallbackErrorText: string },
     options: { onErrorText?: (message: string) => void },
   ) => Promise<ApifoxCacheStatus>;
@@ -187,11 +188,20 @@ export function usePopupFeedbackActions({
       return;
     }
 
+    if (!settings.apifoxAuthToken) {
+      setToast({
+        type: 'info',
+        text: '请先在设置中填写 Apifox 授权令牌。',
+      });
+      return;
+    }
+
     setErrorText('');
 
     try {
       const nextStatus = await refreshApifox(
         settings.apifoxExportUrl,
+        settings.apifoxAuthToken,
         { fallbackErrorText: '刷新 Apifox 数据失败。' },
         { onErrorText: setErrorText },
       );
