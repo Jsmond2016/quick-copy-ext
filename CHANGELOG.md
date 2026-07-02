@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.42](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.42) (2026-07-02)
+
+
+### Bug Fixes
+
+* **api:** 修复 Apifox 接口链接含 /web/ 路径导致跳转错误 ([95e95a5](https://github.com/Jsmond2016/quick-copy-ext/commit/95e95a57282f12e8582fc17bc213909098529540))
+
 ## [1.4.41](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.41) (2026-07-01)
 
 
