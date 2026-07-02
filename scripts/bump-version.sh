@@ -12,6 +12,14 @@ fi
 NEW_VERSION=$(npm version "$VERSION_TYPE" --no-git-tag-version)
 VERSION_NUMBER=$(echo "$NEW_VERSION" | sed 's/^v//')
 
+# Write release date for display in footer
+RELEASE_DATE=$(date +%Y.%m.%d)
+node -e "
+  const pkg = require('./package.json');
+  pkg.releaseDate = '$RELEASE_DATE';
+  require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+
 if [ ! -f CHANGELOG.md ]; then
   cat > CHANGELOG.md << 'EOF'
 # Changelog

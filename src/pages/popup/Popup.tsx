@@ -39,7 +39,7 @@ import {
 } from '@pages/popup/utils/settings-form';
 
 export default function Popup() {
-  const versionText = `当前版本：v${pkg.version}`;
+  const versionText = `当前版本：v${pkg.version}${pkg.releaseDate ? `_${pkg.releaseDate}` : ''}`;
   const [note, setNote] = useState('');
   const [savingSettings, { setTrue: startSavingSettings, setFalse: stopSavingSettings }] = useBoolean(false);
   const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(true);

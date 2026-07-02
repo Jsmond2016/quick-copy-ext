@@ -22,6 +22,15 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 npm version "$VERSION" --no-git-tag-version
+
+# Write release date for display in footer
+RELEASE_DATE=$(date +%Y.%m.%d)
+node -e "
+  const pkg = require('./package.json');
+  pkg.releaseDate = '$RELEASE_DATE';
+  require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+
 pnpm run build:chrome
 pnpm run build:firefox
 
