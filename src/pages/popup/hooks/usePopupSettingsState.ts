@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useBoolean } from 'ahooks';
 import {
   getDefaultSettings,
-  EnvironmentConfig,
   QuickCopyMode,
   QuickCopySettings,
   TesterAioConfig,
@@ -47,9 +46,6 @@ interface UsePopupSettingsStateResult {
     field: 'name' | 'url',
     value: string,
   ) => void;
-  addEnvironment: () => void;
-  removeEnvironment: (index: number) => void;
-  moveEnvironment: (index: number, direction: 'up' | 'down') => void;
 }
 
 function createEmptyTesterAioConfig(): TesterAioConfig {
@@ -57,14 +53,6 @@ function createEmptyTesterAioConfig(): TesterAioConfig {
     id: crypto.randomUUID?.() ?? `aio-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     iterationName: '',
     bugUrl: '',
-  };
-}
-
-function createEmptyEnvironment(): EnvironmentConfig {
-  return {
-    id: crypto.randomUUID?.() ?? `env-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
-    name: '',
-    url: '',
   };
 }
 
@@ -158,52 +146,16 @@ export function usePopupSettingsState(): UsePopupSettingsStateResult {
     }));
   }
 
-  function addEnvironment(): void {
-    setSettingsForm((current) => ({
-      ...current,
-      environments: [...current.environments, createEmptyEnvironment()],
-    }));
-  }
-
-  function removeEnvironment(index: number): void {
-    setSettingsForm((current) => ({
-      ...current,
-      environments: current.environments.filter((_, currentIndex) => currentIndex !== index),
-    }));
-  }
-
-  function moveEnvironment(index: number, direction: 'up' | 'down'): void {
-    setSettingsForm((current) => {
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-
-      if (targetIndex < 0 || targetIndex >= current.environments.length) {
-        return current;
-      }
-
-      const nextEnvironments = [...current.environments];
-      const [movedItem] = nextEnvironments.splice(index, 1);
-      nextEnvironments.splice(targetIndex, 0, movedItem);
-
-      return {
-        ...current,
-        environments: nextEnvironments,
-      };
-    });
-  }
-
   return {
     addTesterAioConfig,
-    addEnvironment,
     closeConfigModal,
     closeSettings,
     configModalContent,
     configModalMode,
     moveTesterAioConfig,
-    moveEnvironment,
     openConfigModal,
     openSettings,
     removeTesterAioConfig,
-    removeEnvironment,
     selectedTesterAioConfigId,
     setConfigModalContent,
     setConfigModalMode,

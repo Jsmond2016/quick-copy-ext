@@ -27,6 +27,7 @@ interface PopupBodyProps {
   showSettings: boolean;
   useQuickFill: boolean;
   includeEnvironment: boolean;
+  selectedEnvironment?: { name: string; url: string } | null;
   onAddTesterAioConfig: () => void;
   onCancelSettings: () => void;
   onClearRequests: () => void;
@@ -60,9 +61,6 @@ interface PopupBodyProps {
     field: 'name' | 'url',
     value: string,
   ) => void;
-  onMoveEnvironment: (index: number, direction: 'up' | 'down') => void;
-  onAddEnvironment: () => void;
-  onRemoveEnvironment: (index: number) => void;
 }
 
 export function PopupBody({
@@ -87,6 +85,7 @@ export function PopupBody({
   showSettings,
   useQuickFill,
   includeEnvironment,
+  selectedEnvironment,
   onAddTesterAioConfig,
   onCancelSettings,
   onClearRequests,
@@ -112,9 +111,6 @@ export function PopupBody({
   onToggleRequestParams,
   onTesterAioConfigChange,
   onEnvironmentChange,
-  onMoveEnvironment,
-  onAddEnvironment,
-  onRemoveEnvironment,
 }: PopupBodyProps) {
   if (showSettings) {
     return (
@@ -130,9 +126,6 @@ export function PopupBody({
         onAddTesterAioConfig={onAddTesterAioConfig}
         onRemoveTesterAioConfig={onRemoveTesterAioConfig}
         onEnvironmentChange={onEnvironmentChange}
-        onMoveEnvironment={onMoveEnvironment}
-        onAddEnvironment={onAddEnvironment}
-        onRemoveEnvironment={onRemoveEnvironment}
         onSave={onSaveSettings}
         onReset={onResetSettings}
         onImport={onImportSettings}
@@ -161,6 +154,7 @@ export function PopupBody({
             selectedTesterAioConfigId={selectedTesterAioConfigId}
             environments={settings.environments}
             includeEnvironment={includeEnvironment}
+            selectedEnvironment={selectedEnvironment}
             onToggleRequestParams={onToggleRequestParams}
             onSelectedTesterAioConfigChange={onSelectedTesterAioConfigChange}
             onToggleEnvironment={onToggleEnvironment}

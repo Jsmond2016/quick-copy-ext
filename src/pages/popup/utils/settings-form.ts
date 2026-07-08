@@ -197,23 +197,19 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     throw new Error('Apifox 项目 ID 只能填写数字。');
   }
 
-  const environments = form.environments
-    .map((item) => ({
-      id: item.id,
-      name: item.name.trim(),
-      url: item.url.trim(),
-    }))
-    .filter((item) => item.name || item.url);
+  // 环境为固定的 4 个（LOCAL / FAT / UAT / PROD），URL 可选填写
+  const environments = form.environments.map((item) => ({
+    id: item.id,
+    name: item.name.trim(),
+    url: item.url.trim(),
+  }));
 
-  if (environments.some((item) => !item.name || !item.url)) {
-    throw new Error('环境配置请完整填写环境类型和网址。');
-  }
-
-  environments.forEach((item) => {
-    if (!isValidEnvironmentUrl(item.url)) {
-      throw new Error(`环境「${item.name}」的网址格式不正确。`);
+  // 只验证已填写 URL 的格式，空的 URL 代表未配置该环境
+  for (const env of environments) {
+    if (env.url && !isValidEnvironmentUrl(env.url)) {
+      throw new Error(`环境「${env.name}」的网址格式不正确。`);
     }
-  });
+  }
 
   return {
     feedbackTitle: form.feedbackTitle.trim() || defaults.feedbackTitle,

@@ -113,7 +113,11 @@ export function buildWebOnlyText(payload: {
   ];
 
   if (payload.selectedEnvironment) {
-    sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+    if (payload.selectedEnvironment.url) {
+      sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+    } else {
+      sections.push(`- 环境：${payload.selectedEnvironment.name}`);
+    }
   }
 
   sections.push('');
@@ -151,7 +155,11 @@ export function buildFeedbackText(payload: CopyPayload): string {
   ];
 
   if (payload.selectedEnvironment) {
-    sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+    if (payload.selectedEnvironment.url) {
+      sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
+    } else {
+      sections.push(`- 环境：${payload.selectedEnvironment.name}`);
+    }
   }
 
   sections.push('');

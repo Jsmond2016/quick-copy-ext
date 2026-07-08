@@ -1,5 +1,5 @@
 import { TRACE_HEADER_KEYS } from './constants';
-import type { HeaderRecord } from './types';
+import type { EnvironmentConfig, HeaderRecord } from './types';
 
 function getLastVisiblePath(rawPath: string): string {
   const segments = rawPath.split('/').filter(Boolean);
@@ -243,6 +243,19 @@ export function dedupeBatchQuickMockUrls(rawUrls: string[]): string[] {
 const LOCALHOST_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]']);
 
 /**
+ * 环境标记 → 环境名称映射（不区分大小写匹配）。
+ * 用于从 API 请求的 `x-forwarded-for` 响应头中检测当前调试环境。
+ */
+const ENV_MARKERS: Array<{ marker: string; name: string }> = [
+  { marker: '.fat.', name: 'FAT' },
+  { marker: '.uat.', name: 'UAT' },
+  { marker: '.pro.', name: 'PROD' },
+];
+
+/** 优先用于环境检测的响应头字段名。 */
+const ENV_HEADER_KEY = 'x-forwarded-for';
+
+/**
  * 将用户填写的环境网址（可能缺少协议，如 `www.fat.baidu.com`）补全为完整 URL 对象。
  * 解析失败时返回 null。
  */
@@ -339,8 +352,8 @@ export function getOtherEnvironments(
  */
 export function matchCurrentEnvironment(
   currentUrl: string,
-  environments: Array<{ name: string; url: string }>,
-): { name: string; url: string } | null {
+  environments: EnvironmentConfig[],
+): EnvironmentConfig | null {
   if (!currentUrl || environments.length === 0) {
     return null;
   }
@@ -359,4 +372,59 @@ export function matchCurrentEnvironment(
   } catch {
     return null;
   }
+}
+
+/**
+ * 通过已捕获的 API 请求检测当前调试环境。
+ *
+ * 检测规则（按优先级）：
+ * 1. 请求响应头 `x-forwarded-for` 的值含 `.fat.` → FAT
+ * 2. 请求响应头 `x-forwarded-for` 的值含 `.uat.` → UAT
+ * 3. 请求响应头 `x-forwarded-for` 的值含 `.pro.` → PROD
+ * 4. 降级检查请求 URL（同上标记）
+ * 5. 有请求但无标记命中 → PROD（生产环境）
+ *
+ * 匹配成功后会在 `environments` 列表中查找对应名称的配置，找不到则返回仅含名称的对象。
+ */
+export function detectEnvironmentFromRequests(
+  requests: Array<{ url: string; headers: Record<string, string> }>,
+  environments: EnvironmentConfig[],
+): EnvironmentConfig | null {
+  if (requests.length === 0) {
+    return null;
+  }
+
+  function matchEnv(source: string): EnvironmentConfig | null {
+    const lower = source.toLowerCase();
+    for (const { marker, name } of ENV_MARKERS) {
+      if (lower.includes(marker)) {
+        const configured = environments.find(
+          (env) => env.name.toUpperCase() === name,
+        );
+        return configured ?? { id: `env-${name.toLowerCase()}`, name, url: '' };
+      }
+    }
+    return null;
+  }
+
+  // 优先从 x-forwarded-for 响应头检测
+  for (const request of requests) {
+    const forwarded = request.headers?.[ENV_HEADER_KEY];
+    if (forwarded) {
+      const matched = matchEnv(forwarded);
+      if (matched) return matched;
+    }
+  }
+
+  // 降级：从请求 URL 中检测
+  for (const request of requests) {
+    const matched = matchEnv(request.url);
+    if (matched) return matched;
+  }
+
+  // 有请求但无标记命中 → 生产环境
+  const configured = environments.find(
+    (env) => env.name.toUpperCase() === 'PROD',
+  );
+  return configured ?? { id: 'env-prod', name: 'PROD', url: '' };
 }

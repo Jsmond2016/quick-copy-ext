@@ -6,6 +6,7 @@ interface RequestParamsPanelProps {
   selectedTesterAioConfigId: string;
   environments: EnvironmentConfig[];
   includeEnvironment: boolean;
+  selectedEnvironment?: { name: string; url: string } | null;
   onToggleRequestParams: () => void;
   onSelectedTesterAioConfigChange: (value: string) => void;
   onToggleEnvironment: () => void;
@@ -17,10 +18,13 @@ export function RequestParamsPanel({
   selectedTesterAioConfigId,
   environments,
   includeEnvironment,
+  selectedEnvironment,
   onToggleRequestParams,
   onSelectedTesterAioConfigChange,
   onToggleEnvironment,
 }: RequestParamsPanelProps) {
+  const envLabel = selectedEnvironment?.name ?? environments[0]?.name ?? '';
+
   return (
     <section className="panel">
       <div className="panel-head">
@@ -45,7 +49,7 @@ export function RequestParamsPanel({
             checked={includeEnvironment}
             onChange={onToggleEnvironment}
           />
-          环境 {environments[0].name}
+          环境 {envLabel}
         </label>
       ) : null}
 

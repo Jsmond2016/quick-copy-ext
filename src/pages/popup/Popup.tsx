@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useBoolean, useMount, useRequest, useUpdateEffect } from 'ahooks';
 import pkg from '../../../package.json';
 import {
+  detectEnvironmentFromRequests,
   getDefaultSettings,
   isDefaultSettings,
   isValidResponseErrorRuleConfig,
@@ -48,17 +49,14 @@ export default function Popup() {
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const {
     addTesterAioConfig,
-    addEnvironment,
     closeConfigModal,
     closeSettings,
     configModalContent,
     configModalMode,
     moveTesterAioConfig,
-    moveEnvironment,
     openConfigModal,
     openSettings,
     removeTesterAioConfig,
-    removeEnvironment,
     selectedTesterAioConfigId,
     setConfigModalContent,
     setConfigModalMode,
@@ -113,8 +111,20 @@ export default function Popup() {
   );
 
   const selectedEnvironment = useMemo(
-    () => (includeEnvironment ? matchCurrentEnvironment(page.url, settings.environments) : null),
-    [includeEnvironment, page.url, settings.environments],
+    () => {
+      if (!includeEnvironment) return null;
+
+      // 1. 优先从已捕获请求的 x-forwarded-for 响应头检测环境
+      const detected = detectEnvironmentFromRequests(requests, settings.environments);
+      if (detected) return detected;
+
+      // 2. 降级：通过页面 URL 匹配已配置的环境
+      const matchedByUrl = matchCurrentEnvironment(page.url, settings.environments);
+      if (matchedByUrl) return matchedByUrl;
+
+      return null;
+    },
+    [includeEnvironment, page.url, requests, settings.environments],
   );
 
   const {
@@ -373,6 +383,7 @@ export default function Popup() {
         showSettings={showSettings}
         useQuickFill={useQuickFill}
         includeEnvironment={includeEnvironment}
+        selectedEnvironment={selectedEnvironment}
         onAddTesterAioConfig={addTesterAioConfig}
         onCancelSettings={closeSettings}
         onClearRequests={() => {
@@ -401,9 +412,6 @@ export default function Popup() {
         onToggleRequestParams={toggleIncludeRequestParams}
         onTesterAioConfigChange={updateTesterAioConfig}
         onEnvironmentChange={updateEnvironment}
-        onMoveEnvironment={moveEnvironment}
-        onAddEnvironment={addEnvironment}
-        onRemoveEnvironment={removeEnvironment}
       />
 
       {showConfigModal && (

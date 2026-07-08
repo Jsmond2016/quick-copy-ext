@@ -1,6 +1,14 @@
 import { DEFAULT_RESPONSE_ERROR_RULE, SETTINGS_STORAGE_KEY } from './constants';
 import type { EnvironmentConfig, QuickCopyMode, QuickCopySettings, TesterAioConfig } from './types';
 
+/** 固定环境列表：LOCAL / FAT / UAT / PROD，用户只需填写对应 URL。 */
+const FIXED_ENVIRONMENTS: EnvironmentConfig[] = [
+  { id: 'env-local', name: 'LOCAL', url: '' },
+  { id: 'env-fat', name: 'FAT', url: '' },
+  { id: 'env-uat', name: 'UAT', url: '' },
+  { id: 'env-prod', name: 'PROD', url: '' },
+];
+
 const DEFAULT_SETTINGS: QuickCopySettings = {
   feedbackTitle: '页面接口信息如下',
   monitoredOrigins: ['localhost', '127.0.0.1'],
@@ -13,7 +21,7 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   mode: 'default',
   quickMockTargetExtensionId: '',
   testerAioConfigs: [],
-  environments: [],
+  environments: FIXED_ENVIRONMENTS.map((env) => ({ ...env })),
 };
 
 function sanitizeStringArray(
@@ -67,26 +75,32 @@ function sanitizeTesterAioConfigs(value: unknown): TesterAioConfig[] {
 }
 
 function sanitizeEnvironments(value: unknown): EnvironmentConfig[] {
-  if (!Array.isArray(value)) {
-    return [];
+  // 从已保存数据中读取各环境的 URL，按大写名称索引
+  const savedMap = new Map<string, string>();
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (!item || typeof item !== 'object') continue;
+      const record = item as Record<string, unknown>;
+
+      const name = typeof record.name === 'string'
+        ? record.name.trim().toUpperCase()
+        : '';
+      const url = typeof record.url === 'string'
+        ? record.url.trim()
+        : '';
+
+      if (name && url) {
+        savedMap.set(name, url);
+      }
+    }
   }
 
-  return value.flatMap((item, index) => {
-    if (!item || typeof item !== 'object') {
-      return [];
-    }
-
-    const name = typeof item.name === 'string' ? item.name.trim() : '';
-    const url = typeof item.url === 'string' ? item.url.trim() : '';
-
-    if (!name || !url) {
-      return [];
-    }
-
-    const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `env-${index + 1}`;
-
-    return [{ id, name, url }];
-  });
+  // 以固定环境列表为基准，合并已保存的 URL
+  return FIXED_ENVIRONMENTS.map((env) => ({
+    ...env,
+    url: savedMap.get(env.name) ?? env.url,
+  }));
 }
 
 function areStringArraysEqual(left: string[], right: string[]): boolean {

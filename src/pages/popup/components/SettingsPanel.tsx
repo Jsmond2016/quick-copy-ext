@@ -22,9 +22,6 @@ interface SettingsPanelProps {
     field: 'name' | 'url',
     value: string,
   ) => void;
-  onMoveEnvironment: (index: number, direction: 'up' | 'down') => void;
-  onAddEnvironment: () => void;
-  onRemoveEnvironment: (index: number) => void;
   onCancel: () => void;
   onSave: () => void;
   onReset: () => void;
@@ -43,9 +40,6 @@ export function SettingsPanel({
   onAddTesterAioConfig,
   onRemoveTesterAioConfig,
   onEnvironmentChange,
-  onMoveEnvironment,
-  onAddEnvironment,
-  onRemoveEnvironment,
   onCancel,
   onSave,
   onReset,
@@ -201,62 +195,18 @@ export function SettingsPanel({
           <div className="tester-config-list">
             {form.environments.map((item, index) => (
               <div className="tester-config-row" key={item.id}>
-                <input
-                  className="note-input"
-                  onChange={(event) => onEnvironmentChange(index, 'name', event.target.value)}
-                  placeholder="环境类型（如 fat）"
-                  type="text"
-                  value={item.name}
-                />
+                <span className="note-input-static">{item.name}</span>
                 <input
                   className="note-input"
                   onChange={(event) => onEnvironmentChange(index, 'url', event.target.value)}
-                  placeholder="网址（如 www.fat.baidu.com）"
+                  placeholder={`${item.name} 环境网址`}
                   type="text"
                   value={item.url}
                 />
-                <div className="tester-config-actions">
-                  <button
-                    aria-label="上移"
-                    className="ghost-button icon-only tester-config-icon"
-                    disabled={index === 0}
-                    onClick={() => onMoveEnvironment(index, 'up')}
-                    type="button"
-                  >
-                    ^
-                  </button>
-                  <button
-                    aria-label="下移"
-                    className="ghost-button icon-only tester-config-icon"
-                    disabled={index === form.environments.length - 1}
-                    onClick={() => onMoveEnvironment(index, 'down')}
-                    type="button"
-                  >
-                    v
-                  </button>
-                  <button
-                    aria-label="删除"
-                    className="ghost-button icon-only tester-config-icon tester-config-remove"
-                    disabled={form.environments.length === 1}
-                    onClick={() => onRemoveEnvironment(index)}
-                    type="button"
-                  >
-                    -
-                  </button>
-                </div>
               </div>
             ))}
           </div>
-          {form.environments.length === 0 ? (
-            <button className="ghost-button tester-config-add" onClick={onAddEnvironment} type="button">
-              + 添加
-            </button>
-          ) : (
-            <button className="ghost-button tester-config-add" onClick={onAddEnvironment} type="button">
-              + 添加
-            </button>
-          )}
-          <small>保存后，主面板会展示环境切换链接。当前页面为 localhost 时点击链接会自动携带路径跳转。</small>
+          <small>4 个环境为固定配置，只需填写对应的网址即可。当前页面为 localhost 时，插件会自动从 API 请求中检测环境。</small>
         </div>
 
         <label className="field-block">

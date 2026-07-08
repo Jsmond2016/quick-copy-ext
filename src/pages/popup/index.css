@@ -959,6 +959,20 @@ input {
   border-color: rgba(184, 79, 44, 0.35);
 }
 
+.note-input-static {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid rgba(31, 37, 32, 0.12);
+  border-radius: 16px;
+  background: rgba(31, 37, 32, 0.04);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
 .password-input-wrap {
   position: relative;
   display: flex;
