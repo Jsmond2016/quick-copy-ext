@@ -390,3 +390,7 @@ $RECYCLE.BIN/
 
 #generated manifest
 public/manifest.json
+
+# VitePress
+docs-site/.vitepress/cache
+docs-site/.vitepress/dist
