@@ -193,40 +193,43 @@ export function RequestHistoryPanel({
                         {abnormalBadgeText}
                       </span>
                     ) : null}
-                    {request.apifoxUrl ? (
-                      <a
-                        className="request-path request-link"
-                        href={request.apifoxUrl}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                        }}
-                        onMouseDown={(event) => {
-                          event.stopPropagation()
-                        }}
-                        rel="noreferrer"
-                        target="_blank"
-                        title={`${request.apiName ? `接口名: ${request.apiName}\n` : ""}${title}\n点击跳转到 Apifox`}
-                      >
-                        <span className="request-path-leaf">{leaf}</span>
-                        <span className="request-path-parent">
-                          {parentPath}
+                    <div className="request-url-group">
+                      {request.apifoxUrl ? (
+                        <a
+                          className="request-path request-link"
+                          href={request.apifoxUrl}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                          }}
+                          onMouseDown={(event) => {
+                            event.stopPropagation()
+                          }}
+                          rel="noreferrer"
+                          target="_blank"
+                          title={`${title}\n点击跳转到 Apifox`}
+                        >
+                          <span className="request-path-leaf">{leaf}</span>
+                          <span className="request-path-parent">
+                            {parentPath}
+                          </span>
+                        </a>
+                      ) : (
+                        <span
+                          className="request-path"
+                          title={title}
+                        >
+                          <span className="request-path-leaf">{leaf}</span>
+                          <span className="request-path-parent">
+                            {parentPath}
+                          </span>
                         </span>
-                      </a>
-                    ) : (
-                      <span
-                        className="request-path"
-                        title={
-                          request.apiName
-                            ? `接口名: ${request.apiName}\n${title}`
-                            : title
-                        }
-                      >
-                        <span className="request-path-leaf">{leaf}</span>
-                        <span className="request-path-parent">
-                          {parentPath}
-                        </span>
-                      </span>
-                    )}
+                      )}
+                      {request.apiName ? (
+                        <div className="request-api-name">
+                          {request.apiName}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </article>

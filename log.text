@@ -1,0 +1,32 @@
+const axios = require('axios');
+let data = JSON.stringify({
+   "scope": {
+      "type": "ALL",
+   
+   },
+   "options": {
+      "includeApifoxExtensionProperties": true,
+    },
+   "oasVersion": "3.1",
+   "exportFormat": "JSON"
+});
+
+let config = {
+   method: 'post',
+   maxBodyLength: Infinity,
+   url: 'https://api.apifox.com/v1/projects/{{projectId}}/export-openapi?locale=zh-CN',
+   headers: { 
+      'X-Apifox-Api-Version': '2024-03-28', 
+      'Authorization': 'Bearer {{access_token}}', 
+      'Content-Type': 'application/json'
+   },
+   data : data
+};
+
+axios.request(config)
+.then((response) => {
+   console.log(JSON.stringify(response.data));
+})
+.catch((error) => {
+   console.log(error);
+});
