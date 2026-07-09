@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.44](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.44) (2026-07-09)
+
+
+### Bug Fixes
+
+* **api:** 修复 Apifox 接口链接含 /web/ 路径导致跳转错误 ([95e95a5](https://github.com/Jsmond2016/quick-copy-ext/commit/95e95a57282f12e8582fc17bc213909098529540))
+
+
+### Features
+
+* **components:** 捕获接口历史表格新增接口名字展示行 ([39ae1a8](https://github.com/Jsmond2016/quick-copy-ext/commit/39ae1a88a015b31c2767e266bb4a21c4e9eaded5))
+* 版本信息末尾追加发布日期 ([98b853e](https://github.com/Jsmond2016/quick-copy-ext/commit/98b853eb22967677914b20af251564dd8470b0f8))
+* 环境配置固定4个(LOCAL/FAT/UAT/PROD)，环境检测改为从 x-forwarded-for 响应头判断 ([414c84c](https://github.com/Jsmond2016/quick-copy-ext/commit/414c84c9d04161bfea23485b62dc3f56b2edcb8c))
+
 ## [1.4.43](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.43) (2026-07-02)
 
 
