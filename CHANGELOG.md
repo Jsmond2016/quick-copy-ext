@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.45](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.43...v1.4.45) (2026-07-09)
+
+
+### Features
+
+* **components:** 捕获接口历史表格新增接口名字展示行 ([39ae1a8](https://github.com/Jsmond2016/quick-copy-ext/commit/39ae1a88a015b31c2767e266bb4a21c4e9eaded5))
+* 环境配置固定4个(LOCAL/FAT/UAT/PROD)，环境检测改为从 x-forwarded-for 响应头判断 ([414c84c](https://github.com/Jsmond2016/quick-copy-ext/commit/414c84c9d04161bfea23485b62dc3f56b2edcb8c))
+
 ## [1.4.44](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.44) (2026-07-09)
 
 
