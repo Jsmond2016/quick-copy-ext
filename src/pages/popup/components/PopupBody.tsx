@@ -150,6 +150,7 @@ export function PopupBody({
           />
           <RequestParamsPanel
             includeRequestParams={includeRequestParams}
+            mode={mode}
             testerAioConfigs={mode === 'tester' ? settings.testerAioConfigs : []}
             selectedTesterAioConfigId={selectedTesterAioConfigId}
             environments={settings.environments}

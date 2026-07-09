@@ -347,6 +347,7 @@ export default function Popup() {
       <PopupHero
         apifoxExportUrl={settings.apifoxExportUrl}
         apifoxStatus={apifoxStatus}
+        mode={settings.mode}
         page={page}
         pageMonitoringEnabled={pageMonitoringEnabled}
         refreshingApifox={refreshingApifox}

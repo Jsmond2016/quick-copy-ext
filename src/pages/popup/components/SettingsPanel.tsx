@@ -190,24 +190,26 @@ export function SettingsPanel({
           <small>复制内容第一行标题，默认值为"页面信息反馈"，支持自定义。</small>
         </label>
 
-        <div className="field-block">
-          <span>环境配置</span>
-          <div className="tester-config-list">
-            {form.environments.map((item, index) => (
-              <div className="tester-config-row" key={item.id}>
-                <span className="note-input-static">{item.name}</span>
-                <input
-                  className="note-input"
-                  onChange={(event) => onEnvironmentChange(index, 'url', event.target.value)}
-                  placeholder={`${item.name} 环境网址`}
-                  type="text"
-                  value={item.url}
-                />
-              </div>
-            ))}
+        {form.mode === 'developer' ? (
+          <div className="field-block">
+            <span>环境配置</span>
+            <div className="tester-config-list">
+              {form.environments.map((item, index) => (
+                <div className="tester-config-row" key={item.id}>
+                  <span className="note-input-static">{item.name}</span>
+                  <input
+                    className="note-input"
+                    onChange={(event) => onEnvironmentChange(index, 'url', event.target.value)}
+                    placeholder={`${item.name} 环境网址`}
+                    type="text"
+                    value={item.url}
+                  />
+                </div>
+              ))}
+            </div>
+            <small>4 个环境为固定配置，只需填写对应的网址即可。当前页面为 localhost 时，插件会自动从 API 请求中检测环境。</small>
           </div>
-          <small>4 个环境为固定配置，只需填写对应的网址即可。当前页面为 localhost 时，插件会自动从 API 请求中检测环境。</small>
-        </div>
+        ) : null}
 
         <label className="field-block">
           <span>监听页面 Origin</span>

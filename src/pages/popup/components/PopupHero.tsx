@@ -1,4 +1,4 @@
-import { ApifoxCacheStatus, buildEnvironmentUrl, EnvironmentConfig, getApifoxProjectId, getDisplayPath, getOtherEnvironments, PageSummary } from '@src/lib/quick-copy';
+import { ApifoxCacheStatus, buildEnvironmentUrl, EnvironmentConfig, getApifoxProjectId, getDisplayPath, getOtherEnvironments, PageSummary, QuickCopyMode } from '@src/lib/quick-copy';
 
 interface PopupHeroProps {
   apifoxStatus: ApifoxCacheStatus;
@@ -7,6 +7,7 @@ interface PopupHeroProps {
   page: PageSummary;
   pageMonitoringEnabled: boolean;
   showSettings: boolean;
+  mode: QuickCopyMode;
   environments: EnvironmentConfig[];
   onRefreshApifox: () => void;
   onToggleSettings: () => void;
@@ -19,6 +20,7 @@ export function PopupHero({
   page,
   pageMonitoringEnabled,
   showSettings,
+  mode,
   environments,
   onRefreshApifox,
   onToggleSettings,
@@ -45,18 +47,20 @@ export function PopupHero({
           <p>自动汇总页面与接口请求，便于快速复制反馈。</p>
         </div>
         <div className="hero-actions">
-          {getOtherEnvironments(page.url, environments).map((env) => (
-            <a
-              key={env.name}
-              href={buildEnvironmentUrl(env.url, page.url) || '#'}
-              rel="noreferrer"
-              target="_blank"
-              className="env-badge"
-              title={`跳转到 ${env.name}: ${env.url}`}
-            >
-              {env.name.toUpperCase()}
-            </a>
-          ))}
+          {mode === 'developer'
+            ? getOtherEnvironments(page.url, environments).map((env) => (
+                <a
+                  key={env.name}
+                  href={buildEnvironmentUrl(env.url, page.url) || '#'}
+                  rel="noreferrer"
+                  target="_blank"
+                  className="env-badge"
+                  title={`跳转到 ${env.name}: ${env.url}`}
+                >
+                  {env.name.toUpperCase()}
+                </a>
+              ))
+            : null}
           <div className={`apifox-badge ${apifoxStatus.ready ? 'ready' : 'idle'}`}>
             <span className="apifox-badge-dot" />
             {apifoxLabel}

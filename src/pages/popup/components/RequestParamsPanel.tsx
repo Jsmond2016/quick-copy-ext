@@ -1,7 +1,8 @@
-import { EnvironmentConfig, TesterAioConfig } from '@src/lib/quick-copy';
+import { EnvironmentConfig, QuickCopyMode, TesterAioConfig } from '@src/lib/quick-copy';
 
 interface RequestParamsPanelProps {
   includeRequestParams: boolean;
+  mode: QuickCopyMode;
   testerAioConfigs: TesterAioConfig[];
   selectedTesterAioConfigId: string;
   environments: EnvironmentConfig[];
@@ -14,6 +15,7 @@ interface RequestParamsPanelProps {
 
 export function RequestParamsPanel({
   includeRequestParams,
+  mode,
   testerAioConfigs,
   selectedTesterAioConfigId,
   environments,
@@ -42,7 +44,7 @@ export function RequestParamsPanel({
         包含接口入参
       </label>
 
-      {environments.length > 0 ? (
+      {mode === 'developer' && environments.length > 0 ? (
         <label className="checkbox-row request-params-row">
           <input
             type="checkbox"
