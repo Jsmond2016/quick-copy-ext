@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.4.46](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.45...v1.4.46) (2026-07-10)
+
+
+### Bug Fixes
+
+* **changelog:** 修复版本日志重复问题，确保脚本自动创建 tag ([dc39277](https://github.com/Jsmond2016/quick-copy-ext/commit/dc39277e0967ef3257ec8dd447acc131ed2b2950))
+
+
+### Features
+
+* **components:** 环境配置仅在开发者模式下展示 ([a5cb23a](https://github.com/Jsmond2016/quick-copy-ext/commit/a5cb23a8eb415a7da2633db69ec61b48471f5a2b))
 ## [1.4.45](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.43...v1.4.45) (2026-07-09)
 
 
