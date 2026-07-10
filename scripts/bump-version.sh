@@ -9,6 +9,17 @@ if [ -z "$VERSION_TYPE" ]; then
   exit 1
 fi
 
+# Check if there are new commits since the latest tag
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+if [ -n "$LATEST_TAG" ]; then
+  COMMITS_SINCE_TAG=$(git log "$LATEST_TAG"..HEAD --oneline --no-merges 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$COMMITS_SINCE_TAG" -eq 0 ]; then
+    echo "⚠️  No new commits since $LATEST_TAG. Nothing to release."
+    echo "   Commit some changes first, or bump manually after a new commit."
+    exit 1
+  fi
+fi
+
 NEW_VERSION=$(npm version "$VERSION_TYPE" --no-git-tag-version)
 VERSION_NUMBER=$(echo "$NEW_VERSION" | sed 's/^v//')
 
@@ -40,7 +51,7 @@ NEW_ENTRY_FILE=$(mktemp)
 head -n 7 CHANGELOG.md > "$HEADER_FILE"
 tail -n +8 CHANGELOG.md > "$BODY_FILE" 2>/dev/null || true
 
-conventional-changelog -p angular -r 1 > "$NEW_ENTRY_FILE"
+conventional-changelog -p angular -u > "$NEW_ENTRY_FILE"
 
 {
   cat "$HEADER_FILE"
@@ -53,5 +64,6 @@ rm -f "$HEADER_FILE" "$BODY_FILE" "$NEW_ENTRY_FILE"
 
 git add package.json CHANGELOG.md
 git commit --no-verify -m "chore(release): $VERSION_NUMBER"
+git tag -a "v$VERSION_NUMBER" -m "Release $VERSION_NUMBER"
 
-echo "✅ Version bumped to $NEW_VERSION"
+echo "✅ Version bumped to $NEW_VERSION (tagged as v$VERSION_NUMBER)"

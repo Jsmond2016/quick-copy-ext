@@ -5,47 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
 ## [1.4.45](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.43...v1.4.45) (2026-07-09)
 
 
 ### Features
 
 * **components:** 捕获接口历史表格新增接口名字展示行 ([39ae1a8](https://github.com/Jsmond2016/quick-copy-ext/commit/39ae1a88a015b31c2767e266bb4a21c4e9eaded5))
+* **components:** 环境配置仅在开发者模式下展示 ([a5cb23a](https://github.com/Jsmond2016/quick-copy-ext/commit/a5cb23a8eb415a7da2633db69ec61b48471f5a2b))
 * 环境配置固定4个(LOCAL/FAT/UAT/PROD)，环境检测改为从 x-forwarded-for 响应头判断 ([414c84c](https://github.com/Jsmond2016/quick-copy-ext/commit/414c84c9d04161bfea23485b62dc3f56b2edcb8c))
 
-## [1.4.44](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.44) (2026-07-09)
-
-
-### Bug Fixes
-
-* **api:** 修复 Apifox 接口链接含 /web/ 路径导致跳转错误 ([95e95a5](https://github.com/Jsmond2016/quick-copy-ext/commit/95e95a57282f12e8582fc17bc213909098529540))
-
-
-### Features
-
-* **components:** 捕获接口历史表格新增接口名字展示行 ([39ae1a8](https://github.com/Jsmond2016/quick-copy-ext/commit/39ae1a88a015b31c2767e266bb4a21c4e9eaded5))
-* 版本信息末尾追加发布日期 ([98b853e](https://github.com/Jsmond2016/quick-copy-ext/commit/98b853eb22967677914b20af251564dd8470b0f8))
-* 环境配置固定4个(LOCAL/FAT/UAT/PROD)，环境检测改为从 x-forwarded-for 响应头判断 ([414c84c](https://github.com/Jsmond2016/quick-copy-ext/commit/414c84c9d04161bfea23485b62dc3f56b2edcb8c))
-
-## [1.4.43](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.43) (2026-07-02)
-
-
-### Bug Fixes
-
-* **api:** 修复 Apifox 接口链接含 /web/ 路径导致跳转错误 ([95e95a5](https://github.com/Jsmond2016/quick-copy-ext/commit/95e95a57282f12e8582fc17bc213909098529540))
+## [1.4.43](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.41...v1.4.43) (2026-07-02)
 
 
 ### Features
 
 * 版本信息末尾追加发布日期 ([98b853e](https://github.com/Jsmond2016/quick-copy-ext/commit/98b853eb22967677914b20af251564dd8470b0f8))
-
-## [1.4.42](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.42) (2026-07-02)
-
-
-### Bug Fixes
-
-* **api:** 修复 Apifox 接口链接含 /web/ 路径导致跳转错误 ([95e95a5](https://github.com/Jsmond2016/quick-copy-ext/commit/95e95a57282f12e8582fc17bc213909098529540))
 
 ## [1.4.41](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.40...v1.4.41) (2026-07-01)
 
@@ -151,26 +125,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * use side panel for chrome entry ([9ead3db](https://github.com/Jsmond2016/quick-copy-ext/commit/9ead3dbda272d6c3c4b34f52acae6e9a696d2de7))
 * 实时同步接口变化到 sidepanel 接口列表中 ([2f1698e](https://github.com/Jsmond2016/quick-copy-ext/commit/2f1698e1fcca0203e5d39acae6e1032fa11b2572))
 
-## [1.4.30](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.30) (2026-05-15)
-
-
-### Bug Fixes
-
-* include request params in copied feedback ([7b2e066](https://github.com/Jsmond2016/quick-copy-ext/commit/7b2e0668df01eafe9eb79dcdff1df2d0a0f74e3d))
+## [1.4.30](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.29...v1.4.30) (2026-05-15)
 
 
 ### Features
 
 * 增加快速填写功能 ([5ab4a1e](https://github.com/Jsmond2016/quick-copy-ext/commit/5ab4a1e5522fea9710b011aa3ae5c3042929bed8))
 
-## [1.4.29](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.29) (2026-05-15)
+## [1.4.29](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.27...v1.4.29) (2026-05-15)
 
 
 ### Bug Fixes
 
 * include request params in copied feedback ([7b2e066](https://github.com/Jsmond2016/quick-copy-ext/commit/7b2e0668df01eafe9eb79dcdff1df2d0a0f74e3d))
-
-## [1.4.28](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.28) (2026-05-15)
 
 ## [1.4.27](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.26...v1.4.27) (2026-05-15)
 
@@ -181,12 +148,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * 去掉复制文本中「详细描述：N/A」默认值，异常原因仅在接口异常时展示 ([d189512](https://github.com/Jsmond2016/quick-copy-ext/commit/d189512eee6b7defe6a1593ed1927e92a367624d))
 
-## [1.4.25](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.24...v1.4.25) (2026-05-15)
+## [1.4.25](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.24...v1.4.25) (2026-05-13)
 
 
 ### Features
 
-* 配置导入/导出 & 重置 & 导出复制按钮 & 弹框主题色适配 ([b1993eb](https://github.com/Jsmond2016/quick-copy-ext/commit/b1993eb10d5e390f48a507b5ce33895263d1d2e8))
+* 配置导入/导出 & 重置 & 导出复制按钮 & 弹框主题色适配 ([b1993eb](https://github.com/Jsmond2016/quick-copy-ext/commit/b1993eb3665555b6b96123864f3b7487034dba0e))
 
 ## [1.4.24](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.23...v1.4.24) (2026-05-13)
 
@@ -202,16 +169,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **requests:** highlight business response exceptions ([d6a0e08](https://github.com/Jsmond2016/quick-copy-ext/commit/d6a0e0893f194575c3fefc7058d48e91aa0902cf))
 
-## [1.4.22](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.22) (2026-04-29)
+## [1.4.22](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.21...v1.4.22) (2026-04-29)
 
 
 ### Bug Fixes
 
-* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
 * **background:** use compatible timeout type ([95efd59](https://github.com/Jsmond2016/quick-copy-ext/commit/95efd595f86b40783627ec8b3043b457639d4ce4))
 * **ci:** avoid yaml not condition syntax ([a818eeb](https://github.com/Jsmond2016/quick-copy-ext/commit/a818eebc7cd2ac5cdff5504395ebdce4f25006f7))
 * **ci:** quote workflow condition ([3021193](https://github.com/Jsmond2016/quick-copy-ext/commit/30211934c80d4c72d0c1027229ca6e76eee0d903))
 * **ci:** quote workflow if expression ([8b67487](https://github.com/Jsmond2016/quick-copy-ext/commit/8b674877530b065afa7e7ce5718f9e6b784a9a25))
+
+## [1.4.21](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.19...v1.4.21) (2026-04-27)
+
+## [1.4.19](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.18...v1.4.19) (2026-04-27)
+
+
+### Bug Fixes
+
 * **popup:** align request method vertically ([c43369a](https://github.com/Jsmond2016/quick-copy-ext/commit/c43369a33de4d63ca8b325a901eaf810c936d440))
 * **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
 
@@ -222,81 +196,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
 * **popup:** show extension version ([21d9988](https://github.com/Jsmond2016/quick-copy-ext/commit/21d9988716d8573fe91c17c8d9dcfd6c7f694169))
 
-## [1.4.21](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.21) (2026-04-27)
+## [1.4.18](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.17...v1.4.18) (2026-04-24)
+
+## [1.4.17](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.16...v1.4.17) (2026-04-23)
 
 
 ### Bug Fixes
 
 * **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
-* **popup:** align request method vertically ([c43369a](https://github.com/Jsmond2016/quick-copy-ext/commit/c43369a33de4d63ca8b325a901eaf810c936d440))
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
 
 
 ### Features
 
 * improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
-* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
-* **popup:** show extension version ([21d9988](https://github.com/Jsmond2016/quick-copy-ext/commit/21d9988716d8573fe91c17c8d9dcfd6c7f694169))
-
-## [1.4.20](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.20) (2026-04-27)
-
-
-### Bug Fixes
-
-* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
-* **popup:** align request method vertically ([c43369a](https://github.com/Jsmond2016/quick-copy-ext/commit/c43369a33de4d63ca8b325a901eaf810c936d440))
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
-
-
-### Features
-
-* improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
-* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
-* **popup:** show extension version ([21d9988](https://github.com/Jsmond2016/quick-copy-ext/commit/21d9988716d8573fe91c17c8d9dcfd6c7f694169))
-
-## [1.4.19](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.19) (2026-04-27)
-
-
-### Bug Fixes
-
-* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
-* **popup:** align request method vertically ([c43369a](https://github.com/Jsmond2016/quick-copy-ext/commit/c43369a33de4d63ca8b325a901eaf810c936d440))
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
-
-
-### Features
-
-* improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
-* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
-* **popup:** show extension version ([21d9988](https://github.com/Jsmond2016/quick-copy-ext/commit/21d9988716d8573fe91c17c8d9dcfd6c7f694169))
-
-## [1.4.18](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.18) (2026-04-24)
-
-
-### Bug Fixes
-
-* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
-
-
-### Features
-
-* improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
-* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
-
-## [1.4.17](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.17) (2026-04-23)
-
-
-### Bug Fixes
-
-* **apifox:** fallback match legacy paths ([35dd417](https://github.com/Jsmond2016/quick-copy-ext/commit/35dd4172040bb454552718acfac032ceda862679))
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
-
-
-### Features
-
-* improve popup apifox request navigation ([e20fdc4](https://github.com/Jsmond2016/quick-copy-ext/commit/e20fdc4cd2c2bddbbbabd0ca2275c843d437c68a))
-* **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
 
 ## [1.4.16](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.16) (2026-04-21)
 
@@ -310,91 +222,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * **popup:** refine request history copy ([d67d568](https://github.com/Jsmond2016/quick-copy-ext/commit/d67d568c02ebd0650eb5cfd94f082c0cb14a6ddc))
 
-## [1.4.15](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.15) (2026-04-20)
-
-
-### Bug Fixes
-
-* **popup:** rename settings close button ([66044af](https://github.com/Jsmond2016/quick-copy-ext/commit/66044afd8b606e9ca04342a2b95a2f7848fd9c73))
-
-## [1.4.14](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.13...v1.4.14) (2026-04-20)
-
 ## [1.4.13](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.12...v1.4.13) (2026-04-18)
 
-## [1.4.12](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.12) (2026-04-17)
+## [1.4.12](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.11...v1.4.12) (2026-04-17)
 
 
 ### Bug Fixes
 
-* **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
-* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
-* persist apifox cache across worker restarts ([1a05d50](https://github.com/Jsmond2016/quick-copy-ext/commit/1a05d50dd7c46c185fa9c6a29f5165bcb287d1bc))
 * persist request history across popup opens ([293c798](https://github.com/Jsmond2016/quick-copy-ext/commit/293c7985947a065a26ca855603beeae5aed5417d))
 
-
-### Features
-
-* optimize popup apifox loading ([bf590c6](https://github.com/Jsmond2016/quick-copy-ext/commit/bf590c697f6687749b860634d6668f375f7e717d))
-* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
-* support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
-
-## [1.4.11](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.11) (2026-04-17)
+## [1.4.11](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.10...v1.4.11) (2026-04-17)
 
 
 ### Bug Fixes
 
-* **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
-* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
 * persist apifox cache across worker restarts ([1a05d50](https://github.com/Jsmond2016/quick-copy-ext/commit/1a05d50dd7c46c185fa9c6a29f5165bcb287d1bc))
 
-
-### Features
-
-* optimize popup apifox loading ([bf590c6](https://github.com/Jsmond2016/quick-copy-ext/commit/bf590c697f6687749b860634d6668f375f7e717d))
-* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
-* support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
-
-## [1.4.10](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.10) (2026-04-17)
+## [1.4.10](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.7...v1.4.10) (2026-04-17)
 
 
 ### Bug Fixes
 
 * **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
-* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
 
 
 ### Features
 
 * optimize popup apifox loading ([bf590c6](https://github.com/Jsmond2016/quick-copy-ext/commit/bf590c697f6687749b860634d6668f375f7e717d))
-* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
-* support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
-
-## [1.4.9](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.9) (2026-04-16)
-
-
-### Bug Fixes
-
-* **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
-* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
-
-
-### Features
-
-* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
-* support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
-
-## [1.4.8](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.8) (2026-04-16)
-
-
-### Bug Fixes
-
-* **copy:** reorder feedback summary layout ([e54717f](https://github.com/Jsmond2016/quick-copy-ext/commit/e54717fe428bd752fa9a55fa360754a24a5755a9))
-* normalize apifox preview url ([b37faf2](https://github.com/Jsmond2016/quick-copy-ext/commit/b37faf270522c4f5d6a737b7a31b6bd7e64f2b06))
-
-
-### Features
-
-* restrict request capture by origin ([e9d59ad](https://github.com/Jsmond2016/quick-copy-ext/commit/e9d59adcbff8c9725df56607daad43172192a743))
 * support configurable feedback title ([a2933cd](https://github.com/Jsmond2016/quick-copy-ext/commit/a2933cdfaede95b6c5237e150c441310b6760e68))
 
 ## [1.4.7](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.6...v1.4.7) (2026-04-13)
@@ -436,41 +290,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
 * normalize changelog release script ([f98ca2f](https://github.com/Jsmond2016/quick-copy-ext/commit/f98ca2f26f6607e9f07aa33537cf822176e2d79f))
-
-## [1.4.3](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.0...v1.4.3) (2026-04-12)
-
-
-### Bug Fixes
-
-* normalize changelog release script ([f98ca2f](https://github.com/Jsmond2016/quick-copy-ext/commit/f98ca2f26f6607e9f07aa33537cf822176e2d79f))
-## [Unreleased]
-
-## [1.4.2](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.0...v1.4.2) (2026-04-12)
-
-### Documentation
-
-- 初始化首个 release 基线 changelog
-
-### Build
-
-- 补充 changelog、版本脚本与自动发布工作流
-
-## [1.4.0] - 2026-04-12
-
-### Features
-
-- 初始化 Quick Copy Ext 项目基础能力
-- 支持采集当前页面 URL、标题与接口请求记录
-- 支持按接口前缀过滤异常接口
-- 支持勾选接口并复制标准化反馈内容
-- 支持展示 `traceId`、状态码、请求时间、耗时、接口大小
-- 支持自定义字段配置与 popup 设置视图
-- 支持复制成功提示与设置保存提醒
-
-### Documentation
-
-- 完善 README、需求文档与项目元信息
-
-### Build
-
-- 补充 changelog、版本脚本与自动发布工作流
