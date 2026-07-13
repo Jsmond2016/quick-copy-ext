@@ -5,6 +5,7 @@ import {
   detectEnvironmentFromRequests,
   getDefaultSettings,
   isDefaultSettings,
+  isLocalhostUrl,
   isValidResponseErrorRuleConfig,
   loadSettings,
   matchCurrentEnvironment,
@@ -31,6 +32,7 @@ import {
   getErrorMessage,
   getApifoxStatus,
 } from '@pages/popup/services/runtime';
+import { getSettingsSavedMessage, hasApifoxConfigChanged } from '@pages/popup/utils/apifox-settings';
 import {
   buildSettingsFromForm,
   createPortableSettingsConfig,
@@ -48,6 +50,7 @@ export default function Popup() {
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const {
+    addEnvironmentGroup,
     addTesterAioConfig,
     closeConfigModal,
     closeSettings,
@@ -57,6 +60,7 @@ export default function Popup() {
     openConfigModal,
     openSettings,
     removeTesterAioConfig,
+    removeEnvironmentGroup,
     selectedTesterAioConfigId,
     setConfigModalContent,
     setConfigModalMode,
@@ -105,26 +109,37 @@ export default function Popup() {
     [page.url, settings.monitoredOrigins],
   );
   const quickFillOptions = settings.quickFillTemplates;
+  const environmentConfigs = useMemo(
+    () => settings.environmentGroups.flatMap((group) => group.environments),
+    [settings.environmentGroups],
+  );
   const selectedTesterAioConfig = useMemo(
     () => settings.testerAioConfigs.find((item) => item.id === selectedTesterAioConfigId) ?? null,
     [selectedTesterAioConfigId, settings.testerAioConfigs],
   );
 
-  const selectedEnvironment = useMemo(
+  const detectedEnvironment = useMemo(
     () => {
-      if (!includeEnvironment) return null;
+      // 非本地页面优先使用页面自身域名，避免请求标记覆盖精确匹配结果。
+      const matchedByUrl = matchCurrentEnvironment(page.url, environmentConfigs);
+      if (matchedByUrl && !isLocalhostUrl(page.url)) return matchedByUrl;
 
-      // 1. 优先从已捕获请求的 x-forwarded-for 响应头检测环境
-      const detected = detectEnvironmentFromRequests(requests, settings.environments);
+      // localhost 下优先从请求域名或 x-forwarded-for 响应头检测环境。
+      const detected = detectEnvironmentFromRequests(requests, environmentConfigs);
       if (detected) return detected;
 
-      // 2. 降级：通过页面 URL 匹配已配置的环境
-      const matchedByUrl = matchCurrentEnvironment(page.url, settings.environments);
       if (matchedByUrl) return matchedByUrl;
 
       return null;
     },
-    [includeEnvironment, page.url, requests, settings.environments],
+    [environmentConfigs, page.url, requests],
+  );
+  const selectedEnvironment = includeEnvironment ? detectedEnvironment : null;
+  const selectedEnvironmentGroup = useMemo(
+    () => settings.environmentGroups.find((group) => (
+      group.environments.some((environment) => environment.id === detectedEnvironment?.id)
+    )) ?? settings.environmentGroups[0],
+    [detectedEnvironment?.id, settings.environmentGroups],
   );
 
   const {
@@ -234,21 +249,24 @@ export default function Popup() {
 
     try {
       const nextSettings = buildSettingsFromForm(overrideForm ?? settingsForm);
+      const apifoxConfigChanged = hasApifoxConfigChanged(settings, nextSettings);
 
       if (!isValidResponseErrorRuleConfig(nextSettings.responseErrorRule)) {
         throw new Error('异常响应规则格式错误，请检查 JSON 数组和表达式写法。');
       }
 
-      if (!nextSettings.apifoxExportUrl) {
-        await clearApifoxData();
-        setApifoxStatus(DEFAULT_APIFOX_STATUS);
-        setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request));
-      } else {
-        setApifoxStatus({
-          ready: false,
-          sourceUrl: nextSettings.apifoxExportUrl,
-          endpointCount: 0,
-        });
+      if (apifoxConfigChanged) {
+        if (!nextSettings.apifoxExportUrl) {
+          await clearApifoxData();
+          setApifoxStatus(DEFAULT_APIFOX_STATUS);
+          setRequests((current) => current.map(({ apifoxUrl: _apifoxUrl, apiName: _apiName, ...request }) => request));
+        } else {
+          setApifoxStatus({
+            ready: false,
+            sourceUrl: nextSettings.apifoxExportUrl,
+            endpointCount: 0,
+          });
+        }
       }
 
       await saveSettings(nextSettings);
@@ -257,14 +275,12 @@ export default function Popup() {
       setSelectedTesterAioConfigId(nextSettings.testerAioConfigs[0]?.id ?? '');
       setToast({
         type: 'info',
-        text: nextSettings.apifoxExportUrl
-          ? '配置已保存，Apifox 接口信息正在后台刷新。'
-          : '配置已保存，监听范围已更新，且已清空 Apifox 缓存。',
+        text: getSettingsSavedMessage(nextSettings.apifoxExportUrl, apifoxConfigChanged),
       });
       closeSettings();
-      await load(nextSettings, DEFAULT_APIFOX_STATUS);
+      await load(nextSettings, apifoxConfigChanged ? DEFAULT_APIFOX_STATUS : apifoxStatus);
 
-      if (nextSettings.apifoxExportUrl) {
+      if (apifoxConfigChanged && nextSettings.apifoxExportUrl) {
         void refreshApifox(
           nextSettings.apifoxExportUrl,
           nextSettings.apifoxAuthToken,
@@ -352,7 +368,7 @@ export default function Popup() {
         pageMonitoringEnabled={pageMonitoringEnabled}
         refreshingApifox={refreshingApifox}
         showSettings={showSettings}
-        environments={settings.environments}
+        environments={selectedEnvironmentGroup?.environments ?? []}
         onRefreshApifox={() => {
           if (!settings.apifoxExportUrl) {
             openSettings();
@@ -386,6 +402,7 @@ export default function Popup() {
         includeEnvironment={includeEnvironment}
         selectedEnvironment={selectedEnvironment}
         onAddTesterAioConfig={addTesterAioConfig}
+        onAddEnvironmentGroup={addEnvironmentGroup}
         onCancelSettings={closeSettings}
         onClearRequests={() => {
           void clearCurrentTabRequests();
@@ -403,6 +420,7 @@ export default function Popup() {
         onQuickFillSelectionChange={updateNoteWithQuickFill}
         onQuickMock={() => void handleQuickMock()}
         onRemoveTesterAioConfig={removeTesterAioConfig}
+        onRemoveEnvironmentGroup={removeEnvironmentGroup}
         onResetSettings={() => void handleReset()}
         onSaveSettings={() => void handleSaveSettings()}
         onSelectAll={selectAll}

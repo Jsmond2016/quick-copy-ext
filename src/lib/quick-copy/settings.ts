@@ -1,5 +1,11 @@
 import { DEFAULT_RESPONSE_ERROR_RULE, SETTINGS_STORAGE_KEY } from './constants';
-import type { EnvironmentConfig, QuickCopyMode, QuickCopySettings, TesterAioConfig } from './types';
+import type {
+  EnvironmentConfig,
+  EnvironmentGroupConfig,
+  QuickCopyMode,
+  QuickCopySettings,
+  TesterAioConfig,
+} from './types';
 
 /** 固定环境列表：LOCAL / FAT / UAT / PROD，用户只需填写对应 URL。 */
 const FIXED_ENVIRONMENTS: EnvironmentConfig[] = [
@@ -8,6 +14,19 @@ const FIXED_ENVIRONMENTS: EnvironmentConfig[] = [
   { id: 'env-uat', name: 'UAT', url: '' },
   { id: 'env-prod', name: 'PROD', url: '' },
 ];
+
+function createDefaultEnvironmentGroup(index = 1): EnvironmentGroupConfig {
+  const id = `environment-group-${index}`;
+
+  return {
+    id,
+    name: `环境-${index}`,
+    environments: FIXED_ENVIRONMENTS.map((environment) => ({
+      ...environment,
+      id: `${id}-${environment.name.toLowerCase()}`,
+    })),
+  };
+}
 
 const DEFAULT_SETTINGS: QuickCopySettings = {
   feedbackTitle: '页面接口信息如下',
@@ -21,7 +40,7 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   mode: 'default',
   quickMockTargetExtensionId: '',
   testerAioConfigs: [],
-  environments: FIXED_ENVIRONMENTS.map((env) => ({ ...env })),
+  environmentGroups: [createDefaultEnvironmentGroup()],
 };
 
 function sanitizeStringArray(
@@ -74,33 +93,67 @@ function sanitizeTesterAioConfigs(value: unknown): TesterAioConfig[] {
   });
 }
 
-function sanitizeEnvironments(value: unknown): EnvironmentConfig[] {
-  // 从已保存数据中读取各环境的 URL，按大写名称索引
-  const savedMap = new Map<string, string>();
+function sanitizeEnvironmentItems(value: unknown, groupId: string): EnvironmentConfig[] {
+  const savedUrls = new Map<string, string>();
 
   if (Array.isArray(value)) {
-    for (const item of value) {
-      if (!item || typeof item !== 'object') continue;
+    value.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
       const record = item as Record<string, unknown>;
+      const name = typeof record.name === 'string' ? record.name.trim().toUpperCase() : '';
+      const url = typeof record.url === 'string' ? record.url.trim() : '';
 
-      const name = typeof record.name === 'string'
-        ? record.name.trim().toUpperCase()
-        : '';
-      const url = typeof record.url === 'string'
-        ? record.url.trim()
-        : '';
-
-      if (name && url) {
-        savedMap.set(name, url);
+      if (FIXED_ENVIRONMENTS.some((environment) => environment.name === name) && !savedUrls.has(name)) {
+        savedUrls.set(name, url);
       }
-    }
+    });
   }
 
-  // 以固定环境列表为基准，合并已保存的 URL
-  return FIXED_ENVIRONMENTS.map((env) => ({
-    ...env,
-    url: savedMap.get(env.name) ?? env.url,
+  return FIXED_ENVIRONMENTS.map((environment) => ({
+    id: `${groupId}-${environment.name.toLowerCase()}`,
+    name: environment.name,
+    url: savedUrls.get(environment.name) ?? '',
   }));
+}
+
+function sanitizeEnvironmentGroups(value: unknown, legacyValue: unknown): EnvironmentGroupConfig[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    if (Array.isArray(legacyValue)) {
+      const legacyGroup = createDefaultEnvironmentGroup();
+      return [{
+        ...legacyGroup,
+        environments: sanitizeEnvironmentItems(legacyValue, legacyGroup.id),
+      }];
+    }
+
+    return [createDefaultEnvironmentGroup()];
+  }
+
+  const savedIds = new Set<string>();
+
+  const groups = value.flatMap((item, index) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const fallback = createDefaultEnvironmentGroup(index + 1);
+    const rawId = typeof record.id === 'string' ? record.id.trim() : '';
+    const baseId = rawId || fallback.id;
+    let id = baseId;
+    let suffix = 2;
+    while (savedIds.has(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    const name = typeof record.name === 'string' && record.name.trim() ? record.name.trim() : fallback.name;
+    savedIds.add(id);
+
+    return [{
+      id,
+      name,
+      environments: sanitizeEnvironmentItems(record.environments, id),
+    }];
+  });
+
+  return groups.length > 0 ? groups : [createDefaultEnvironmentGroup()];
 }
 
 function areStringArraysEqual(left: string[], right: string[]): boolean {
@@ -125,11 +178,25 @@ function areEnvironmentsEqual(left: EnvironmentConfig[], right: EnvironmentConfi
     );
 }
 
+function areEnvironmentGroupsEqual(
+  left: EnvironmentGroupConfig[],
+  right: EnvironmentGroupConfig[],
+): boolean {
+  return left.length === right.length
+    && left.every(
+      (value, index) => value.id === right[index]?.id
+        && value.name === right[index]?.name
+        && areEnvironmentsEqual(value.environments, right[index]?.environments ?? []),
+    );
+}
+
 export function normalizeSettings(
   current?: Partial<QuickCopySettings>,
 ): QuickCopySettings {
   const defaults = getDefaultSettings();
-  const legacySettings = current as (Partial<QuickCopySettings> & { developerMode?: boolean }) | undefined;
+  const legacySettings = current as (
+    Partial<QuickCopySettings> & { developerMode?: boolean; environments?: unknown }
+  ) | undefined;
   const legacyDeveloperMode = typeof legacySettings?.developerMode === 'boolean'
     ? legacySettings.developerMode
     : false;
@@ -160,7 +227,10 @@ export function normalizeSettings(
       defaults.quickMockTargetExtensionId,
     ),
     testerAioConfigs: sanitizeTesterAioConfigs(current?.testerAioConfigs),
-    environments: sanitizeEnvironments(current?.environments),
+    environmentGroups: sanitizeEnvironmentGroups(
+      current?.environmentGroups,
+      legacySettings?.environments,
+    ),
   };
 }
 
@@ -172,7 +242,10 @@ export function getDefaultSettings(): QuickCopySettings {
     customFields: [...DEFAULT_SETTINGS.customFields],
     quickFillTemplates: [...DEFAULT_SETTINGS.quickFillTemplates],
     testerAioConfigs: [...DEFAULT_SETTINGS.testerAioConfigs],
-    environments: [...DEFAULT_SETTINGS.environments],
+    environmentGroups: DEFAULT_SETTINGS.environmentGroups.map((group) => ({
+      ...group,
+      environments: group.environments.map((environment) => ({ ...environment })),
+    })),
   };
 }
 
@@ -191,7 +264,7 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     settings.mode === defaults.mode &&
     settings.quickMockTargetExtensionId === defaults.quickMockTargetExtensionId &&
     areTesterAioConfigsEqual(settings.testerAioConfigs, defaults.testerAioConfigs) &&
-    areEnvironmentsEqual(settings.environments, defaults.environments)
+    areEnvironmentGroupsEqual(settings.environmentGroups, defaults.environmentGroups)
   );
 }
 

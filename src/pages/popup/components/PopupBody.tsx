@@ -1,4 +1,4 @@
-import { EnvironmentConfig, NetworkRequestRecord, QuickCopyMode, QuickCopySettings, TesterAioConfig } from '@src/lib/quick-copy';
+import { NetworkRequestRecord, QuickCopyMode, QuickCopySettings, TesterAioConfig } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
 import { RequestHistoryPanel } from '@pages/popup/components/RequestHistoryPanel';
 import { RequestParamsPanel } from '@pages/popup/components/RequestParamsPanel';
@@ -57,10 +57,12 @@ interface PopupBodyProps {
     value: string,
   ) => void;
   onEnvironmentChange: (
-    index: number,
-    field: 'name' | 'url',
+    groupId: string,
+    environmentId: string,
     value: string,
   ) => void;
+  onAddEnvironmentGroup: () => string;
+  onRemoveEnvironmentGroup: (groupId: string) => void;
 }
 
 export function PopupBody({
@@ -111,6 +113,8 @@ export function PopupBody({
   onToggleRequestParams,
   onTesterAioConfigChange,
   onEnvironmentChange,
+  onAddEnvironmentGroup,
+  onRemoveEnvironmentGroup,
 }: PopupBodyProps) {
   if (showSettings) {
     return (
@@ -126,6 +130,8 @@ export function PopupBody({
         onAddTesterAioConfig={onAddTesterAioConfig}
         onRemoveTesterAioConfig={onRemoveTesterAioConfig}
         onEnvironmentChange={onEnvironmentChange}
+        onAddEnvironmentGroup={onAddEnvironmentGroup}
+        onRemoveEnvironmentGroup={onRemoveEnvironmentGroup}
         onSave={onSaveSettings}
         onReset={onResetSettings}
         onImport={onImportSettings}
@@ -153,7 +159,7 @@ export function PopupBody({
             mode={mode}
             testerAioConfigs={mode === 'tester' ? settings.testerAioConfigs : []}
             selectedTesterAioConfigId={selectedTesterAioConfigId}
-            environments={settings.environments}
+            environments={settings.environmentGroups.flatMap((group) => group.environments)}
             includeEnvironment={includeEnvironment}
             selectedEnvironment={selectedEnvironment}
             onToggleRequestParams={onToggleRequestParams}

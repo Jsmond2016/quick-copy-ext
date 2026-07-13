@@ -336,14 +336,21 @@ export function getOtherEnvironments(
     // 无法解析则不过滤，全部保留
   }
 
+  const configuredEnvironments = environments.filter((environment) => parseEnvironmentUrl(environment.url));
   const others = currentOrigin
-    ? environments.filter((env) => {
+    ? configuredEnvironments.filter((env) => {
         const parsed = parseEnvironmentUrl(env.url);
-        return !parsed || parsed.origin.toLowerCase() !== currentOrigin;
+        return parsed?.origin.toLowerCase() !== currentOrigin;
       })
-    : environments.slice();
+    : configuredEnvironments;
 
-  return others.slice(0, max);
+  const uniqueNames = new Set<string>();
+  return others.filter((environment) => {
+    const name = environment.name.toUpperCase();
+    if (uniqueNames.has(name)) return false;
+    uniqueNames.add(name);
+    return true;
+  }).slice(0, max);
 }
 
 /**
@@ -394,13 +401,19 @@ export function detectEnvironmentFromRequests(
     return null;
   }
 
+  // 多域名配置下，精确 origin 匹配能定位到对应的具体配置项。
+  for (const request of requests) {
+    const configured = matchCurrentEnvironment(request.url, environments);
+    if (configured) return configured;
+  }
+
   function matchEnv(source: string): EnvironmentConfig | null {
     const lower = source.toLowerCase();
     for (const { marker, name } of ENV_MARKERS) {
       if (lower.includes(marker)) {
         const configured = environments.find(
-          (env) => env.name.toUpperCase() === name,
-        );
+          (env) => env.name.toUpperCase() === name && env.url,
+        ) ?? environments.find((env) => env.name.toUpperCase() === name);
         return configured ?? { id: `env-${name.toLowerCase()}`, name, url: '' };
       }
     }
@@ -424,7 +437,7 @@ export function detectEnvironmentFromRequests(
 
   // 有请求但无标记命中 → 生产环境
   const configured = environments.find(
-    (env) => env.name.toUpperCase() === 'PROD',
-  );
+    (env) => env.name.toUpperCase() === 'PROD' && env.url,
+  ) ?? environments.find((env) => env.name.toUpperCase() === 'PROD');
   return configured ?? { id: 'env-prod', name: 'PROD', url: '' };
 }

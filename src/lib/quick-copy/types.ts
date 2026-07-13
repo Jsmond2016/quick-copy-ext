@@ -70,6 +70,12 @@ export interface EnvironmentConfig {
   url: string;
 }
 
+export interface EnvironmentGroupConfig {
+  id: string;
+  name: string;
+  environments: EnvironmentConfig[];
+}
+
 export interface QuickCopySettings {
   feedbackTitle: string;
   monitoredOrigins: string[];
@@ -82,7 +88,7 @@ export interface QuickCopySettings {
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];
-  environments: EnvironmentConfig[];
+  environmentGroups: EnvironmentGroupConfig[];
 }
 
 export type RuntimeRequestMessage =

@@ -1,5 +1,5 @@
 import { ChangeEvent, useState } from 'react';
-import { EnvironmentConfig, QuickCopyMode } from '@src/lib/quick-copy';
+import { QuickCopyMode } from '@src/lib/quick-copy';
 import { SettingsFormState } from '@pages/popup/utils/settings-form';
 import { ScrollNavFab } from '@pages/popup/components/ScrollNavFab';
 
@@ -18,10 +18,12 @@ interface SettingsPanelProps {
   onAddTesterAioConfig: () => void;
   onRemoveTesterAioConfig: (index: number) => void;
   onEnvironmentChange: (
-    index: number,
-    field: 'name' | 'url',
+    groupId: string,
+    environmentId: string,
     value: string,
   ) => void;
+  onAddEnvironmentGroup: () => string;
+  onRemoveEnvironmentGroup: (groupId: string) => void;
   onCancel: () => void;
   onSave: () => void;
   onReset: () => void;
@@ -40,6 +42,8 @@ export function SettingsPanel({
   onAddTesterAioConfig,
   onRemoveTesterAioConfig,
   onEnvironmentChange,
+  onAddEnvironmentGroup,
+  onRemoveEnvironmentGroup,
   onCancel,
   onSave,
   onReset,
@@ -53,6 +57,35 @@ export function SettingsPanel({
   }
 
   const [showToken, setShowToken] = useState(false);
+  const [activeEnvironmentGroupId, setActiveEnvironmentGroupId] = useState(
+    form.environmentGroups[0]?.id ?? '',
+  );
+  const [pendingDeleteGroupId, setPendingDeleteGroupId] = useState<string | null>(null);
+  const activeEnvironmentGroup = form.environmentGroups.find(
+    (group) => group.id === activeEnvironmentGroupId,
+  ) ?? form.environmentGroups[0];
+
+  function handleRemoveEnvironmentGroup(): void {
+    if (!activeEnvironmentGroup || form.environmentGroups.length === 1) return;
+    const currentIndex = form.environmentGroups.findIndex(
+      (group) => group.id === activeEnvironmentGroup.id,
+    );
+    const nextActiveGroup = form.environmentGroups[currentIndex - 1]
+      ?? form.environmentGroups[currentIndex + 1];
+    setActiveEnvironmentGroupId(nextActiveGroup?.id ?? '');
+    setPendingDeleteGroupId(null);
+    onRemoveEnvironmentGroup(activeEnvironmentGroup.id);
+  }
+
+  function handleAddEnvironmentGroup(): void {
+    setPendingDeleteGroupId(null);
+    setActiveEnvironmentGroupId(onAddEnvironmentGroup());
+  }
+
+  function handleSelectEnvironmentGroup(groupId: string): void {
+    setPendingDeleteGroupId(null);
+    setActiveEnvironmentGroupId(groupId);
+  }
 
   const modeOptions: Array<{
     value: QuickCopyMode;
@@ -193,21 +226,93 @@ export function SettingsPanel({
         {form.mode === 'developer' ? (
           <div className="field-block">
             <span>环境配置</span>
-            <div className="tester-config-list">
-              {form.environments.map((item, index) => (
-                <div className="tester-config-row" key={item.id}>
-                  <span className="note-input-static">{item.name}</span>
-                  <input
-                    className="note-input"
-                    onChange={(event) => onEnvironmentChange(index, 'url', event.target.value)}
-                    placeholder={`${item.name} 环境网址`}
-                    type="text"
-                    value={item.url}
-                  />
+            <div className="environment-tabs-wrap">
+              <div className="environment-tabs" role="tablist" aria-label="环境配置组">
+                <div className="environment-tab-list">
+                  {form.environmentGroups.map((group) => (
+                    <button
+                      aria-controls={`environment-panel-${group.id}`}
+                      aria-selected={activeEnvironmentGroup?.id === group.id}
+                      className={`environment-tab${activeEnvironmentGroup?.id === group.id ? ' active' : ''}`}
+                      id={`environment-tab-${group.id}`}
+                      key={group.id}
+                      onClick={() => handleSelectEnvironmentGroup(group.id)}
+                      role="tab"
+                      type="button"
+                    >
+                      {group.name}
+                    </button>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <button
+                aria-label="添加环境配置组"
+                className="ghost-button icon-only environment-group-add"
+                onClick={handleAddEnvironmentGroup}
+                title="添加环境配置组"
+                type="button"
+              >
+                +
+              </button>
             </div>
-            <small>4 个环境为固定配置，只需填写对应的网址即可。当前页面为 localhost 时，插件会自动从 API 请求中检测环境。</small>
+            {activeEnvironmentGroup ? (
+              <div
+                aria-labelledby={`environment-tab-${activeEnvironmentGroup.id}`}
+                className="environment-tab-panel"
+                id={`environment-panel-${activeEnvironmentGroup.id}`}
+                role="tabpanel"
+              >
+                <div className="environment-group-actions">
+                  {pendingDeleteGroupId === activeEnvironmentGroup.id ? (
+                    <div className="environment-delete-confirm" role="group" aria-label="确认删除环境组">
+                      <span>确认删除？</span>
+                      <button
+                        className="ghost-button environment-delete-cancel"
+                        onClick={() => setPendingDeleteGroupId(null)}
+                        type="button"
+                      >
+                        取消
+                      </button>
+                      <button
+                        className="ghost-button environment-delete-confirm-button"
+                        onClick={handleRemoveEnvironmentGroup}
+                        type="button"
+                      >
+                        确认删除
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="ghost-button environment-group-remove"
+                      disabled={form.environmentGroups.length === 1}
+                      onClick={() => setPendingDeleteGroupId(activeEnvironmentGroup.id)}
+                      type="button"
+                    >
+                      删除此组
+                    </button>
+                  )}
+                </div>
+                <div className="environment-domain-list">
+                  {activeEnvironmentGroup.environments.map((environment) => (
+                    <label className="environment-domain-row" key={environment.id}>
+                      <span className="note-input-static">{environment.name}</span>
+                      <input
+                        className="note-input"
+                        onChange={(event) => onEnvironmentChange(
+                          activeEnvironmentGroup.id,
+                          environment.id,
+                          event.target.value,
+                        )}
+                        placeholder={`${environment.name} 环境域名`}
+                        type="text"
+                        value={environment.url}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <small>每个 Tab 是一套完整环境配置，包含 LOCAL、FAT、UAT、PROD 四个域名。</small>
           </div>
         ) : null}
 

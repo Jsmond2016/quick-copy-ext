@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useBoolean } from 'ahooks';
 import {
+  EnvironmentGroupConfig,
   getDefaultSettings,
   QuickCopyMode,
   QuickCopySettings,
@@ -42,10 +43,12 @@ interface UsePopupSettingsStateResult {
   removeTesterAioConfig: (index: number) => void;
   moveTesterAioConfig: (index: number, direction: 'up' | 'down') => void;
   updateEnvironment: (
-    index: number,
-    field: 'name' | 'url',
+    groupId: string,
+    environmentId: string,
     value: string,
   ) => void;
+  addEnvironmentGroup: () => string;
+  removeEnvironmentGroup: (groupId: string) => void;
 }
 
 function createEmptyTesterAioConfig(): TesterAioConfig {
@@ -53,6 +56,20 @@ function createEmptyTesterAioConfig(): TesterAioConfig {
     id: crypto.randomUUID?.() ?? `aio-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     iterationName: '',
     bugUrl: '',
+  };
+}
+
+function createEnvironmentGroup(index: number): EnvironmentGroupConfig {
+  const id = crypto.randomUUID?.() ?? `environment-group-${Date.now()}-${index}`;
+
+  return {
+    id,
+    name: `环境-${index}`,
+    environments: ['LOCAL', 'FAT', 'UAT', 'PROD'].map((name) => ({
+      id: `${id}-${name.toLowerCase()}`,
+      name,
+      url: '',
+    })),
   };
 }
 
@@ -132,21 +149,54 @@ export function usePopupSettingsState(): UsePopupSettingsStateResult {
   }
 
   function updateEnvironment(
-    index: number,
-    field: 'name' | 'url',
+    groupId: string,
+    environmentId: string,
     value: string,
   ): void {
     setSettingsForm((current) => ({
       ...current,
-      environments: current.environments.map((item, currentIndex) => (
-        currentIndex === index
-          ? { ...item, [field]: value }
-          : item
+      environmentGroups: current.environmentGroups.map((group) => (
+        group.id === groupId
+          ? {
+              ...group,
+              environments: group.environments.map((environment) => (
+                environment.id === environmentId
+                  ? { ...environment, url: value }
+                  : environment
+              )),
+            }
+          : group
       )),
     }));
   }
 
+  function addEnvironmentGroup(): string {
+    const nextIndex = settingsForm.environmentGroups.reduce((maxIndex, group) => {
+      const matchedIndex = Number(group.name.match(/(\d+)$/)?.[1] ?? 0);
+      return Math.max(maxIndex, matchedIndex);
+    }, 0) + 1;
+    const nextGroup = createEnvironmentGroup(nextIndex);
+
+    setSettingsForm((current) => ({
+      ...current,
+      environmentGroups: [...current.environmentGroups, nextGroup],
+    }));
+    return nextGroup.id;
+  }
+
+  function removeEnvironmentGroup(groupId: string): void {
+    setSettingsForm((current) => {
+      if (current.environmentGroups.length === 1) return current;
+
+      return {
+        ...current,
+        environmentGroups: current.environmentGroups.filter((group) => group.id !== groupId),
+      };
+    });
+  }
+
   return {
+    addEnvironmentGroup,
     addTesterAioConfig,
     closeConfigModal,
     closeSettings,
@@ -156,6 +206,7 @@ export function usePopupSettingsState(): UsePopupSettingsStateResult {
     openConfigModal,
     openSettings,
     removeTesterAioConfig,
+    removeEnvironmentGroup,
     selectedTesterAioConfigId,
     setConfigModalContent,
     setConfigModalMode,
