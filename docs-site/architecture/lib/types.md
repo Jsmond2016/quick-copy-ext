@@ -1,5 +1,9 @@
 # 类型系统
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## 概述
 
 扩展的类型系统定义在 `src/lib/quick-copy/types.ts` 中，是所有共享数据结构的来源。
@@ -24,7 +28,7 @@ interface NetworkRequestRecord {
   error?: string;             // 错误信息
   apifoxUrl?: string;         // Apifox 链接
   apiName?: string;           // Apifox 接口名称
-  responseSnapshot?: any;     // 响应体快照（裁剪后）
+  responseSnapshot?: JsonValue; // 响应体快照（裁剪后）
   responseRuleMatched?: boolean; // 是否命中异常规则
   responseMessage?: string;   // 异常规则命中说明
   abnormalReasons?: string[]; // 异常原因列表
@@ -47,9 +51,11 @@ interface QuickCopySettings {
   mode: 'default' | 'developer' | 'tester'; // 操作模式
   quickMockTargetExtensionId: string; // Quick Mock 扩展 ID
   testerAioConfigs: TesterAioConfig[]; // AIO 配置
-  environments: EnvironmentConfig[];  // 环境配置
+  environmentGroups: EnvironmentGroupConfig[]; // 多套环境配置
 }
 ```
+
+`EnvironmentGroupConfig` 表示一套项目环境，每组包含 LOCAL、FAT、UAT、PROD 四个 `EnvironmentConfig`。配置规范化会补齐缺失槽位，并兼容旧版单组 `environments` 数据。
 
 ### 消息协议类型
 
@@ -87,4 +93,5 @@ type RuntimeResponseMessage =
 | `ApifoxMatchResult` | Apifox 匹配结果（url + 接口名） |
 | `TesterAioConfig` | 测试者 AIO 配置（迭代名称 + 提交 URL） |
 | `EnvironmentConfig` | 环境配置（环境名称 + 基础 URL） |
+| `EnvironmentGroupConfig` | 环境配置组（组名 + 四个固定环境槽位） |
 | `ResponseErrorRuleEntry` | 异常规则条目（label + expression） |

@@ -1,5 +1,9 @@
 # 完整配置项参考
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## QuickCopySettings
 
 扩展的所有配置通过 `QuickCopySettings` 对象管理，通过 `chrome.storage.sync` 持久化。
@@ -54,7 +58,9 @@
 
 | 配置项 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `environments` | `EnvironmentConfig[]` | `[]` | 环境定义（环境名称 + 基础 URL） |
+| `environmentGroups` | `EnvironmentGroupConfig[]` | 一组空白环境 | 多套环境配置；每组固定包含 LOCAL、FAT、UAT、PROD |
+
+默认组名为“环境-1”，四个环境 URL 均为空。环境配置只在开发者模式显示。加载配置时会将旧版 `environments` 数组迁移为第一组，因此升级后无需手工转换存储数据。
 
 ## 配置类型
 
@@ -71,7 +77,7 @@ interface QuickCopySettings {
   mode: 'default' | 'developer' | 'tester';
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];
-  environments: EnvironmentConfig[];
+  environmentGroups: EnvironmentGroupConfig[];
 }
 
 interface TesterAioConfig {
@@ -84,5 +90,11 @@ interface EnvironmentConfig {
   id: string;
   name: string;
   url: string;
+}
+
+interface EnvironmentGroupConfig {
+  id: string;
+  name: string;
+  environments: EnvironmentConfig[];
 }
 ```

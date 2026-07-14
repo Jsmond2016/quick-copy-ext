@@ -1,5 +1,9 @@
 # 配置管理
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## 概述
 
 `src/lib/quick-copy/settings.ts` 提供配置的加载、保存、规范化和默认值管理。
@@ -17,6 +21,8 @@ function loadSettings(): Promise<QuickCopySettings>
 - 读取存储中的配置
 - 合并默认值（缺失字段自动补充）
 - 处理历史数据兼容（如旧版 `developerMode` 布尔值 → `mode` 字符串）
+- 将旧版单组 `environments` 数组迁移为 `environmentGroups`
+- 为每个环境组补齐固定的 LOCAL、FAT、UAT、PROD 槽位，并保证组 ID 唯一
 - 返回完整的 `QuickCopySettings` 对象
 
 ### saveSettings()
@@ -52,4 +58,6 @@ function normalizeSettings(
 | `mode` | `"default"` |
 | `quickMockTargetExtensionId` | `""` |
 | `testerAioConfigs` | `[]` |
-| `environments` | `[]` |
+| `environmentGroups` | 一组名为“环境-1”的空白环境配置 |
+
+`getDefaultSettings()` 会深拷贝环境组和环境项，避免表单编辑时修改默认配置引用。

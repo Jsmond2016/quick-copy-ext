@@ -1,5 +1,9 @@
 # 配置导入/导出
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## 概述
 
 扩展支持通过 JSON 格式导入和导出完整的配置，方便团队共享配置规则或在不同浏览器之间迁移设置。
@@ -35,7 +39,9 @@
 | mode | 模式（default/developer/tester） |
 | quickMockTargetExtensionId | Quick Mock 目标扩展 ID |
 | testerAioConfigs | 测试者 AIO 配置 |
-| environments | 环境配置 |
+| environmentGroups | 多套环境配置，每组包含 LOCAL、FAT、UAT、PROD |
+
+导入仍兼容旧版 `environments` 字段。旧数据会被转换为一个默认环境组；再次导出时只输出 `environmentGroups`。
 
 ## 适用场景
 

@@ -74,7 +74,7 @@ Web 信息：
 接口信息-1条接口：
 
 - 接口名: 查询用户列表
-- POST /api/saas/user/queryList
+- POST /api/user/queryList
 - traceId: a1b2c3d4e5f6
 - 状态码: 200
 - 异常原因: 列表为空

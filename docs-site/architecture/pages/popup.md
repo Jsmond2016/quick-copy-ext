@@ -1,5 +1,9 @@
 # 弹窗 UI (Popup)
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## 概述
 
 Popup 是扩展的主要用户界面，使用 React 19 构建，通过 `@vitejs/plugin-react` 在 Vite 中编译。当用户点击浏览器工具栏中的扩展图标时，弹出面板显示。
@@ -41,7 +45,7 @@ Popup 是扩展的主要用户界面，使用 React 19 构建，通过 `@vitejs/
 | `Popup.tsx` | 页面编排：状态管理、主流程编排、数据加载 |
 | `PopupHero.tsx` | 顶部品牌区、Apifox 状态指示、设置入口 |
 | `PopupBody.tsx` | 主内容切换（功能视图 / 设置视图） |
-| `RequestHistoryPanel.tsx` | 请求列表展示、过滤、多选、滚动 |
+| `RequestHistoryPanel.tsx` | 请求列表展示、接口名展示、过滤、多选和单接口复制 |
 | `RequestParamsPanel.tsx` | 复制选项配置（入参、环境等） |
 | `NotePanel.tsx` | 备注输入、快速模板选择、复制/操作按钮 |
 | `SettingsPanel.tsx` | 完整设置表单 |
@@ -54,7 +58,7 @@ Popup 是扩展的主要用户界面，使用 React 19 构建，通过 `@vitejs/
 |------|------|
 | `useTabRequests()` | 从后台加载请求、Apifox 匹配、异常评估、实时更新 |
 | `useApifox()` | Apifox 状态管理、刷新操作 |
-| `usePopupFeedbackActions()` | 复制反馈、AIO 复制、Quick Mock 操作 |
+| `usePopupFeedbackActions()` | 完整反馈复制、单接口复制、AIO 复制、Quick Mock 操作 |
 | `usePopupSettingsState()` | 设置表单状态管理 |
 | `useSelection()` | 请求多选逻辑（含 Shift 键范围选择） |
 | `useToast()` | Toast 生命周期管理 |
@@ -67,3 +71,5 @@ Popup 是扩展的主要用户界面，使用 React 19 构建，通过 `@vitejs/
 | 默认模式 | `default` | 基础复制功能 |
 | 开发者模式 | `developer` | 增加"快速 Mock"按钮 |
 | 测试者模式 | `tester` | 显示"复制到 AIO"按钮 + 迭代选择器 |
+
+环境配置、环境快捷跳转和复制环境信息仅在开发者模式展示。环境按组管理，每组固定包含 LOCAL、FAT、UAT、PROD 四个槽位。

@@ -102,6 +102,7 @@ export default defineConfig({
             { text: '开发指南', link: '/development/' },
             { text: '环境搭建', link: '/development/setup' },
             { text: '构建与打包', link: '/development/build' },
+            { text: '近期代码变更', link: '/development/recent-changes' },
             { text: '版本发布流程', link: '/development/release' },
             { text: '代码规范', link: '/development/code-style' },
           ],

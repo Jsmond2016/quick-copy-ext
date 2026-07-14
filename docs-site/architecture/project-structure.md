@@ -1,5 +1,9 @@
 # 项目结构
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 ## 根目录
 
 ```text
@@ -10,12 +14,9 @@ quick-copy-ext/
 │   │   ├── background/           # 后台 Service Worker
 │   │   ├── content/              # 内容脚本
 │   │   ├── popup/                # 弹窗 UI (React)
-│   │   ├── sidepanel/            # 侧边面板
-│   │   ├── devtools/             # 开发者工具（占位）
-│   │   ├── options/              # 选项页（占位）
-│   │   └── newtab/               # 新标签页（占位）
-│   ├── locales/                  # 国际化目录（筹备中）
-│   └── assets/                   # 静态资源
+│   │   └── sidepanel/            # 复用 Popup 的侧边面板入口
+│   ├── global.d.ts               # 全局类型声明
+│   └── vite-env.d.ts             # Vite 环境类型声明
 ├── public/                       # Web 可访问资源
 ├── dist_chrome/                  # Chrome 构建产物
 ├── docs-site/                    # VitePress 文档站点
@@ -71,7 +72,8 @@ src/pages/popup/
 ├── services/        # 通信层
 │   └── runtime.ts   # chrome.runtime.sendMessage 封装
 └── utils/           # 工具函数
-    └── settings-form.ts  # 设置表单转换
+    ├── apifox-settings.ts # Apifox 配置变更判断和保存提示
+    └── settings-form.ts   # 设置表单与可移植 JSON 配置转换
 ```
 
 ## 后台 Service Worker 结构

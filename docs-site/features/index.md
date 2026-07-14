@@ -1,5 +1,9 @@
 # 功能特性
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 Quick Copy Ext 提供以下核心功能：
 
 | 功能 | 说明 | 适用模式 |
@@ -10,7 +14,7 @@ Quick Copy Ext 提供以下核心功能：
 | [反馈文本格式](/features/feedback-format) | 标准化的复制内容格式 | 所有模式 |
 | [请求多选与复制](/features/multi-select) | 灵活选择接口，一键复制 | 所有模式 |
 | [配置导入/导出](/features/config-import-export) | JSON 格式的配置备份与迁移 | 所有模式 |
-| [多环境切换](/features/environments) | 配置多套环境，快速跳转 | 所有模式 |
+| [多环境切换](/features/environments) | 按项目管理多组 LOCAL/FAT/UAT/PROD 环境并快速跳转 | 开发者模式 |
 | [Quick Mock](/features/quick-mock) | 开发者模式的快速 Mock 功能 | 开发者模式 |
 | [AIO 一键复制](/features/aio-copy) | 测试者模式的批量反馈 | 测试者模式 |
 
