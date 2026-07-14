@@ -1,13 +1,14 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  base: '/quick-copy-ext/',
   lang: 'zh-CN',
   title: 'Quick Copy Ext',
   description: 'Web 异常问题反馈的 Chrome 扩展 — 自动捕获接口信息，一键复制标准化反馈内容',
   lastUpdated: true,
 
   head: [
-    ['link', { rel: 'icon', href: '/icon-128.png' }],
+    ['link', { rel: 'icon', href: '/quick-copy-ext/icon-128.png' }],
   ],
 
   themeConfig: {
