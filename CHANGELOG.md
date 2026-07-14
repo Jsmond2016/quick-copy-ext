@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.47](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.46...v1.4.47) (2026-07-14)
+
+
+### Features
+
+* **config:** 支持多套环境配置并优化保存刷新 ([48f3065](https://github.com/Jsmond2016/quick-copy-ext/commit/48f3065a04de4a27d3748a23820baabf6fd1f42b))
+* **pages:** 添加单接口信息复制功能 ([f121425](https://github.com/Jsmond2016/quick-copy-ext/commit/f12142583493b10a760025a6926133bc8e3be486))
+
 ## [1.4.46](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.45...v1.4.46) (2026-07-10)
 
 
