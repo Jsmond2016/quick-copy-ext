@@ -20,6 +20,7 @@ export default defineConfig({
       { text: '功能特性', link: '/features/' },
       { text: '配置参考', link: '/configuration/' },
       { text: '架构设计', link: '/architecture/' },
+      { text: '更新日志', link: '/changelog/' },
       { text: '本地开发', link: '/development/' },
     ],
 
@@ -103,7 +104,7 @@ export default defineConfig({
             { text: '开发指南', link: '/development/' },
             { text: '环境搭建', link: '/development/setup' },
             { text: '构建与打包', link: '/development/build' },
-            { text: '近期代码变更', link: '/development/recent-changes' },
+            { text: '近期改动说明', link: '/development/recent-changes' },
             { text: '版本发布流程', link: '/development/release' },
             { text: '代码规范', link: '/development/code-style' },
           ],
