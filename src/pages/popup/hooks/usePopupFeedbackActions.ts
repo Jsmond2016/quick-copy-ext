@@ -6,6 +6,7 @@ import {
   buildWebOnlyText,
   dedupeBatchQuickMockUrls,
   EnvironmentConfig,
+  getUrlAfterOrigin,
   NetworkRequestRecord,
   PageSummary,
   QuickCopySettings,
@@ -55,6 +56,7 @@ interface UsePopupFeedbackActionsResult {
   handleQuickMock: () => Promise<void>;
   handleRefreshApifox: () => Promise<void>;
   copyFeedback: () => Promise<void>;
+  copyRequest: (request: NetworkRequestRecord) => Promise<void>;
   quickMocking: boolean;
 }
 
@@ -151,6 +153,21 @@ export function usePopupFeedbackActions({
       setToast({ type: 'error', text: message });
     } finally {
       stopCopying();
+    }
+  }
+
+  async function copyRequest(request: NetworkRequestRecord): Promise<void> {
+    const apiName = request.apiName?.trim();
+    const text = `${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}${apiName ? ` [${apiName}]` : ''}`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setToast({ type: 'success', text: '接口信息已复制到剪贴板' });
+    } catch (error) {
+      setToast({
+        type: 'error',
+        text: getErrorMessage(error, '复制接口信息失败。'),
+      });
     }
   }
 
@@ -254,6 +271,7 @@ export function usePopupFeedbackActions({
   return {
     copying,
     copyFeedback,
+    copyRequest,
     handleCopyToAio,
     handleQuickMock,
     handleRefreshApifox,

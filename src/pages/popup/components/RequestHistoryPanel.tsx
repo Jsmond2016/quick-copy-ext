@@ -13,6 +13,7 @@ interface RequestHistoryPanelProps {
   onSelectAll: () => void
   onClearSelection: () => void
   onClearRequests: () => void
+  onCopyRequest: (request: NetworkRequestRecord) => void
   onToggleRequest: (id: string, index: number, shiftKey: boolean) => void
 }
 
@@ -90,6 +91,7 @@ export function RequestHistoryPanel({
   onSelectAll,
   onClearSelection,
   onClearRequests,
+  onCopyRequest,
   onToggleRequest,
 }: RequestHistoryPanelProps) {
   const abnormalCount = filteredRequests.filter(
@@ -232,6 +234,21 @@ export function RequestHistoryPanel({
                     </div>
                   </div>
                 </div>
+                <button
+                  aria-label="复制接口信息"
+                  className="request-copy-button"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onCopyRequest(request)
+                  }}
+                  onMouseDown={(event) => {
+                    event.stopPropagation()
+                  }}
+                  title="复制接口信息"
+                  type="button"
+                >
+                  <span aria-hidden="true" className="copy-icon" />
+                </button>
               </article>
             )
           })

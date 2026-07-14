@@ -33,6 +33,7 @@ interface PopupBodyProps {
   onClearRequests: () => void;
   onClearSelection: () => void;
   onCopy: () => void;
+  onCopyRequest: (request: NetworkRequestRecord) => void;
   onCopyToAio: () => void;
   onExportSettings: () => void;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
@@ -93,6 +94,7 @@ export function PopupBody({
   onClearRequests,
   onClearSelection,
   onCopy,
+  onCopyRequest,
   onCopyToAio,
   onExportSettings,
   onFieldChange,
@@ -151,6 +153,7 @@ export function PopupBody({
             settings={settings}
             onClearRequests={onClearRequests}
             onClearSelection={onClearSelection}
+            onCopyRequest={onCopyRequest}
             onSelectAll={onSelectAll}
             onToggleRequest={onToggleRequest}
           />

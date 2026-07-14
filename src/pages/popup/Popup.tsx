@@ -27,11 +27,7 @@ import { usePopupSettingsState } from '@pages/popup/hooks/usePopupSettingsState'
 import { useTabRequests } from '@pages/popup/hooks/useTabRequests';
 import { useSelection } from '@pages/popup/hooks/useSelection';
 import { useToast } from '@pages/popup/hooks/useToast';
-import {
-  clearApifoxData,
-  getErrorMessage,
-  getApifoxStatus,
-} from '@pages/popup/services/runtime';
+import { clearApifoxData, getErrorMessage, getApifoxStatus } from '@pages/popup/services/runtime';
 import { getSettingsSavedMessage, hasApifoxConfigChanged } from '@pages/popup/utils/apifox-settings';
 import {
   buildSettingsFromForm,
@@ -153,6 +149,7 @@ export default function Popup() {
   const {
     copying,
     copyFeedback,
+    copyRequest,
     handleCopyToAio,
     handleQuickMock,
     handleRefreshApifox,
@@ -410,6 +407,7 @@ export default function Popup() {
         }}
         onClearSelection={clearSelection}
         onCopy={() => void copyFeedback()}
+        onCopyRequest={(request) => void copyRequest(request)}
         onCopyToAio={() => void handleCopyToAio()}
         onExportSettings={handleExport}
         onFieldChange={updateSettingsForm}
