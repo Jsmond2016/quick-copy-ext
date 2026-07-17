@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.48](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.47...v1.4.48) (2026-07-17)
+
+
+### Features
+
+* **pages:** 添加页面异常采集与反馈 ([ebf4cae](https://github.com/Jsmond2016/quick-copy-ext/commit/ebf4caef3dc0c6e0321ae2e5d47c3548507991a9))
+* **文档:** 优化文档变更日志展示 ([799d418](https://github.com/Jsmond2016/quick-copy-ext/commit/799d41875f02ff571d6fe99b600e3dae852d7af7))
+
 ## [1.4.47](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.46...v1.4.47) (2026-07-14)
 
 
