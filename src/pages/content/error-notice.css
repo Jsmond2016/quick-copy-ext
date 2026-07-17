@@ -1,0 +1,112 @@
+:host {
+  all: initial;
+}
+
+.notice {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483647;
+  width: min(360px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid #d7d2cb;
+  border-left: 4px solid #b42318;
+  border-radius: 8px;
+  background: #fffdfa;
+  box-shadow: 0 16px 38px rgba(31, 37, 32, 0.2);
+  color: #1f2520;
+  font-family: "Segoe UI", "PingFang SC", sans-serif;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+p {
+  margin: 6px 0 0;
+  color: #625f5a;
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #625f5a;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #8f3416;
+  border-radius: 6px;
+  font: 600 12px/1.4 "Segoe UI", "PingFang SC", sans-serif;
+  cursor: pointer;
+}
+
+.copy {
+  background: #8f3416;
+  color: #fff;
+}
+
+.details {
+  background: #fff;
+  color: #8f3416;
+}
+
+.status {
+  color: #28724f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e8e3dc;
+  color: #625f5a;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.brand img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+button:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}

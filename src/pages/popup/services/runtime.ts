@@ -1,4 +1,4 @@
-import {
+import type {
   ApifoxCacheStatus,
   ApifoxMatchResult,
   ApifoxMatchesResponse,
@@ -28,12 +28,27 @@ interface ExternalBatchQuickMockResponse {
   message: string;
 }
 
+const PAGE_ERROR_BACKGROUND_OUTDATED_MESSAGE =
+  '页面异常采集后台尚未更新，请在扩展管理页重新加载 Quick Copy Ext。';
+
 function isUnknownMessageTypeError(error: unknown): boolean {
   return error instanceof Error && error.message === 'Unknown message type.';
 }
 
 export function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
+}
+
+function unwrapPageErrorsResponse(response: PageErrorsResponse): PageErrorRecord[] {
+  if (!response.ok) {
+    if (response.error === 'Unknown message type.') {
+      throw new Error(PAGE_ERROR_BACKGROUND_OUTDATED_MESSAGE);
+    }
+
+    throw new Error(response.error);
+  }
+
+  return response.data;
 }
 
 export async function getActiveTab() {
@@ -67,14 +82,7 @@ export async function getTabPageErrors(tabId: number): Promise<PageErrorRecord[]
     tabId,
   })) as PageErrorsResponse;
 
-  if (!response.ok) {
-    if (response.error === 'Unknown message type.') {
-      throw new Error('页面异常采集后台尚未更新，请在扩展管理页重新加载 Quick Copy Ext。');
-    }
-    throw new Error(response.error);
-  }
-
-  return response.data;
+  return unwrapPageErrorsResponse(response);
 }
 
 export async function clearTabPageErrors(tabId: number): Promise<void> {
@@ -83,12 +91,7 @@ export async function clearTabPageErrors(tabId: number): Promise<void> {
     tabId,
   })) as PageErrorsResponse;
 
-  if (!response.ok) {
-    if (response.error === 'Unknown message type.') {
-      throw new Error('页面异常采集后台尚未更新，请在扩展管理页重新加载 Quick Copy Ext。');
-    }
-    throw new Error(response.error);
-  }
+  unwrapPageErrorsResponse(response);
 }
 
 export async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
@@ -221,11 +224,14 @@ export async function sendBatchQuickMockToExtension(
   });
 }
 
-export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) {
+function subscribeToTabUpdates(
+  messageType: RuntimeEventMessage['type'],
+  listener: (tabId: number) => void,
+): () => void {
   const handleMessage = (message: unknown) => {
     const runtimeMessage = message as RuntimeEventMessage;
 
-    if (runtimeMessage?.type !== 'quick-copy/tab-requests-updated') {
+    if (runtimeMessage?.type !== messageType) {
       return;
     }
 
@@ -239,20 +245,14 @@ export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) 
   };
 }
 
-export function subscribeToPageErrorUpdates(listener: (tabId: number) => void) {
-  const handleMessage = (message: unknown) => {
-    const runtimeMessage = message as RuntimeEventMessage;
+export function subscribeToTabRequestUpdates(
+  listener: (tabId: number) => void,
+): () => void {
+  return subscribeToTabUpdates('quick-copy/tab-requests-updated', listener);
+}
 
-    if (runtimeMessage?.type !== 'quick-copy/page-errors-updated') {
-      return;
-    }
-
-    listener(runtimeMessage.tabId);
-  };
-
-  chrome.runtime.onMessage.addListener(handleMessage);
-
-  return () => {
-    chrome.runtime.onMessage.removeListener(handleMessage);
-  };
+export function subscribeToPageErrorUpdates(
+  listener: (tabId: number) => void,
+): () => void {
+  return subscribeToTabUpdates('quick-copy/page-errors-updated', listener);
 }

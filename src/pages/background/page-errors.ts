@@ -1,8 +1,8 @@
 import {
-  CapturedPageErrorPayload,
   MAX_PAGE_ERRORS_PER_TAB,
-  PageErrorKind,
-  PageErrorRecord,
+  type CapturedPageErrorPayload,
+  type PageErrorKind,
+  type PageErrorRecord,
 } from '@src/lib/quick-copy';
 
 const PAGE_ERROR_SESSION_CACHE_KEY = 'quick-copy-page-error-session-cache';
@@ -15,6 +15,16 @@ const VALID_ERROR_KINDS = new Set<PageErrorKind>([
 
 interface SerializedPageErrorCache {
   errorsByTab: [number, PageErrorRecord[]][];
+}
+
+interface PageErrorStore {
+  report(
+    tabId: number,
+    payload: CapturedPageErrorPayload,
+    senderUrl?: string,
+  ): Promise<boolean>;
+  get(tabId: number): Promise<PageErrorRecord[]>;
+  clear(tabId: number, shouldNotify?: boolean): Promise<void>;
 }
 
 function truncate(value: unknown, maxLength: number): string | undefined {
@@ -65,7 +75,7 @@ function isDuplicate(current: PageErrorRecord, payload: CapturedPageErrorPayload
 
 export function createPageErrorStore(
   shouldAccept: (tabId: number, senderUrl?: string) => boolean,
-) {
+): PageErrorStore {
   const errorsByTab = new Map<number, PageErrorRecord[]>();
 
   const readyPromise = chrome.storage.session.get(PAGE_ERROR_SESSION_CACHE_KEY)
@@ -110,7 +120,6 @@ export function createPageErrorStore(
   }
 
   return {
-    ensureReady: () => readyPromise,
     async report(
       tabId: number,
       rawPayload: CapturedPageErrorPayload,

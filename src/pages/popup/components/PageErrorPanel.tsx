@@ -3,8 +3,8 @@ import {
   getDisplayPath,
   getPageErrorKindLabel,
   getRelatedRequests,
-  NetworkRequestRecord,
-  PageErrorRecord,
+  type NetworkRequestRecord,
+  type PageErrorRecord,
 } from '@src/lib/quick-copy';
 
 interface PageErrorPanelProps {
@@ -14,14 +14,15 @@ interface PageErrorPanelProps {
   onCopy: (error: PageErrorRecord) => void;
 }
 
-function getErrorLocation(error: PageErrorRecord): string {
+function getDisplayErrorLocation(error: PageErrorRecord): string {
   const source = error.filename || error.resourceUrl;
   if (!source) {
     return '-';
   }
 
-  const suffix = `${error.lineNumber ? `:${error.lineNumber}` : ''}${error.columnNumber ? `:${error.columnNumber}` : ''}`;
-  return `${getDisplayPath(source) || source}${suffix}`;
+  const lineNumber = error.lineNumber ? `:${error.lineNumber}` : '';
+  const columnNumber = error.columnNumber ? `:${error.columnNumber}` : '';
+  return `${getDisplayPath(source) || source}${lineNumber}${columnNumber}`;
 }
 
 export function PageErrorPanel({
@@ -49,6 +50,7 @@ export function PageErrorPanel({
       <div className="page-error-list">
         {errors.map((error) => {
           const relatedRequests = getRelatedRequests(error, requests);
+          const location = getDisplayErrorLocation(error);
 
           return (
             <article className="page-error-item" key={error.id}>
@@ -74,8 +76,8 @@ export function PageErrorPanel({
               <strong className="page-error-message" title={error.message}>
                 {error.message}
               </strong>
-              <div className="page-error-location" title={getErrorLocation(error)}>
-                {getErrorLocation(error)}
+              <div className="page-error-location" title={location}>
+                {location}
               </div>
 
               {relatedRequests.length > 0 ? (

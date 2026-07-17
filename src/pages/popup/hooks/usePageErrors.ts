@@ -2,16 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDebounceFn, useUnmount } from 'ahooks';
 import {
   buildPageErrorText,
-  NetworkRequestRecord,
-  PageErrorRecord,
-  PageSummary,
+  type NetworkRequestRecord,
+  type PageErrorRecord,
+  type PageSummary,
 } from '@src/lib/quick-copy';
 import {
   clearTabPageErrors,
+  getErrorMessage,
   getTabPageErrors,
   subscribeToPageErrorUpdates,
 } from '@pages/popup/services/runtime';
-import { ToastState } from '@pages/popup/types';
+import type { ToastState } from '@pages/popup/types';
 
 export function usePageErrors(
   tabId: number | null,
@@ -27,7 +28,7 @@ export function usePageErrors(
     } catch (error) {
       onFeedback({
         type: 'error',
-        text: error instanceof Error ? error.message : '读取页面异常失败。',
+        text: getErrorMessage(error, '读取页面异常失败。'),
       });
     }
   }, [onFeedback]);
@@ -44,7 +45,7 @@ export function usePageErrors(
     } catch (error) {
       onFeedback({
         type: 'error',
-        text: error instanceof Error ? error.message : '清空页面异常失败。',
+        text: getErrorMessage(error, '清空页面异常失败。'),
       });
     }
   }, [onFeedback, tabId]);
@@ -56,7 +57,7 @@ export function usePageErrors(
     } catch (copyError) {
       onFeedback({
         type: 'error',
-        text: copyError instanceof Error ? copyError.message : '复制页面异常失败。',
+        text: getErrorMessage(copyError, '复制页面异常失败。'),
       });
     }
   }, [onFeedback, page, requests]);
