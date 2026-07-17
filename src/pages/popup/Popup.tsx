@@ -23,6 +23,7 @@ import { ToastMessage } from '@pages/popup/components/ToastMessage';
 import { DEFAULT_APIFOX_STATUS } from '@pages/popup/constants';
 import { useApifox } from '@pages/popup/hooks/useApifox';
 import { usePopupFeedbackActions } from '@pages/popup/hooks/usePopupFeedbackActions';
+import { usePageErrors } from '@pages/popup/hooks/usePageErrors';
 import { usePopupSettingsState } from '@pages/popup/hooks/usePopupSettingsState';
 import { useTabRequests } from '@pages/popup/hooks/useTabRequests';
 import { useSelection } from '@pages/popup/hooks/useSelection';
@@ -92,14 +93,12 @@ export default function Popup() {
     setErrorText,
   } = useTabRequests(settings, apifoxStatus, attachApifoxUrls);
   const { toast, setToast } = useToast();
-
+  const { pageErrors, clear: clearPageErrors, copy: copyPageError } = usePageErrors(tabId, page, requests, setToast);
   const isDefaultConfig = useMemo(() => isDefaultSettings(settings), [settings]);
-
   const filteredRequests = useMemo(
     () => requests.filter((request) => matchesApiPrefixes(request.url, settings.apiPrefixes)),
     [requests, settings.apiPrefixes],
   );
-
   const pageMonitoringEnabled = useMemo(
     () => matchesMonitoredOrigins(page.url, settings.monitoredOrigins),
     [page.url, settings.monitoredOrigins],
@@ -382,6 +381,7 @@ export default function Popup() {
         isDefaultConfig={isDefaultConfig}
         mode={settings.mode}
         note={note}
+        pageErrors={pageErrors}
         pageMonitoringEnabled={pageMonitoringEnabled}
         quickFillOptions={quickFillOptions}
         quickMocking={quickMocking}
@@ -405,9 +405,11 @@ export default function Popup() {
           void clearCurrentTabRequests();
           setSelectedIds([]);
         }}
+        onClearPageErrors={() => void clearPageErrors()}
         onClearSelection={clearSelection}
         onCopy={() => void copyFeedback()}
         onCopyRequest={(request) => void copyRequest(request)}
+        onCopyPageError={(error) => void copyPageError(error)}
         onCopyToAio={() => void handleCopyToAio()}
         onExportSettings={handleExport}
         onFieldChange={updateSettingsForm}

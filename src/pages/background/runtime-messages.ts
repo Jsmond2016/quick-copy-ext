@@ -1,14 +1,18 @@
 import {
   ApifoxCacheStatus,
   ApifoxMatchResult,
+  CapturedPageErrorPayload,
   CapturedResponsePayload,
   NetworkRequestRecord,
+  PageErrorRecord,
+  RuntimeEventMessage,
   RuntimeRequestMessage,
   RuntimeResponseMessage,
 } from '@src/lib/quick-copy';
 
 interface RegisterRuntimeMessageListenerOptions {
   applyCapturedResponse: (tabId: number, payload: CapturedResponsePayload) => void;
+  clearPageErrors: (tabId: number) => Promise<void>;
   clearTabRequests: (tabId: number) => void;
   ensureApifoxCacheReady: () => Promise<void>;
   ensureRuntimeCacheReady: () => Promise<void>;
@@ -17,8 +21,15 @@ interface RegisterRuntimeMessageListenerOptions {
   ) => Record<string, ApifoxMatchResult>;
   getApifoxStatus: () => ApifoxCacheStatus;
   getRequestsByTabId: (tabId: number) => NetworkRequestRecord[];
+  getPageErrorsByTabId: (tabId: number) => Promise<PageErrorRecord[]>;
   persistClearedApifoxCache: () => Promise<ApifoxCacheStatus>;
   refreshApifoxData: (exportUrl: string, authToken: string) => Promise<ApifoxCacheStatus>;
+  reportPageError: (
+    tabId: number,
+    payload: CapturedPageErrorPayload,
+    senderUrl?: string,
+  ) => Promise<boolean>;
+  startPageSession: (tabId: number) => Promise<void>;
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -27,18 +38,22 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 export function registerRuntimeMessageListener({
   applyCapturedResponse,
+  clearPageErrors,
   clearTabRequests,
   ensureApifoxCacheReady,
   ensureRuntimeCacheReady,
   getApifoxMatches,
   getApifoxStatus,
   getRequestsByTabId,
+  getPageErrorsByTabId,
   persistClearedApifoxCache,
   refreshApifoxData,
+  reportPageError,
+  startPageSession,
 }: RegisterRuntimeMessageListenerOptions): void {
   chrome.runtime.onMessage.addListener(
     (
-      message: RuntimeRequestMessage,
+      message: RuntimeRequestMessage | RuntimeEventMessage,
       sender,
       sendResponse: (
         response:
@@ -47,6 +62,13 @@ export function registerRuntimeMessageListener({
           | { ok: false; error: string },
       ) => void,
     ) => {
+      if (
+        message.type === 'quick-copy/tab-requests-updated'
+        || message.type === 'quick-copy/page-errors-updated'
+      ) {
+        return false;
+      }
+
       if (message.type === 'quick-copy/get-tab-requests') {
         void ensureRuntimeCacheReady()
           .then(() => {
@@ -66,6 +88,24 @@ export function registerRuntimeMessageListener({
           })
           .catch((error: unknown) => {
             sendResponse({ ok: false, error: getErrorMessage(error, '清空请求记录失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/get-tab-page-errors') {
+        void getPageErrorsByTabId(message.tabId)
+          .then((records) => sendResponse({ ok: true, data: records }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '读取页面异常失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/clear-tab-page-errors') {
+        void clearPageErrors(message.tabId)
+          .then(() => sendResponse({ ok: true, data: [] }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '清空页面异常失败。') });
           });
         return true;
       }
@@ -125,6 +165,40 @@ export function registerRuntimeMessageListener({
 
         sendResponse({ ok: true, data: null });
         return false;
+      }
+
+      if (message.type === 'quick-copy/report-page-error') {
+        const tabId = sender.tab?.id;
+
+        if (typeof tabId !== 'number') {
+          sendResponse({ ok: true, data: { accepted: false } });
+          return false;
+        }
+
+        void reportPageError(tabId, message.payload, sender.tab?.url)
+          .then((accepted) => sendResponse({ ok: true, data: { accepted } }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '上报页面异常失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/page-session-started') {
+        const tabId = sender.tab?.id;
+        if (typeof tabId === 'number') {
+          void startPageSession(tabId);
+        }
+        sendResponse({ ok: true, data: null });
+        return false;
+      }
+
+      if (message.type === 'quick-copy/open-popup') {
+        void chrome.action.openPopup()
+          .then(() => sendResponse({ ok: true, data: null }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '请点击扩展图标查看详情。') });
+          });
+        return true;
       }
 
       sendResponse({ ok: false, error: 'Unknown message type.' });

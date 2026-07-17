@@ -1,5 +1,6 @@
-import { NetworkRequestRecord, QuickCopyMode, QuickCopySettings, TesterAioConfig } from '@src/lib/quick-copy';
+import { NetworkRequestRecord, PageErrorRecord, QuickCopyMode, QuickCopySettings, TesterAioConfig } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
+import { PageErrorPanel } from '@pages/popup/components/PageErrorPanel';
 import { RequestHistoryPanel } from '@pages/popup/components/RequestHistoryPanel';
 import { RequestParamsPanel } from '@pages/popup/components/RequestParamsPanel';
 import { SettingsPanel } from '@pages/popup/components/SettingsPanel';
@@ -12,6 +13,7 @@ interface PopupBodyProps {
   isDefaultConfig: boolean;
   mode: QuickCopyMode;
   note: string;
+  pageErrors: PageErrorRecord[];
   pageMonitoringEnabled: boolean;
   quickFillOptions: string[];
   quickMocking: boolean;
@@ -31,9 +33,11 @@ interface PopupBodyProps {
   onAddTesterAioConfig: () => void;
   onCancelSettings: () => void;
   onClearRequests: () => void;
+  onClearPageErrors: () => void;
   onClearSelection: () => void;
   onCopy: () => void;
   onCopyRequest: (request: NetworkRequestRecord) => void;
+  onCopyPageError: (error: PageErrorRecord) => void;
   onCopyToAio: () => void;
   onExportSettings: () => void;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
@@ -73,6 +77,7 @@ export function PopupBody({
   isDefaultConfig,
   mode,
   note,
+  pageErrors,
   pageMonitoringEnabled,
   quickFillOptions,
   quickMocking,
@@ -92,9 +97,11 @@ export function PopupBody({
   onAddTesterAioConfig,
   onCancelSettings,
   onClearRequests,
+  onClearPageErrors,
   onClearSelection,
   onCopy,
   onCopyRequest,
+  onCopyPageError,
   onCopyToAio,
   onExportSettings,
   onFieldChange,
@@ -146,6 +153,12 @@ export function PopupBody({
     <>
       {pageMonitoringEnabled ? (
         <>
+          <PageErrorPanel
+            errors={pageErrors}
+            requests={requests}
+            onClear={onClearPageErrors}
+            onCopy={onCopyPageError}
+          />
           <RequestHistoryPanel
             filteredRequests={currentRequests}
             requests={requests}

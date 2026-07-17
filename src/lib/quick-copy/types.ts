@@ -12,6 +12,26 @@ export interface CapturedResponsePayload {
   requestParams?: JsonValue;
 }
 
+export type PageErrorKind = 'runtime' | 'unhandledrejection' | 'resource';
+
+export interface CapturedPageErrorPayload {
+  kind: PageErrorKind;
+  message: string;
+  name?: string;
+  stack?: string;
+  filename?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  resourceUrl?: string;
+  pageUrl: string;
+  occurredAt: number;
+}
+
+export interface PageErrorRecord extends CapturedPageErrorPayload {
+  id: string;
+  tabId: number;
+}
+
 export interface NetworkRequestRecord {
   id: string;
   requestId: string;
@@ -98,15 +118,27 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/refresh-apifox-data'; exportUrl: string; authToken: string }
   | { type: 'quick-copy/clear-apifox-data' }
   | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] }
-  | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload };
+  | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload }
+  | { type: 'quick-copy/report-page-error'; payload: CapturedPageErrorPayload }
+  | { type: 'quick-copy/page-session-started' }
+  | { type: 'quick-copy/open-popup' }
+  | { type: 'quick-copy/get-tab-page-errors'; tabId: number }
+  | { type: 'quick-copy/clear-tab-page-errors'; tabId: number };
 
-export interface RuntimeEventMessage {
-  type: 'quick-copy/tab-requests-updated';
-  tabId: number;
-}
+export type RuntimeEventMessage =
+  | { type: 'quick-copy/tab-requests-updated'; tabId: number }
+  | { type: 'quick-copy/page-errors-updated'; tabId: number };
 
 export type RuntimeResponseMessage =
   | { ok: true; data: NetworkRequestRecord[] }
+  | { ok: false; error: string };
+
+export type PageErrorsResponse =
+  | { ok: true; data: PageErrorRecord[] }
+  | { ok: false; error: string };
+
+export type ReportPageErrorResponse =
+  | { ok: true; data: { accepted: boolean } }
   | { ok: false; error: string };
 
 export interface ApifoxCacheStatus {

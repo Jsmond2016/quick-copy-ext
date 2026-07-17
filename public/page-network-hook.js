@@ -7,6 +7,95 @@
 
   var PAGE_MESSAGE_SOURCE = 'quick-copy-ext-page-hook';
 
+  function truncateErrorText(value, maxLength) {
+    if (typeof value !== 'string') {
+      return undefined;
+    }
+
+    return value.length > maxLength ? value.slice(0, maxLength) + '...' : value;
+  }
+
+  function getErrorDetails(reason, fallbackMessage) {
+    if (reason && typeof reason === 'object') {
+      return {
+        name: truncateErrorText(reason.name, 120),
+        message: truncateErrorText(reason.message, 1000) || fallbackMessage,
+        stack: truncateErrorText(reason.stack, 8000),
+      };
+    }
+
+    if (typeof reason === 'string') {
+      return { message: truncateErrorText(reason, 1000) };
+    }
+
+    try {
+      return {
+        message: truncateErrorText(JSON.stringify(reason), 1000) || fallbackMessage,
+      };
+    } catch {
+      return { message: fallbackMessage };
+    }
+  }
+
+  function postPageError(payload) {
+    window.postMessage(
+      {
+        source: PAGE_MESSAGE_SOURCE,
+        type: 'quick-copy:page-error',
+        payload: payload,
+      },
+      '*',
+    );
+  }
+
+  window.addEventListener(
+    'error',
+    function onPageError(event) {
+      var target = event.target;
+
+      if (target && target !== window) {
+        if (target.tagName !== 'SCRIPT') {
+          return;
+        }
+
+        postPageError({
+          kind: 'resource',
+          message: '关键脚本加载失败',
+          resourceUrl: truncateErrorText(target.src, 2000),
+          pageUrl: window.location.href,
+          occurredAt: Date.now(),
+        });
+        return;
+      }
+
+      var details = getErrorDetails(event.error, event.message || '页面发生未知运行时异常');
+      postPageError({
+        kind: 'runtime',
+        name: details.name,
+        message: details.message,
+        stack: details.stack,
+        filename: truncateErrorText(event.filename, 2000),
+        lineNumber: event.lineno || undefined,
+        columnNumber: event.colno || undefined,
+        pageUrl: window.location.href,
+        occurredAt: Date.now(),
+      });
+    },
+    true,
+  );
+
+  window.addEventListener('unhandledrejection', function onUnhandledRejection(event) {
+    var details = getErrorDetails(event.reason, '未处理的 Promise 异常');
+    postPageError({
+      kind: 'unhandledrejection',
+      name: details.name,
+      message: details.message,
+      stack: details.stack,
+      pageUrl: window.location.href,
+      occurredAt: Date.now(),
+    });
+  });
+
   function canReadResponseBody(contentType) {
     return typeof contentType === 'string' && /json|javascript|text\/plain/i.test(contentType);
   }

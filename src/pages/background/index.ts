@@ -11,6 +11,7 @@ import {
   withRequestAbnormalState,
 } from '@src/lib/quick-copy';
 import { getApifoxMatches as buildApifoxMatches } from '@pages/background/apifox-matches';
+import { createPageErrorStore } from '@pages/background/page-errors';
 import { registerRequestTrackingListeners } from '@pages/background/request-events';
 import { applyCapturedResponse as applyCapturedResponseToRequest } from '@pages/background/response-capture';
 import { registerRuntimeMessageListener } from '@pages/background/runtime-messages';
@@ -29,14 +30,12 @@ const defaultApifoxStatus: ApifoxCacheStatus = {
   sourceUrl: '',
   endpointCount: 0,
 };
-
 interface SerializedApifoxCache {
   status: ApifoxCacheStatus;
   endpointEntries: [string, string][];
   pathEntries: [string, string][];
   nameEntries: [string, string][];
 }
-
 interface SerializedRuntimeCache {
   version: number;
   requestsByTab: [number, NetworkRequestRecord[]][];
@@ -47,14 +46,12 @@ let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
 let responseErrorRule = '';
 let runtimePersistTimer: ReturnType<typeof setTimeout> | undefined;
-
 async function persistRuntimeCache() {
   const payload: SerializedRuntimeCache = {
     version: RUNTIME_CACHE_VERSION,
     requestsByTab: Array.from(requestsByTab.entries()),
     tabUrlEntries: Array.from(tabUrlMap.entries()),
   };
-
   await chrome.storage.session.set({
     [RUNTIME_SESSION_CACHE_KEY]: payload,
   });
@@ -64,7 +61,6 @@ function scheduleRuntimeCachePersist() {
   if (runtimePersistTimer !== undefined) {
     clearTimeout(runtimePersistTimer);
   }
-
   runtimePersistTimer = setTimeout(() => {
     runtimePersistTimer = undefined;
     void persistRuntimeCache();
@@ -74,7 +70,6 @@ function scheduleRuntimeCachePersist() {
 async function hydrateRuntimeCache() {
   const stored = await chrome.storage.session.get(RUNTIME_SESSION_CACHE_KEY);
   const payload = stored[RUNTIME_SESSION_CACHE_KEY] as SerializedRuntimeCache | undefined;
-
   if (!payload || typeof payload !== 'object') {
     return;
   }
@@ -83,7 +78,6 @@ async function hydrateRuntimeCache() {
     await chrome.storage.session.remove(RUNTIME_SESSION_CACHE_KEY);
     return;
   }
-
   requestsByTab.clear();
   requestIndex.clear();
   tabUrlMap.clear();
@@ -96,7 +90,6 @@ async function hydrateRuntimeCache() {
     const nextRecords = records
       .filter((record): record is NetworkRequestRecord => Boolean(record) && typeof record === 'object')
       .slice(0, MAX_REQUESTS_PER_TAB);
-
     requestsByTab.set(tabId, nextRecords);
     nextRecords.forEach((record) => {
       requestIndex.set(record.requestId, record);
@@ -117,7 +110,6 @@ async function persistApifoxCache() {
     pathEntries: Array.from(apifoxPathMap.entries()),
     nameEntries: Array.from(apifoxNameMap.entries()),
   };
-
   await chrome.storage.session.set({
     [APIFOX_SESSION_CACHE_KEY]: payload,
   });
@@ -126,7 +118,6 @@ async function persistApifoxCache() {
 async function hydrateApifoxCache() {
   const stored = await chrome.storage.session.get(APIFOX_SESSION_CACHE_KEY);
   const payload = stored[APIFOX_SESSION_CACHE_KEY] as SerializedApifoxCache | undefined;
-
   if (!payload || typeof payload !== 'object') {
     return;
   }
@@ -280,6 +271,9 @@ function shouldTrackRequest(tabId: number, initiator?: string) {
 
   return false;
 }
+
+const pageErrorStore = createPageErrorStore((tabId, senderUrl) =>
+  shouldTrackTabUrl(senderUrl ?? tabUrlMap.get(tabId)));
 
 async function refreshMonitoredOrigins() {
   const settings = await loadSettings();
@@ -436,6 +430,7 @@ registerRequestTrackingListeners({
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrlMap.delete(tabId);
   clearTabRequests(tabId);
+  void pageErrorStore.clear(tabId, false);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -468,11 +463,13 @@ void refreshMonitoredOrigins()
 
 registerRuntimeMessageListener({
   applyCapturedResponse,
+  clearPageErrors: pageErrorStore.clear,
   clearTabRequests,
   ensureApifoxCacheReady,
   ensureRuntimeCacheReady,
   getApifoxMatches,
   getApifoxStatus: () => apifoxStatus,
+  getPageErrorsByTabId: pageErrorStore.get,
   getRequestsByTabId: (tabId) => requestsByTab.get(tabId) ?? [],
   persistClearedApifoxCache: async () => {
     resetApifoxCache('');
@@ -480,4 +477,6 @@ registerRuntimeMessageListener({
     return apifoxStatus;
   },
   refreshApifoxData,
+  reportPageError: pageErrorStore.report,
+  startPageSession: (tabId) => pageErrorStore.clear(tabId, false),
 });

@@ -782,6 +782,119 @@ input {
   padding-right: 4px;
 }
 
+.page-error-panel {
+  border-color: rgba(180, 35, 24, 0.24);
+}
+
+.page-error-kicker {
+  color: #a12e24;
+}
+
+.page-error-list {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.page-error-item {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(180, 35, 24, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 247, 246, 0.86);
+}
+
+.page-error-item-head,
+.page-error-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-error-item-head {
+  justify-content: space-between;
+}
+
+.page-error-summary {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.page-error-summary time,
+.page-error-location {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.page-error-message {
+  display: -webkit-box;
+  margin-top: 8px;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.page-error-location {
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-error-related {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(180, 35, 24, 0.12);
+}
+
+.page-error-related > span {
+  color: #7f342d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.page-error-related code {
+  overflow: hidden;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-error-details {
+  margin-top: 10px;
+}
+
+.page-error-details summary {
+  color: var(--brand-deep);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.page-error-details pre {
+  max-height: 180px;
+  margin: 8px 0 0;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: #272522;
+  color: #f8f3ed;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .request-card {
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) 30px;

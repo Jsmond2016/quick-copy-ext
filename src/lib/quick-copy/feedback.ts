@@ -1,6 +1,91 @@
 import { formatDuration, formatTime, getTraceId, getUrlAfterOrigin } from './url';
 import { getResponseMessage, getResponseRtnValue } from './response-rules';
-import type { CopyPayload, JsonValue, NetworkRequestRecord, PageSummary } from './types';
+import {
+  PAGE_ERROR_RELATED_REQUEST_AFTER_MS,
+  PAGE_ERROR_RELATED_REQUEST_BEFORE_MS,
+} from './constants';
+import type {
+  CopyPayload,
+  JsonValue,
+  NetworkRequestRecord,
+  PageErrorKind,
+  PageErrorRecord,
+  PageSummary,
+} from './types';
+
+const PAGE_ERROR_KIND_LABELS: Record<PageErrorKind, string> = {
+  runtime: 'JavaScript 运行时异常',
+  unhandledrejection: '未处理的 Promise 异常',
+  resource: '关键脚本加载失败',
+};
+
+function formatDateTime(timestamp: number): string {
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(timestamp);
+}
+
+export function getPageErrorKindLabel(kind: PageErrorKind): string {
+  return PAGE_ERROR_KIND_LABELS[kind];
+}
+
+export function getRelatedRequests(
+  error: Pick<PageErrorRecord, 'occurredAt'>,
+  requests: NetworkRequestRecord[],
+): NetworkRequestRecord[] {
+  return requests
+    .filter((request) => {
+      return request.startedAt >= error.occurredAt - PAGE_ERROR_RELATED_REQUEST_BEFORE_MS
+        && request.startedAt <= error.occurredAt + PAGE_ERROR_RELATED_REQUEST_AFTER_MS;
+    })
+    .sort((left, right) => Math.abs(left.startedAt - error.occurredAt) - Math.abs(right.startedAt - error.occurredAt))
+    .slice(0, 3);
+}
+
+export function buildPageErrorText(
+  error: PageErrorRecord,
+  page: PageSummary,
+  requests: NetworkRequestRecord[],
+): string {
+  const relatedRequests = getRelatedRequests(error, requests);
+  const location = error.filename
+    ? `${error.filename}${error.lineNumber ? `:${error.lineNumber}` : ''}${error.columnNumber ? `:${error.columnNumber}` : ''}`
+    : error.resourceUrl ?? '-';
+  const sections = [
+    '=== 页面异常信息',
+    '',
+    `- 页面 URL：${page.url || error.pageUrl || '-'}`,
+    `- 页面标题：${page.title || '-'}`,
+    `- 发生时间：${formatDateTime(error.occurredAt)}`,
+    `- 异常类型：${getPageErrorKindLabel(error.kind)}`,
+    `- 错误信息：${error.message}`,
+    `- 错误位置：${location}`,
+  ];
+
+  if (error.stack) {
+    sections.push('', '错误堆栈：', error.stack);
+  }
+
+  sections.push('', '可能关联接口：');
+  if (relatedRequests.length === 0) {
+    sections.push('- 未发现时间相近的接口请求');
+  } else {
+    relatedRequests.forEach((request) => {
+      sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
+      sections.push(`  状态码：${request.statusCode ?? '-'}`);
+      sections.push(`  traceId：${getTraceId(request.headers)}`);
+    });
+  }
+
+  sections.push('', '=== From Quick Copy Ext');
+  return sections.join('\n');
+}
 
 function getUrlPathname(url: string | undefined): string {
   if (!url) return '-';

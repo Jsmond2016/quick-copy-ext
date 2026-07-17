@@ -5,6 +5,8 @@ import {
   ApifoxRefreshResponse,
   ApifoxStatusResponse,
   NetworkRequestRecord,
+  PageErrorRecord,
+  PageErrorsResponse,
   RuntimeEventMessage,
   RuntimeResponseMessage,
 } from '@src/lib/quick-copy';
@@ -57,6 +59,36 @@ export async function clearTabRequests(tabId: number): Promise<void> {
     type: 'quick-copy/clear-tab-requests',
     tabId,
   });
+}
+
+export async function getTabPageErrors(tabId: number): Promise<PageErrorRecord[]> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/get-tab-page-errors',
+    tabId,
+  })) as PageErrorsResponse;
+
+  if (!response.ok) {
+    if (response.error === 'Unknown message type.') {
+      throw new Error('页面异常采集后台尚未更新，请在扩展管理页重新加载 Quick Copy Ext。');
+    }
+    throw new Error(response.error);
+  }
+
+  return response.data;
+}
+
+export async function clearTabPageErrors(tabId: number): Promise<void> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/clear-tab-page-errors',
+    tabId,
+  })) as PageErrorsResponse;
+
+  if (!response.ok) {
+    if (response.error === 'Unknown message type.') {
+      throw new Error('页面异常采集后台尚未更新，请在扩展管理页重新加载 Quick Copy Ext。');
+    }
+    throw new Error(response.error);
+  }
 }
 
 export async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
@@ -194,6 +226,24 @@ export function subscribeToTabRequestUpdates(listener: (tabId: number) => void) 
     const runtimeMessage = message as RuntimeEventMessage;
 
     if (runtimeMessage?.type !== 'quick-copy/tab-requests-updated') {
+      return;
+    }
+
+    listener(runtimeMessage.tabId);
+  };
+
+  chrome.runtime.onMessage.addListener(handleMessage);
+
+  return () => {
+    chrome.runtime.onMessage.removeListener(handleMessage);
+  };
+}
+
+export function subscribeToPageErrorUpdates(listener: (tabId: number) => void) {
+  const handleMessage = (message: unknown) => {
+    const runtimeMessage = message as RuntimeEventMessage;
+
+    if (runtimeMessage?.type !== 'quick-copy/page-errors-updated') {
       return;
     }
 
