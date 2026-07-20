@@ -52,6 +52,21 @@ pnpm build
 
 构建产物输出到 `dist_chrome/` 目录。
 
+### 本地打包
+
+执行与 GitHub Actions 正式发布流程一致的 Chrome / Firefox 构建和 ZIP 打包：
+
+```bash
+pnpm package
+```
+
+脚本会读取 `package.json` 中的版本号，并在项目根目录生成：
+
+- `quick-copy-ext_<version>.zip`
+- `quick-copy-ext_firefox_<version>.zip`
+
+本地打包不会创建 Git tag 或 GitHub Release。
+
 ## 版本与发布
 
 当前项目已经补充了基础的版本管理、changelog 与自动发布配置。
