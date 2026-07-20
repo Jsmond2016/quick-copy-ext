@@ -1,6 +1,7 @@
 import type {
   CapturedPageErrorPayload,
   CapturedResponsePayload,
+  PageMonitoringStateResponse,
   ReportPageErrorResponse,
 } from '@src/lib/quick-copy';
 import errorNoticeStyles from './error-notice.css?inline';
@@ -186,10 +187,20 @@ window.addEventListener('message', (event: MessageEvent<PageHookMessage>) => {
   }
 });
 
-try {
+async function initializePageSession(): Promise<void> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/get-page-monitoring-state',
+  })) as PageMonitoringStateResponse;
+
+  if (!response.ok || !response.data.enabled) {
+    return;
+  }
+
   void chrome.runtime.sendMessage({ type: 'quick-copy/page-session-started' });
   injectPageHook();
   console.debug('[Quick Copy Ext] content script ready');
-} catch (error) {
-  console.error('[Quick Copy Ext] content script failed to initialize', error);
 }
+
+void initializePageSession().catch((error: unknown) => {
+  console.error('[Quick Copy Ext] content script failed to initialize', error);
+});

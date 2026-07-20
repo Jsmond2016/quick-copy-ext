@@ -29,6 +29,7 @@ interface RegisterRuntimeMessageListenerOptions {
     payload: CapturedPageErrorPayload,
     senderUrl?: string,
   ) => Promise<boolean>;
+  isPageMonitoringEnabled: (senderUrl?: string) => Promise<boolean>;
   startPageSession: (tabId: number) => Promise<void>;
 }
 
@@ -49,6 +50,7 @@ export function registerRuntimeMessageListener({
   persistClearedApifoxCache,
   refreshApifoxData,
   reportPageError,
+  isPageMonitoringEnabled,
   startPageSession,
 }: RegisterRuntimeMessageListenerOptions): void {
   chrome.runtime.onMessage.addListener(
@@ -179,6 +181,15 @@ export function registerRuntimeMessageListener({
           .then((accepted) => sendResponse({ ok: true, data: { accepted } }))
           .catch((error: unknown) => {
             sendResponse({ ok: false, error: getErrorMessage(error, '上报页面异常失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/get-page-monitoring-state') {
+        void isPageMonitoringEnabled(sender.tab?.url)
+          .then((enabled) => sendResponse({ ok: true, data: { enabled } }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '读取页面监听配置失败。') });
           });
         return true;
       }

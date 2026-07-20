@@ -120,6 +120,7 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-apifox-matches'; requests: Pick<NetworkRequestRecord, 'url' | 'method'>[] }
   | { type: 'quick-copy/report-response-body'; payload: CapturedResponsePayload }
   | { type: 'quick-copy/report-page-error'; payload: CapturedPageErrorPayload }
+  | { type: 'quick-copy/get-page-monitoring-state' }
   | { type: 'quick-copy/page-session-started' }
   | { type: 'quick-copy/open-popup' }
   | { type: 'quick-copy/get-tab-page-errors'; tabId: number }
@@ -139,6 +140,10 @@ export type PageErrorsResponse =
 
 export type ReportPageErrorResponse =
   | { ok: true; data: { accepted: boolean } }
+  | { ok: false; error: string };
+
+export type PageMonitoringStateResponse =
+  | { ok: true; data: { enabled: boolean } }
   | { ok: false; error: string };
 
 export interface ApifoxCacheStatus {

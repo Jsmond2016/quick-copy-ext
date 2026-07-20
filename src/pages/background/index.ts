@@ -298,6 +298,11 @@ async function refreshMonitoredOrigins() {
   scheduleRuntimeCachePersist();
 }
 
+async function isPageMonitoringEnabled(tabUrl?: string): Promise<boolean> {
+  const settings = await loadSettings();
+  return Boolean(tabUrl) && matchesMonitoredOrigins(tabUrl ?? '', settings.monitoredOrigins);
+}
+
 async function bootstrapTabs() {
   const tabs = await chrome.tabs.query({});
   tabs.forEach((tab) => {
@@ -478,5 +483,6 @@ registerRuntimeMessageListener({
   },
   refreshApifoxData,
   reportPageError: pageErrorStore.report,
+  isPageMonitoringEnabled,
   startPageSession: (tabId) => pageErrorStore.clear(tabId, false),
 });
