@@ -1,16 +1,12 @@
-import { EnvironmentConfig, QuickCopyMode, TesterAioConfig } from '@src/lib/quick-copy';
+import { QuickCopyMode, TesterAioConfig } from '@src/lib/quick-copy';
 
 interface RequestParamsPanelProps {
   includeRequestParams: boolean;
   mode: QuickCopyMode;
   testerAioConfigs: TesterAioConfig[];
   selectedTesterAioConfigId: string;
-  environments: EnvironmentConfig[];
-  includeEnvironment: boolean;
-  selectedEnvironment?: { name: string; url: string } | null;
   onToggleRequestParams: () => void;
   onSelectedTesterAioConfigChange: (value: string) => void;
-  onToggleEnvironment: () => void;
 }
 
 export function RequestParamsPanel({
@@ -18,15 +14,9 @@ export function RequestParamsPanel({
   mode,
   testerAioConfigs,
   selectedTesterAioConfigId,
-  environments,
-  includeEnvironment,
-  selectedEnvironment,
   onToggleRequestParams,
   onSelectedTesterAioConfigChange,
-  onToggleEnvironment,
 }: RequestParamsPanelProps) {
-  const envLabel = selectedEnvironment?.name ?? environments[0]?.name ?? '';
-
   return (
     <section className="panel">
       <div className="panel-head">
@@ -43,17 +33,6 @@ export function RequestParamsPanel({
         />
         包含接口入参
       </label>
-
-      {mode === 'developer' && environments.length > 0 ? (
-        <label className="checkbox-row request-params-row">
-          <input
-            type="checkbox"
-            checked={includeEnvironment}
-            onChange={onToggleEnvironment}
-          />
-          环境 {envLabel}
-        </label>
-      ) : null}
 
       {testerAioConfigs.length > 0 ? (
         <label className="field-block request-params-select">

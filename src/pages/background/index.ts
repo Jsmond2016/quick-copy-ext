@@ -239,6 +239,14 @@ function shouldTrackTabUrl(tabUrl: string | undefined): boolean {
   return matchesMonitoredOrigins(tabUrl, monitoredOrigins);
 }
 
+function getTabUrlOrigin(tabUrl: string): string {
+  try {
+    return new URL(tabUrl).origin.toLowerCase();
+  } catch {
+    return tabUrl;
+  }
+}
+
 function setTabUrl(tabId: number, tabUrl: string | undefined) {
   if (!tabUrl) {
     tabUrlMap.delete(tabId);
@@ -246,7 +254,14 @@ function setTabUrl(tabId: number, tabUrl: string | undefined) {
     return;
   }
 
+  const previousTabUrl = tabUrlMap.get(tabId);
+  const domainChanged = previousTabUrl !== undefined
+    && getTabUrlOrigin(previousTabUrl) !== getTabUrlOrigin(tabUrl);
   tabUrlMap.set(tabId, tabUrl);
+
+  if (domainChanged) {
+    clearTabRequests(tabId);
+  }
 
   if (!shouldTrackTabUrl(tabUrl)) {
     clearTabRequests(tabId);

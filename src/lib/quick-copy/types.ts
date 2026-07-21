@@ -70,10 +70,6 @@ export interface CopyPayload extends PopupPayload {
   screenshotLabel: string;
   customFields: string[];
   includeRequestParams: boolean;
-  selectedEnvironment?: {
-    name: string;
-    url: string;
-  };
 }
 
 export type QuickCopyMode = 'default' | 'developer' | 'tester';

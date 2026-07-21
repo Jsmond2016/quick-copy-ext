@@ -2,13 +2,10 @@ import { useMemo, useState } from 'react';
 import { useBoolean, useMount, useRequest, useUpdateEffect } from 'ahooks';
 import pkg from '../../../package.json';
 import {
-  detectEnvironmentFromRequests,
   getDefaultSettings,
   isDefaultSettings,
-  isLocalhostUrl,
   isValidResponseErrorRuleConfig,
   loadSettings,
-  matchCurrentEnvironment,
   matchesMonitoredOrigins,
   matchesApiPrefixes,
   QuickCopyMode,
@@ -43,7 +40,6 @@ export default function Popup() {
   const [note, setNote] = useState('');
   const [savingSettings, { setTrue: startSavingSettings, setFalse: stopSavingSettings }] = useBoolean(false);
   const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(true);
-  const [includeEnvironment, { toggle: toggleIncludeEnvironment }] = useBoolean(true);
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
   const {
@@ -104,38 +100,11 @@ export default function Popup() {
     [page.url, settings.monitoredOrigins],
   );
   const quickFillOptions = settings.quickFillTemplates;
-  const environmentConfigs = useMemo(
-    () => settings.environmentGroups.flatMap((group) => group.environments),
-    [settings.environmentGroups],
-  );
   const selectedTesterAioConfig = useMemo(
     () => settings.testerAioConfigs.find((item) => item.id === selectedTesterAioConfigId) ?? null,
     [selectedTesterAioConfigId, settings.testerAioConfigs],
   );
 
-  const detectedEnvironment = useMemo(
-    () => {
-      // 非本地页面优先使用页面自身域名，避免请求标记覆盖精确匹配结果。
-      const matchedByUrl = matchCurrentEnvironment(page.url, environmentConfigs);
-      if (matchedByUrl && !isLocalhostUrl(page.url)) return matchedByUrl;
-
-      // localhost 下优先从请求域名或 x-forwarded-for 响应头检测环境。
-      const detected = detectEnvironmentFromRequests(requests, environmentConfigs);
-      if (detected) return detected;
-
-      if (matchedByUrl) return matchedByUrl;
-
-      return null;
-    },
-    [environmentConfigs, page.url, requests],
-  );
-  const selectedEnvironment = includeEnvironment ? detectedEnvironment : null;
-  const selectedEnvironmentGroup = useMemo(
-    () => settings.environmentGroups.find((group) => (
-      group.environments.some((environment) => environment.id === detectedEnvironment?.id)
-    )) ?? settings.environmentGroups[0],
-    [detectedEnvironment?.id, settings.environmentGroups],
-  );
 
   const {
     selectedIds,
@@ -165,7 +134,6 @@ export default function Popup() {
     selectedIds,
     selectedRequests,
     selectedTesterAioConfig,
-    selectedEnvironment,
     setApifoxStatus,
     setErrorText,
     setRequests,
@@ -364,7 +332,7 @@ export default function Popup() {
         pageMonitoringEnabled={pageMonitoringEnabled}
         refreshingApifox={refreshingApifox}
         showSettings={showSettings}
-        environments={selectedEnvironmentGroup?.environments ?? []}
+        environments={settings.environmentGroups[0]?.environments ?? []}
         onRefreshApifox={() => {
           if (!settings.apifoxExportUrl) {
             openSettings();
@@ -396,8 +364,6 @@ export default function Popup() {
         settingsForm={settingsForm}
         showSettings={showSettings}
         useQuickFill={useQuickFill}
-        includeEnvironment={includeEnvironment}
-        selectedEnvironment={selectedEnvironment}
         onAddTesterAioConfig={addTesterAioConfig}
         onAddEnvironmentGroup={addEnvironmentGroup}
         onCancelSettings={closeSettings}
@@ -425,7 +391,6 @@ export default function Popup() {
         onSaveSettings={() => void handleSaveSettings()}
         onSelectAll={selectAll}
         onSelectedTesterAioConfigChange={setSelectedTesterAioConfigId}
-        onToggleEnvironment={toggleIncludeEnvironment}
         onToggleQuickFill={toggleUseQuickFill}
         onToggleRequest={toggleRequest}
         onToggleRequestParams={toggleIncludeRequestParams}

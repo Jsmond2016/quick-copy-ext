@@ -3,6 +3,7 @@ import type {
   CapturedResponsePayload,
   PageMonitoringStateResponse,
   ReportPageErrorResponse,
+  RuntimeRequestMessage,
 } from '@src/lib/quick-copy';
 import errorNoticeStyles from './error-notice.css?inline';
 
@@ -27,14 +28,45 @@ const ERROR_NOTICE_ID = 'quick-copy-ext-error-notice';
 const OPEN_POPUP_FALLBACK = '请点击扩展图标查看详情';
 let errorNoticeShown = false;
 
+function isExtensionContextInvalidated(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('Extension context invalidated');
+}
+
+async function sendRuntimeMessage<T>(message: RuntimeRequestMessage): Promise<T | undefined> {
+  try {
+    return await chrome.runtime.sendMessage(message) as T;
+  } catch (error) {
+    if (!isExtensionContextInvalidated(error)) {
+      console.error('[Quick Copy Ext] runtime message failed', error);
+    }
+    return undefined;
+  }
+}
+
+function getExtensionUrl(path: string): string | undefined {
+  try {
+    return chrome.runtime.getURL(path);
+  } catch (error) {
+    if (!isExtensionContextInvalidated(error)) {
+      console.error('[Quick Copy Ext] extension URL unavailable', error);
+    }
+    return undefined;
+  }
+}
+
 function injectPageHook() {
   if (document.getElementById(INJECTED_SCRIPT_ID)) {
     return;
   }
 
+  const hookUrl = getExtensionUrl('page-network-hook.js');
+  if (!hookUrl) {
+    return;
+  }
+
   const script = document.createElement('script');
   script.id = INJECTED_SCRIPT_ID;
-  script.src = chrome.runtime.getURL('page-network-hook.js');
+  script.src = hookUrl;
   script.async = false;
   (document.documentElement || document.head).appendChild(script);
   script.remove();
@@ -74,7 +106,10 @@ function createExtensionBrand(): HTMLDivElement {
   brand.className = 'brand';
 
   const icon = document.createElement('img');
-  icon.src = chrome.runtime.getURL('icon-32.png');
+  const iconUrl = getExtensionUrl('icon-32.png');
+  if (iconUrl) {
+    icon.src = iconUrl;
+  }
   icon.alt = '';
 
   const text = document.createElement('span');
@@ -143,12 +178,10 @@ function showPageErrorNotice(error: CapturedPageErrorPayload): void {
   });
   const detailsButton = createButton('action details', '查看详情');
   detailsButton.addEventListener('click', () => {
-    void chrome.runtime.sendMessage({ type: 'quick-copy/open-popup' }).then((response) => {
+    void sendRuntimeMessage<{ ok: boolean; error?: string }>({ type: 'quick-copy/open-popup' }).then((response) => {
       if (!response?.ok) {
         status.textContent = response?.error || OPEN_POPUP_FALLBACK;
       }
-    }).catch(() => {
-      status.textContent = OPEN_POPUP_FALLBACK;
     });
   });
   actions.append(copyButton, detailsButton, status);
@@ -168,7 +201,7 @@ window.addEventListener('message', (event: MessageEvent<PageHookMessage>) => {
   }
 
   if (message.type === 'quick-copy:response') {
-    void chrome.runtime.sendMessage({
+    void sendRuntimeMessage({
       type: 'quick-copy/report-response-body',
       payload: message.payload,
     });
@@ -176,27 +209,27 @@ window.addEventListener('message', (event: MessageEvent<PageHookMessage>) => {
   }
 
   if (message.type === 'quick-copy:page-error') {
-    void chrome.runtime.sendMessage({
+    void sendRuntimeMessage<ReportPageErrorResponse>({
       type: 'quick-copy/report-page-error',
       payload: message.payload,
-    }).then((response: ReportPageErrorResponse) => {
-      if (response.ok && response.data.accepted) {
+    }).then((response) => {
+      if (response?.ok && response.data.accepted) {
         showPageErrorNotice(message.payload);
       }
-    }).catch(() => undefined);
+    });
   }
 });
 
 async function initializePageSession(): Promise<void> {
-  const response = (await chrome.runtime.sendMessage({
+  const response = await sendRuntimeMessage<PageMonitoringStateResponse>({
     type: 'quick-copy/get-page-monitoring-state',
-  })) as PageMonitoringStateResponse;
+  });
 
-  if (!response.ok || !response.data.enabled) {
+  if (!response?.ok || !response.data.enabled) {
     return;
   }
 
-  void chrome.runtime.sendMessage({ type: 'quick-copy/page-session-started' });
+  void sendRuntimeMessage({ type: 'quick-copy/page-session-started' });
   injectPageHook();
   console.debug('[Quick Copy Ext] content script ready');
 }

@@ -1,4 +1,10 @@
-import { formatDuration, formatTime, getTraceId, getUrlAfterOrigin } from './url';
+import {
+  formatDuration,
+  formatTime,
+  getEnvironmentNameFromRequest,
+  getTraceId,
+  getUrlAfterOrigin,
+} from './url';
 import { getResponseMessage, getResponseRtnValue } from './response-rules';
 import {
   PAGE_ERROR_RELATED_REQUEST_AFTER_MS,
@@ -178,10 +184,6 @@ export function buildWebOnlyText(payload: {
   feedbackTitle: string;
   note: string;
   customFields: string[];
-  selectedEnvironment?: {
-    name: string;
-    url: string;
-  };
 }): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || '-';
@@ -196,14 +198,6 @@ export function buildWebOnlyText(payload: {
     `- 页面 URL：${payload.page.url || '-'}`,
     `- 页面标题：${payload.page.title || '-'}`,
   ];
-
-  if (payload.selectedEnvironment) {
-    if (payload.selectedEnvironment.url) {
-      sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
-    } else {
-      sections.push(`- 环境：${payload.selectedEnvironment.name}`);
-    }
-  }
 
   sections.push('');
 
@@ -239,14 +233,6 @@ export function buildFeedbackText(payload: CopyPayload): string {
     `- 页面标题：${payload.page.title || '-'}`,
   ];
 
-  if (payload.selectedEnvironment) {
-    if (payload.selectedEnvironment.url) {
-      sections.push(`- 环境${payload.selectedEnvironment.name}：${payload.selectedEnvironment.url}`);
-    } else {
-      sections.push(`- 环境：${payload.selectedEnvironment.name}`);
-    }
-  }
-
   sections.push('');
   sections.push(`${abnormalRequestsTitle}：`);
   sections.push('');
@@ -260,6 +246,7 @@ export function buildFeedbackText(payload: CopyPayload): string {
       }
 
       sections.push(`- ${request.method.toUpperCase()} ${getUrlAfterOrigin(request.url)}`);
+      sections.push(`- 环境：${getEnvironmentNameFromRequest(request)}`);
       sections.push(`- traceId: ${getTraceId(request.headers)}`);
       sections.push(`- 状态码: ${request.statusCode ?? '-'}`);
 

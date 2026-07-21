@@ -28,8 +28,6 @@ interface PopupBodyProps {
   settingsForm: SettingsFormState;
   showSettings: boolean;
   useQuickFill: boolean;
-  includeEnvironment: boolean;
-  selectedEnvironment?: { name: string; url: string } | null;
   onAddTesterAioConfig: () => void;
   onCancelSettings: () => void;
   onClearRequests: () => void;
@@ -52,7 +50,6 @@ interface PopupBodyProps {
   onSaveSettings: () => void;
   onSelectAll: () => void;
   onSelectedTesterAioConfigChange: (value: string) => void;
-  onToggleEnvironment: () => void;
   onToggleQuickFill: () => void;
   onToggleRequest: (requestId: string, index: number, shiftKey: boolean) => void;
   onToggleRequestParams: () => void;
@@ -92,8 +89,6 @@ export function PopupBody({
   settingsForm,
   showSettings,
   useQuickFill,
-  includeEnvironment,
-  selectedEnvironment,
   onAddTesterAioConfig,
   onCancelSettings,
   onClearRequests,
@@ -116,7 +111,6 @@ export function PopupBody({
   onSaveSettings,
   onSelectAll,
   onSelectedTesterAioConfigChange,
-  onToggleEnvironment,
   onToggleQuickFill,
   onToggleRequest,
   onToggleRequestParams,
@@ -175,12 +169,8 @@ export function PopupBody({
             mode={mode}
             testerAioConfigs={mode === 'tester' ? settings.testerAioConfigs : []}
             selectedTesterAioConfigId={selectedTesterAioConfigId}
-            environments={settings.environmentGroups.flatMap((group) => group.environments)}
-            includeEnvironment={includeEnvironment}
-            selectedEnvironment={selectedEnvironment}
             onToggleRequestParams={onToggleRequestParams}
             onSelectedTesterAioConfigChange={onSelectedTesterAioConfigChange}
-            onToggleEnvironment={onToggleEnvironment}
           />
         </>
       ) : null}
