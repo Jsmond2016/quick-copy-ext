@@ -158,7 +158,9 @@ function showPageErrorNotice(error: CapturedPageErrorPayload): void {
   title.textContent = '检测到页面运行异常';
   const description = document.createElement('p');
   description.textContent = error.message;
-  messageContent.append(title, description);
+  const settingsHint = document.createElement('p');
+  settingsHint.textContent = '可在设置-是否开启页面错误捕捉中关闭';
+  messageContent.append(title, description, settingsHint);
 
   const closeButton = createButton('close', '×');
   closeButton.title = '关闭提示';

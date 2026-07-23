@@ -39,6 +39,7 @@ interface PopupBodyProps {
   onCopyToAio: () => void;
   onExportSettings: () => void;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
+  onPageErrorCaptureEnabledChange: (value: boolean) => void;
   onImportSettings: () => void;
   onModeChange: (mode: QuickCopyMode) => void;
   onMoveTesterAioConfig: (index: number, direction: 'up' | 'down') => void;
@@ -100,6 +101,7 @@ export function PopupBody({
   onCopyToAio,
   onExportSettings,
   onFieldChange,
+  onPageErrorCaptureEnabledChange,
   onImportSettings,
   onModeChange,
   onMoveTesterAioConfig,
@@ -127,6 +129,7 @@ export function PopupBody({
         isDefaultConfig={isDefaultConfig}
         onCancel={onCancelSettings}
         onFieldChange={onFieldChange}
+        onPageErrorCaptureEnabledChange={onPageErrorCaptureEnabledChange}
         onModeChange={onModeChange}
         onTesterAioConfigChange={onTesterAioConfigChange}
         onMoveTesterAioConfig={onMoveTesterAioConfig}

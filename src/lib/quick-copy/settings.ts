@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS: QuickCopySettings = {
   apifoxExportUrl: '',
   apifoxAuthToken: '',
   responseErrorRule: DEFAULT_RESPONSE_ERROR_RULE,
+  pageErrorCaptureEnabled: true,
   mode: 'default',
   quickMockTargetExtensionId: '',
   testerAioConfigs: [],
@@ -221,6 +222,9 @@ export function normalizeSettings(
         ? current.apifoxAuthToken.trim()
         : defaults.apifoxAuthToken,
     responseErrorRule: sanitizeTrimmedString(current?.responseErrorRule, defaults.responseErrorRule),
+    pageErrorCaptureEnabled: typeof current?.pageErrorCaptureEnabled === 'boolean'
+      ? current.pageErrorCaptureEnabled
+      : defaults.pageErrorCaptureEnabled,
     mode: normalizedMode,
     quickMockTargetExtensionId: sanitizeTrimmedString(
       current?.quickMockTargetExtensionId,
@@ -261,6 +265,7 @@ export function isDefaultSettings(settings: QuickCopySettings): boolean {
     settings.apifoxExportUrl === defaults.apifoxExportUrl &&
     settings.apifoxAuthToken === defaults.apifoxAuthToken &&
     settings.responseErrorRule === defaults.responseErrorRule &&
+    settings.pageErrorCaptureEnabled === defaults.pageErrorCaptureEnabled &&
     settings.mode === defaults.mode &&
     settings.quickMockTargetExtensionId === defaults.quickMockTargetExtensionId &&
     areTesterAioConfigsEqual(settings.testerAioConfigs, defaults.testerAioConfigs) &&

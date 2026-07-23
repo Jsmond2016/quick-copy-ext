@@ -45,6 +45,7 @@ interface SerializedRuntimeCache {
 let apifoxStatus: ApifoxCacheStatus = defaultApifoxStatus;
 let monitoredOrigins: QuickCopySettings['monitoredOrigins'] = [];
 let responseErrorRule = '';
+let pageErrorCaptureEnabled = true;
 let runtimePersistTimer: ReturnType<typeof setTimeout> | undefined;
 async function persistRuntimeCache() {
   const payload: SerializedRuntimeCache = {
@@ -288,12 +289,13 @@ function shouldTrackRequest(tabId: number, initiator?: string) {
 }
 
 const pageErrorStore = createPageErrorStore((tabId, senderUrl) =>
-  shouldTrackTabUrl(senderUrl ?? tabUrlMap.get(tabId)));
+  pageErrorCaptureEnabled && shouldTrackTabUrl(senderUrl ?? tabUrlMap.get(tabId)));
 
 async function refreshMonitoredOrigins() {
   const settings = await loadSettings();
   monitoredOrigins = settings.monitoredOrigins;
   responseErrorRule = settings.responseErrorRule;
+  pageErrorCaptureEnabled = settings.pageErrorCaptureEnabled;
 
   tabUrlMap.forEach((tabUrl, tabId) => {
     if (!shouldTrackTabUrl(tabUrl)) {

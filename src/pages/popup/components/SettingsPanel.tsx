@@ -8,6 +8,7 @@ interface SettingsPanelProps {
   savingSettings: boolean;
   isDefaultConfig: boolean;
   onFieldChange: (field: keyof SettingsFormState, value: string) => void;
+  onPageErrorCaptureEnabledChange: (value: boolean) => void;
   onModeChange: (mode: QuickCopyMode) => void;
   onTesterAioConfigChange: (
     index: number,
@@ -36,6 +37,7 @@ export function SettingsPanel({
   savingSettings,
   isDefaultConfig,
   onFieldChange,
+  onPageErrorCaptureEnabledChange,
   onModeChange,
   onTesterAioConfigChange,
   onMoveTesterAioConfig,
@@ -135,6 +137,22 @@ export function SettingsPanel({
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="switch-field">
+          <div className="switch-field-copy">
+            <strong>是否开启页面错误捕捉</strong>
+            <small>开启后会记录监听页面 Origin 中的页面运行异常，并展示错误提示。</small>
+          </div>
+          <button
+            aria-label="是否开启页面错误捕捉"
+            aria-pressed={form.pageErrorCaptureEnabled}
+            className={`switch-button${form.pageErrorCaptureEnabled ? ' active' : ''}`}
+            onClick={() => onPageErrorCaptureEnabledChange(!form.pageErrorCaptureEnabled)}
+            type="button"
+          >
+            <span className="switch-thumb" />
+          </button>
         </div>
 
         {form.mode === 'developer' ? (

@@ -101,6 +101,7 @@ export interface QuickCopySettings {
   apifoxExportUrl: string;
   apifoxAuthToken: string;
   responseErrorRule: string;
+  pageErrorCaptureEnabled: boolean;
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];

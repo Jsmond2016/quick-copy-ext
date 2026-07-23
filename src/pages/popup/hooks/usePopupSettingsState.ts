@@ -33,6 +33,7 @@ interface UsePopupSettingsStateResult {
   showSettings: boolean;
   toggleShowSettings: () => void;
   updateMode: (mode: QuickCopyMode) => void;
+  updatePageErrorCaptureEnabled: (value: boolean) => void;
   updateSettingsForm: (field: keyof SettingsFormState, value: string) => void;
   updateTesterAioConfig: (
     index: number,
@@ -87,6 +88,10 @@ export function usePopupSettingsState(): UsePopupSettingsStateResult {
       ...current,
       [field]: value,
     }));
+  }
+
+  function updatePageErrorCaptureEnabled(value: boolean): void {
+    setSettingsForm((current) => ({ ...current, pageErrorCaptureEnabled: value }));
   }
 
   function updateMode(mode: QuickCopyMode): void {
@@ -219,6 +224,7 @@ export function usePopupSettingsState(): UsePopupSettingsStateResult {
     showSettings,
     toggleShowSettings,
     updateMode,
+    updatePageErrorCaptureEnabled,
     updateSettingsForm,
     updateTesterAioConfig,
     updateEnvironment,

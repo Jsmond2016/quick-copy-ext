@@ -21,6 +21,7 @@ export interface SettingsFormState {
   apifoxProjectIdInput: string;
   apifoxAuthTokenInput: string;
   responseErrorRuleInput: string;
+  pageErrorCaptureEnabled: boolean;
   mode: QuickCopyMode;
   quickMockTargetExtensionIdInput: string;
   testerAioConfigs: TesterAioConfig[];
@@ -36,6 +37,7 @@ export interface PortableSettingsConfig {
   apifoxProjectId: string;
   apifoxAuthToken: string;
   responseErrorRule: string;
+  pageErrorCaptureEnabled: boolean;
   mode: QuickCopyMode;
   quickMockTargetExtensionId: string;
   testerAioConfigs: TesterAioConfig[];
@@ -64,6 +66,7 @@ export function createSettingsFormState(settings: QuickCopySettings): SettingsFo
     apifoxProjectIdInput: getApifoxProjectId(settings.apifoxExportUrl),
     apifoxAuthTokenInput: settings.apifoxAuthToken,
     responseErrorRuleInput: settings.responseErrorRule,
+    pageErrorCaptureEnabled: settings.pageErrorCaptureEnabled,
     mode: settings.mode,
     quickMockTargetExtensionIdInput: settings.quickMockTargetExtensionId,
     testerAioConfigs: settings.testerAioConfigs.map((item) => ({ ...item })),
@@ -85,6 +88,7 @@ export function createPortableSettingsConfig(settings: QuickCopySettings): Porta
     apifoxProjectId: getApifoxProjectId(settings.apifoxExportUrl),
     apifoxAuthToken: settings.apifoxAuthToken,
     responseErrorRule: settings.responseErrorRule,
+    pageErrorCaptureEnabled: settings.pageErrorCaptureEnabled,
     mode: settings.mode,
     quickMockTargetExtensionId: settings.quickMockTargetExtensionId,
     testerAioConfigs: settings.testerAioConfigs.map((item) => ({ ...item })),
@@ -104,6 +108,7 @@ export function createSettingsFormStateFromPortableConfig(
     apifoxProjectIdInput: config.apifoxProjectId,
     apifoxAuthTokenInput: config.apifoxAuthToken,
     responseErrorRuleInput: config.responseErrorRule,
+    pageErrorCaptureEnabled: config.pageErrorCaptureEnabled,
     mode: config.mode,
     quickMockTargetExtensionIdInput: config.quickMockTargetExtensionId,
     testerAioConfigs: config.testerAioConfigs.map((item) => ({ ...item })),
@@ -146,6 +151,9 @@ function sanitizePortableSettingsConfig(
     responseErrorRule: typeof current.responseErrorRule === 'string'
       ? current.responseErrorRule
       : defaults.responseErrorRule,
+    pageErrorCaptureEnabled: typeof current.pageErrorCaptureEnabled === 'boolean'
+      ? current.pageErrorCaptureEnabled
+      : defaults.pageErrorCaptureEnabled,
     mode,
     quickMockTargetExtensionId: typeof current.quickMockTargetExtensionId === 'string'
       ? current.quickMockTargetExtensionId
@@ -244,6 +252,7 @@ export function buildSettingsFromForm(form: SettingsFormState): QuickCopySetting
     apifoxExportUrl: buildApifoxExportUrl(apifoxProjectId),
     apifoxAuthToken: form.apifoxAuthTokenInput.trim(),
     responseErrorRule: form.responseErrorRuleInput.trim() || defaults.responseErrorRule,
+    pageErrorCaptureEnabled: form.pageErrorCaptureEnabled,
     mode: form.mode,
     quickMockTargetExtensionId: form.quickMockTargetExtensionIdInput.trim(),
     testerAioConfigs,

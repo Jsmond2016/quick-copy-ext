@@ -66,6 +66,7 @@ export default function Popup() {
     showSettings,
     toggleShowSettings,
     updateMode,
+    updatePageErrorCaptureEnabled,
     updateSettingsForm,
     updateTesterAioConfig,
     updateEnvironment,
@@ -379,6 +380,7 @@ export default function Popup() {
         onCopyToAio={() => void handleCopyToAio()}
         onExportSettings={handleExport}
         onFieldChange={updateSettingsForm}
+        onPageErrorCaptureEnabledChange={updatePageErrorCaptureEnabled}
         onImportSettings={handleImport}
         onModeChange={updateMode}
         onMoveTesterAioConfig={moveTesterAioConfig}
