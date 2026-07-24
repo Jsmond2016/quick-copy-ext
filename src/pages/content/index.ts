@@ -406,7 +406,11 @@ function showRecordingOverlay(session: RecordingSession): void {
   info.className = 'info';
   const status = document.createElement('span');
   status.className = 'status';
-  status.textContent = session.status === 'paused' ? '录制已暂停' : session.status === 'saving' ? '正在保存录屏' : '正在录制';
+  status.textContent = session.status === 'paused'
+    ? '录制已暂停'
+    : session.status === 'saving'
+      ? '录制已结束，等待浏览器完成保存'
+      : '正在录制';
   const timer = document.createElement('strong');
   timer.className = 'timer';
   timer.textContent = formatRecordingDuration(session);

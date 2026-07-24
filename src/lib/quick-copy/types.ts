@@ -66,6 +66,9 @@ export interface RecordingSession {
   tabId?: number;
   startedAt?: number;
   elapsedMs?: number;
+  downloadBlobUrl?: string;
+  downloadFileName?: string;
+  downloadId?: number;
   savedFileName?: string;
   downloadDirectory?: string;
   recordingId?: string;

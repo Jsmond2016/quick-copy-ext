@@ -36,7 +36,7 @@ function getMenuItems(session: RecordingSession): chrome.contextMenus.CreateProp
   }
 
   if (session.status === 'saving') {
-    return [{ ...base, id: `${RECORDING_CONTEXT_MENU_ID}/saving`, title: 'Quick Copy：正在保存录制', enabled: false }];
+    return [{ ...base, id: `${RECORDING_CONTEXT_MENU_ID}/saving`, title: 'Quick Copy：录制已结束，等待浏览器完成保存', enabled: false }];
   }
 
   return [{ ...base, id: `${RECORDING_CONTEXT_MENU_ID}/start`, title: 'Quick Copy：开始录制当前页面' }];

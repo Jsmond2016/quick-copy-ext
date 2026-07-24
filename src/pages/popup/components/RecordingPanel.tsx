@@ -67,7 +67,7 @@ export function RecordingPanel({
       ) : isPaused ? (
         <p className="recording-hint">录制已暂停，可继续或结束并保存。</p>
       ) : session.status === 'saving' ? (
-        <p className="recording-hint">正在生成并保存录屏文件。</p>
+        <p className="recording-hint">录制已结束，等待浏览器完成保存。</p>
       ) : session.status === 'saved' ? (
         <p className="recording-hint">录屏已保存：{session.savedFileName}。请在缺陷平台上传附件。</p>
       ) : session.status === 'error' ? (

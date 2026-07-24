@@ -145,12 +145,83 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     }
   }
 
+  async function releaseDownloadResources(blobUrl?: string): Promise<void> {
+    try {
+      if (blobUrl) {
+        await chrome.runtime.sendMessage({
+          type: 'quick-copy/offscreen-release-recording',
+          blobUrl,
+        });
+      }
+    } finally {
+      await closeOffscreenDocument().catch(() => undefined);
+    }
+  }
+
+  let settlingDownloadId: number | undefined;
+
+  async function settleDownload(downloadId: number, state: 'complete' | 'interrupted', reason?: string): Promise<void> {
+    await readyPromise;
+    if (settlingDownloadId === downloadId || session.status !== 'saving' || session.downloadId !== downloadId) {
+      return;
+    }
+
+    settlingDownloadId = downloadId;
+    const blobUrl = session.downloadBlobUrl;
+    try {
+      if (state === 'complete') {
+        await update({
+          status: 'saved',
+          tabId: session.tabId,
+          savedFileName: session.downloadFileName,
+          downloadDirectory: session.downloadDirectory,
+          recordingId: session.recordingId,
+        });
+      } else {
+        await update({
+          status: 'error',
+          tabId: session.tabId,
+          error: reason
+            ? `录屏下载被中断（${reason}），请检查下载权限或磁盘空间后重试。`
+            : '录屏下载被中断，请重试。',
+          downloadDirectory: session.downloadDirectory,
+          recordingId: session.recordingId,
+        });
+      }
+    } finally {
+      await releaseDownloadResources(blobUrl);
+      settlingDownloadId = undefined;
+    }
+  }
+
+  async function syncDownloadState(downloadId: number): Promise<void> {
+    const [download] = await chrome.downloads.search({ id: downloadId });
+    if (download?.state === 'complete' || download?.state === 'interrupted') {
+      await settleDownload(downloadId, download.state, download.error);
+    }
+  }
+
+  chrome.downloads.onChanged.addListener((delta) => {
+    const state = delta.state?.current;
+    if (state === 'complete' || state === 'interrupted') {
+      void settleDownload(delta.id, state, delta.error?.current);
+    }
+  });
+
+  // MV3 Worker 重启后主动补查，避免错过下载终态事件。
+  void readyPromise.then(() => {
+    if (session.status === 'saving' && typeof session.downloadId === 'number') {
+      return syncDownloadState(session.downloadId);
+    }
+    return undefined;
+  }).catch(() => undefined);
+
   return {
     async get(tabId) {
       await readyPromise;
       if (
         session.tabId === tabId
-        && (session.status === 'recording' || session.status === 'paused' || session.status === 'saving')
+        && (session.status === 'recording' || session.status === 'paused')
       ) {
         const capturedTabs = await chrome.tabCapture.getCapturedTabs();
         const stillCaptured = capturedTabs.some(
@@ -268,25 +339,21 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
 
       try {
         const downloadFileName = buildRecordingDownloadFileName(session.downloadDirectory ?? '', fileName);
-        await chrome.downloads.download({ url: blobUrl, filename: downloadFileName, saveAs: false });
+        const downloadId = await chrome.downloads.download({ url: blobUrl, filename: downloadFileName, saveAs: false });
         await update({
-          status: 'saved',
+          ...session,
+          status: 'saving',
           tabId,
-          savedFileName: fileName,
+          downloadBlobUrl: blobUrl,
+          downloadFileName: fileName,
+          downloadId,
           downloadDirectory: session.downloadDirectory,
           recordingId,
         });
+        await syncDownloadState(downloadId);
       } catch (error) {
         await update({ status: 'error', tabId, error: getErrorMessage(error, '保存录屏失败。') });
-      } finally {
-        try {
-          await chrome.runtime.sendMessage({
-            type: 'quick-copy/offscreen-release-recording',
-            blobUrl,
-          });
-        } finally {
-          await closeOffscreenDocument().catch(() => undefined);
-        }
+        await releaseDownloadResources(blobUrl);
       }
     },
     async handleFailed(tabId, error) {
@@ -294,14 +361,15 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
       if (session.tabId !== tabId) {
         return;
       }
+      const blobUrl = session.downloadBlobUrl;
       await update({ status: 'error', tabId, error });
-      await closeOffscreenDocument().catch(() => undefined);
+      await releaseDownloadResources(blobUrl);
     },
     async handleTabRemoved(tabId) {
       await readyPromise;
       if (
         session.tabId !== tabId
-        || (session.status !== 'recording' && session.status !== 'paused' && session.status !== 'saving')
+        || (session.status !== 'recording' && session.status !== 'paused')
       ) {
         return;
       }
