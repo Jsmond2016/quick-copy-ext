@@ -29,6 +29,7 @@ interface RecordingService {
   start(options: StartRecordingOptions): Promise<RecordingSession>;
   startWindow(tabId: number): Promise<RecordingSession>;
   startFromContextMenu(tabId: number): Promise<RecordingSession>;
+  startWindowFromContextMenu(tabId: number): Promise<RecordingSession>;
   pause(tabId: number): Promise<RecordingSession>;
   resume(tabId: number): Promise<RecordingSession>;
   stop(tabId: number): Promise<RecordingSession>;
@@ -341,6 +342,10 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
       }
     },
     async startFromContextMenu(tabId) {
+      const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+      return this.start({ tabId, streamId });
+    },
+    async startWindowFromContextMenu(tabId) {
       const url = chrome.runtime.getURL(`src/pages/recording-picker/index.html?tabId=${tabId}`);
       await chrome.windows.create({ url, type: 'popup', width: 360, height: 180, focused: true });
       return createIdleSession();

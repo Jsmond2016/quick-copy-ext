@@ -304,6 +304,7 @@ recordingContextMenu = registerRecordingContextMenu({
   pause: (tabId) => recordingService.pause(tabId),
   resume: (tabId) => recordingService.resume(tabId),
   start: (tabId) => recordingService.startFromContextMenu(tabId),
+  startWindow: (tabId) => recordingService.startWindowFromContextMenu(tabId),
   stop: (tabId) => recordingService.stop(tabId),
 });
 

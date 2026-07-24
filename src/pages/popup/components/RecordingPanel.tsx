@@ -87,25 +87,25 @@ export function RecordingPanel({
       ) : session.status === 'error' ? (
         <p className="recording-hint recording-error">{session.error || '录制失败，请重试。'}</p>
       ) : (
-        <p className="recording-hint">默认录制当前窗口，覆盖其中新打开的标签页；无音频，最长 5 分钟。</p>
+        <p className="recording-hint">默认录制当前标签页；选择窗口录制可覆盖其中新打开的标签页；无音频，最长 5 分钟。</p>
       )}
       <button
         className={isRecording || isPaused ? 'danger-button' : 'recording-start-button'}
         disabled={pending || session.status === 'saving' || (!canControlRecording && !enabled)}
-        onClick={isRecording || isPaused ? onStop : onStartWindow}
+        onClick={isRecording || isPaused ? onStop : onStart}
         type="button"
       >
         {!pending && !isRecording && !isPaused ? <span aria-hidden="true" className="recording-camera-icon" /> : null}
-        {pending ? '处理中...' : isRecording || isPaused ? '停止并保存' : '录制当前窗口'}
+        {pending ? '处理中...' : isRecording || isPaused ? '停止并保存' : '录制当前标签页'}
       </button>
       {!isRecording && !isPaused ? (
         <button
           className="text-action-button"
           disabled={pending || !enabled || session.status === 'saving'}
-          onClick={onStart}
+          onClick={onStartWindow}
           type="button"
         >
-          仅录制当前标签页
+          录制当前窗口（含新标签页）
         </button>
       ) : null}
       {isRecording || isPaused ? (

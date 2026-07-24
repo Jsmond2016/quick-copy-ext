@@ -8,6 +8,7 @@ interface RecordingContextMenuOptions {
   pause: (tabId: number) => Promise<unknown>;
   resume: (tabId: number) => Promise<unknown>;
   start: (tabId: number) => Promise<unknown>;
+  startWindow: (tabId: number) => Promise<unknown>;
   stop: (tabId: number) => Promise<unknown>;
 }
 
@@ -38,7 +39,10 @@ function getMenuItems(session: RecordingSession): chrome.contextMenus.CreateProp
     return [{ ...base, id: `${RECORDING_CONTEXT_MENU_ID}/saving`, title: 'Quick Copy：录制已结束，等待浏览器完成保存', enabled: false }];
   }
 
-  return [{ ...base, id: `${RECORDING_CONTEXT_MENU_ID}/start`, title: 'Quick Copy：开始录制当前窗口' }];
+  return [
+    { ...base, id: `${RECORDING_CONTEXT_MENU_ID}/start`, title: 'Quick Copy：录制当前标签页' },
+    { ...base, id: `${RECORDING_CONTEXT_MENU_ID}/start-window`, title: 'Quick Copy：录制当前窗口（含新标签页）' },
+  ];
 }
 
 export function registerRecordingContextMenu({
@@ -46,6 +50,7 @@ export function registerRecordingContextMenu({
   pause,
   resume,
   start,
+  startWindow,
   stop,
 }: RecordingContextMenuOptions): RecordingContextMenuController {
   if (!chrome.contextMenus) {
@@ -76,6 +81,7 @@ export function registerRecordingContextMenu({
     }
     const handlers: Record<string, (tabId: number) => Promise<unknown>> = {
       start,
+      'start-window': startWindow,
       pause,
       resume,
       stop,
