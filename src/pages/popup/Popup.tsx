@@ -376,6 +376,16 @@ export default function Popup() {
         onScreenshot={() => void handleScreenshot()}
         screenshotPending={screenshotPending}
         screenshotSupported={isScreenshotSupported()}
+        recording={recording.session}
+        recordingPending={recording.pending}
+        recordingSupported={recording.isSupported}
+        onOpenRecordingPreview={() => void chrome.runtime.openOptionsPage()}
+        onShowRecordingHistory={() => void recording.showHistory()}
+        onPauseRecording={() => void recording.pause()}
+        onResumeRecording={() => void recording.resume()}
+        onStartRecording={() => void recording.start()}
+        onStartWindow={() => void recording.startWindow()}
+        onStopRecording={() => void recording.stop()}
         onToggleSettings={toggleShowSettings}
       />
 
@@ -390,9 +400,6 @@ export default function Popup() {
         pageMonitoringEnabled={pageMonitoringEnabled}
         quickFillOptions={quickFillOptions}
         quickMocking={quickMocking}
-        recording={recording.session}
-        recordingPending={recording.pending}
-        recordingSupported={recording.isSupported}
         requests={requests}
         savingSettings={savingSettings}
         selectedIds={selectedIds}
@@ -426,13 +433,6 @@ export default function Popup() {
         onNoteChange={setNote}
         onQuickFillSelectionChange={updateNoteWithQuickFill}
         onQuickMock={() => void handleQuickMock()}
-        onOpenRecordingPreview={() => void chrome.runtime.openOptionsPage()}
-        onShowRecordingHistory={() => void recording.showHistory()}
-        onPauseRecording={() => void recording.pause()}
-        onResumeRecording={() => void recording.resume()}
-        onStartRecording={() => void recording.start()}
-        onStartWindow={() => void recording.startWindow()}
-        onStopRecording={() => void recording.stop()}
         onRemoveTesterAioConfig={removeTesterAioConfig}
         onRemoveEnvironmentGroup={removeEnvironmentGroup}
         onResetSettings={() => void handleReset()}

@@ -1,4 +1,5 @@
-import { ApifoxCacheStatus, buildEnvironmentUrl, EnvironmentConfig, getApifoxProjectId, getDisplayPath, getOtherEnvironments, PageSummary, QuickCopyMode } from '@src/lib/quick-copy';
+import { useEffect, useState } from 'react';
+import { ApifoxCacheStatus, buildEnvironmentUrl, EnvironmentConfig, getApifoxProjectId, getDisplayPath, getOtherEnvironments, PageSummary, QuickCopyMode, RecordingSession } from '@src/lib/quick-copy';
 
 interface PopupHeroProps {
   apifoxStatus: ApifoxCacheStatus;
@@ -13,6 +14,16 @@ interface PopupHeroProps {
   onScreenshot: () => void;
   screenshotPending: boolean;
   screenshotSupported: boolean;
+  recording: RecordingSession;
+  recordingPending: boolean;
+  recordingSupported: boolean;
+  onOpenRecordingPreview: () => void;
+  onShowRecordingHistory: () => void;
+  onPauseRecording: () => void;
+  onResumeRecording: () => void;
+  onStartRecording: () => void;
+  onStartWindow: () => void;
+  onStopRecording: () => void;
   onToggleSettings: () => void;
 }
 
@@ -29,8 +40,31 @@ export function PopupHero({
   onScreenshot,
   screenshotPending,
   screenshotSupported,
+  recording,
+  recordingPending,
+  recordingSupported,
+  onOpenRecordingPreview,
+  onShowRecordingHistory,
+  onPauseRecording,
+  onResumeRecording,
+  onStartRecording,
+  onStartWindow,
+  onStopRecording,
   onToggleSettings,
 }: PopupHeroProps) {
+  const [confirmMode, setConfirmMode] = useState<'tab' | 'window' | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const isRecording = recording.status === 'recording';
+  const isPaused = recording.status === 'paused';
+
+  useEffect(() => {
+    if (!isRecording) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(timer);
+  }, [isRecording]);
+
+  const duration = Math.floor(((isRecording && recording.startedAt ? now - recording.startedAt : recording.elapsedMs ?? 0) / 1_000));
+  const durationText = `${String(Math.floor(duration / 60)).padStart(2, '0')}:${String(duration % 60).padStart(2, '0')}`;
   const apifoxProjectId = getApifoxProjectId(apifoxExportUrl);
   const apifoxLabel = apifoxProjectId ? (
     <a
@@ -71,15 +105,6 @@ export function PopupHero({
             <span className="apifox-badge-dot" />
             {apifoxLabel}
           </div>
-          {screenshotSupported ? <button
-            aria-label="截图并标注当前页面"
-            className="icon-button"
-            disabled={screenshotPending || !page.url.startsWith('http')}
-            onClick={onScreenshot}
-            type="button"
-          >
-            {screenshotPending ? '处理中' : '截图'}
-          </button> : null}
           <button
             aria-label="刷新 Apifox 接口信息"
             className="icon-button icon-only"
@@ -118,6 +143,32 @@ export function PopupHero({
       {page.url && !pageMonitoringEnabled ? (
         <p className="hero-page-warning">当前页面不在监听 Origin 范围内，请修改设置 origin。</p>
       ) : null}
+      <div className="hero-capture-actions">
+        {isRecording || isPaused ? (
+          <>
+            <button className="hero-capture-button danger" disabled={recordingPending} onClick={onStopRecording} type="button">停止并保存</button>
+            <button className="hero-capture-button" disabled={recordingPending} onClick={isPaused ? onResumeRecording : onPauseRecording} type="button">{isPaused ? '继续录制' : '暂停录制'} {durationText}</button>
+          </>
+        ) : (
+          <>
+            {screenshotSupported ? <button className="hero-capture-button" disabled={screenshotPending || !page.url.startsWith('http')} onClick={onScreenshot} type="button">{screenshotPending ? '截图处理中' : '截图'}</button> : null}
+            {recordingSupported ? <button className="hero-capture-button" disabled={recordingPending || recording.status === 'saving'} onClick={() => setConfirmMode('tab')} type="button">录制当前页面</button> : null}
+            {recordingSupported ? <button className="hero-capture-button" disabled={recordingPending || recording.status === 'saving'} onClick={() => setConfirmMode('window')} type="button">录制窗口</button> : null}
+          </>
+        )}
+      </div>
+      {confirmMode ? (
+        <div className="recording-confirm" role="alertdialog" aria-label="确认开始录制">
+          <p>{confirmMode === 'tab' ? '默认录制当前标签页。' : '选择窗口录制可覆盖其中新打开的标签页。'} 无音频，最长 5 分钟。</p>
+          <div>
+            <button className="text-action-button" onClick={() => setConfirmMode(null)} type="button">取消</button>
+            <button className="hero-capture-button confirm" onClick={() => { setConfirmMode(null); confirmMode === 'tab' ? onStartRecording() : onStartWindow(); }} type="button">确认并开始</button>
+          </div>
+        </div>
+      ) : null}
+      {recording.status === 'saving' ? <p className="recording-result">录制已结束，等待浏览器完成保存。</p> : null}
+      {recording.status === 'saved' ? <p className="recording-result">录屏已保存：{recording.recordingId ? <button className="recording-file-link" onClick={onOpenRecordingPreview} type="button">{recording.savedFileName}</button> : recording.savedFileName}。<button className="recording-file-link" onClick={onShowRecordingHistory} type="button">查看历史</button></p> : null}
+      {recording.status === 'error' ? <p className="recording-result recording-error">{recording.error || '录制失败，请重试。'}</p> : null}
     </section>
   );
 }

@@ -1,9 +1,8 @@
-import { NetworkRequestRecord, PageErrorRecord, QuickCopyMode, QuickCopySettings, RecordingSession, TesterAioConfig } from '@src/lib/quick-copy';
+import { NetworkRequestRecord, PageErrorRecord, QuickCopyMode, QuickCopySettings, TesterAioConfig } from '@src/lib/quick-copy';
 import { NotePanel } from '@pages/popup/components/NotePanel';
 import { PageErrorPanel } from '@pages/popup/components/PageErrorPanel';
 import { RequestHistoryPanel } from '@pages/popup/components/RequestHistoryPanel';
 import { RequestParamsPanel } from '@pages/popup/components/RequestParamsPanel';
-import { RecordingPanel } from '@pages/popup/components/RecordingPanel';
 import { SettingsPanel } from '@pages/popup/components/SettingsPanel';
 import { SettingsFormState } from '@pages/popup/utils/settings-form';
 
@@ -18,9 +17,6 @@ interface PopupBodyProps {
   pageMonitoringEnabled: boolean;
   quickFillOptions: string[];
   quickMocking: boolean;
-  recording: RecordingSession;
-  recordingPending: boolean;
-  recordingSupported: boolean;
   requests: NetworkRequestRecord[];
   savingSettings: boolean;
   selectedIds: string[];
@@ -50,13 +46,6 @@ interface PopupBodyProps {
   onNoteChange: (value: string) => void;
   onQuickFillSelectionChange: (values: string[]) => void;
   onQuickMock: () => void;
-  onOpenRecordingPreview: () => void;
-  onShowRecordingHistory: () => void;
-  onPauseRecording: () => void;
-  onResumeRecording: () => void;
-  onStartRecording: () => void;
-  onStartWindow: () => void;
-  onStopRecording: () => void;
   onRemoveTesterAioConfig: (index: number) => void;
   onResetSettings: () => void;
   onSaveSettings: () => void;
@@ -90,9 +79,6 @@ export function PopupBody({
   pageMonitoringEnabled,
   quickFillOptions,
   quickMocking,
-  recording,
-  recordingPending,
-  recordingSupported,
   requests,
   savingSettings,
   selectedIds,
@@ -122,13 +108,6 @@ export function PopupBody({
   onNoteChange,
   onQuickFillSelectionChange,
   onQuickMock,
-  onOpenRecordingPreview,
-  onShowRecordingHistory,
-  onPauseRecording,
-  onResumeRecording,
-  onStartRecording,
-  onStartWindow,
-  onStopRecording,
   onRemoveTesterAioConfig,
   onResetSettings,
   onSaveSettings,
@@ -171,19 +150,6 @@ export function PopupBody({
     <>
       {pageMonitoringEnabled ? (
         <>
-          <RecordingPanel
-            enabled={pageMonitoringEnabled}
-            pending={recordingPending}
-            session={recording}
-            supported={recordingSupported}
-            onStart={onStartRecording}
-            onStartWindow={onStartWindow}
-            onOpenPreview={onOpenRecordingPreview}
-            onShowHistory={onShowRecordingHistory}
-            onPause={onPauseRecording}
-            onResume={onResumeRecording}
-            onStop={onStopRecording}
-          />
           <PageErrorPanel
             errors={pageErrors}
             requests={requests}
@@ -210,21 +176,7 @@ export function PopupBody({
             onSelectedTesterAioConfigChange={onSelectedTesterAioConfigChange}
           />
         </>
-      ) : (
-        <RecordingPanel
-          enabled={false}
-          pending={recordingPending}
-          session={recording}
-          supported={recordingSupported}
-          onStart={onStartRecording}
-          onStartWindow={onStartWindow}
-          onOpenPreview={onOpenRecordingPreview}
-          onShowHistory={onShowRecordingHistory}
-          onPause={onPauseRecording}
-          onResume={onResumeRecording}
-          onStop={onStopRecording}
-        />
-      )}
+      ) : null}
 
       <NotePanel
         copying={copying}
