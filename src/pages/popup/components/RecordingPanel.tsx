@@ -8,6 +8,7 @@ interface RecordingPanelProps {
   supported: boolean;
   onStart: () => void;
   onOpenPreview: () => void;
+  onShowHistory: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
@@ -29,6 +30,7 @@ export function RecordingPanel({
   supported,
   onStart,
   onOpenPreview,
+  onShowHistory,
   onPause,
   onResume,
   onStop,
@@ -75,7 +77,9 @@ export function RecordingPanel({
           ) : (
             session.savedFileName
           )}
-          。请在缺陷平台上传附件。
+          。请在缺陷平台上传附件。或者你可以点击
+          <button className="recording-file-link" onClick={onShowHistory} type="button">查看历史</button>
+          查看已有录屏。
         </p>
       ) : session.status === 'error' ? (
         <p className="recording-hint recording-error">{session.error || '录制失败，请重试。'}</p>
@@ -83,11 +87,12 @@ export function RecordingPanel({
         <p className="recording-hint">录制当前标签页画面，无音频，最长 5 分钟。</p>
       )}
       <button
-        className={isRecording ? 'danger-button' : 'ghost-button'}
+        className={isRecording || isPaused ? 'danger-button' : 'recording-start-button'}
         disabled={pending || !enabled || session.status === 'saving'}
         onClick={isRecording || isPaused ? onStop : onStart}
         type="button"
       >
+        {!pending && !isRecording && !isPaused ? <span aria-hidden="true" className="recording-camera-icon" /> : null}
         {pending ? '处理中...' : isRecording || isPaused ? '停止并保存' : '开始录制当前标签页'}
       </button>
       {isRecording || isPaused ? (

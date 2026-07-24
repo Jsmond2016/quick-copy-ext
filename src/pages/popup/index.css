@@ -171,6 +171,63 @@ input {
   opacity: 0.56;
 }
 
+.recording-start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--brand);
+  border-radius: 6px;
+  background: var(--brand);
+  color: #fffaf4;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.recording-start-button:hover:not(:disabled) {
+  background: var(--brand-deep);
+  border-color: var(--brand-deep);
+}
+
+.recording-start-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.recording-camera-icon {
+  position: relative;
+  display: inline-block;
+  width: 15px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+
+.recording-camera-icon::before {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 4px;
+  height: 4px;
+  border: 1.25px solid currentColor;
+  border-radius: 50%;
+  content: '';
+}
+
+.recording-camera-icon::after {
+  position: absolute;
+  top: 2px;
+  right: -5px;
+  width: 3px;
+  height: 5px;
+  border: 1.5px solid currentColor;
+  border-left: 0;
+  border-radius: 0 2px 2px 0;
+  content: '';
+}
+
 .text-action-button {
   justify-self: start;
   min-height: 28px;

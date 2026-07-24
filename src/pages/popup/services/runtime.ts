@@ -156,6 +156,15 @@ export async function resumeTabRecording(tabId: number): Promise<RecordingSessio
   return unwrapRecordingSessionResponse(response);
 }
 
+export async function showRecordingHistory(): Promise<void> {
+  const response = await chrome.runtime.sendMessage({
+    type: 'quick-copy/show-recording-history',
+  }) as { ok: boolean; error?: string };
+  if (!response.ok) {
+    throw new Error(response.error || '打开录屏目录失败。');
+  }
+}
+
 export async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
   try {
     const response = (await chrome.runtime.sendMessage({

@@ -141,6 +141,7 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-recording-session'; tabId: number }
   | { type: 'quick-copy/get-current-tab-recording-session' }
   | { type: 'quick-copy/get-latest-recording-session' }
+  | { type: 'quick-copy/show-recording-history' }
   | { type: 'quick-copy/clear-recording-preview' }
   | { type: 'quick-copy/start-recording'; tabId: number; streamId: string }
   | { type: 'quick-copy/pause-recording'; tabId: number }

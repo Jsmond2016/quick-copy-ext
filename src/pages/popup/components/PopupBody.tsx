@@ -51,6 +51,7 @@ interface PopupBodyProps {
   onQuickFillSelectionChange: (values: string[]) => void;
   onQuickMock: () => void;
   onOpenRecordingPreview: () => void;
+  onShowRecordingHistory: () => void;
   onPauseRecording: () => void;
   onResumeRecording: () => void;
   onStartRecording: () => void;
@@ -121,6 +122,7 @@ export function PopupBody({
   onQuickFillSelectionChange,
   onQuickMock,
   onOpenRecordingPreview,
+  onShowRecordingHistory,
   onPauseRecording,
   onResumeRecording,
   onStartRecording,
@@ -174,6 +176,7 @@ export function PopupBody({
             supported={recordingSupported}
             onStart={onStartRecording}
             onOpenPreview={onOpenRecordingPreview}
+            onShowHistory={onShowRecordingHistory}
             onPause={onPauseRecording}
             onResume={onResumeRecording}
             onStop={onStopRecording}
@@ -212,6 +215,7 @@ export function PopupBody({
           supported={recordingSupported}
           onStart={onStartRecording}
           onOpenPreview={onOpenRecordingPreview}
+          onShowHistory={onShowRecordingHistory}
           onPause={onPauseRecording}
           onResume={onResumeRecording}
           onStop={onStopRecording}

@@ -159,6 +159,7 @@ h1 {
   align-items: center;
   gap: 8px;
   color: var(--muted);
+  overflow-wrap: anywhere;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -173,6 +174,19 @@ h1 {
   padding: 0 10px;
 }
 .recording-file-location button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.recording-history-button {
+  align-self: start;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.recording-history-button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .clear-preview-button {
   align-self: start;

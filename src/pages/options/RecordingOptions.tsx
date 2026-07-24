@@ -15,10 +15,6 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '读取录屏预览失败。';
 }
 
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 async function getLatestRecordingSession(): Promise<RecordingSession> {
   const response = await chrome.runtime.sendMessage({ type: 'quick-copy/get-latest-recording-session' }) as {
     ok: boolean;
@@ -134,29 +130,16 @@ export function RecordingOptions() {
     }
   }
 
-  async function handleOpenFileLocation(): Promise<void> {
-    if (typeof chrome.downloads?.show !== 'function') {
-      setError('当前浏览器不支持定位下载文件。');
-      return;
-    }
-
+  async function handleShowHistory(): Promise<void> {
     setOpeningFileLocation(true);
     setError('');
     try {
-      let downloadId = session.downloadId;
-      if (typeof downloadId !== 'number') {
-        const relativePath = `${session.downloadDirectory || DEFAULT_RECORDING_DOWNLOAD_DIRECTORY}/${session.savedFileName}`;
-        const [matchedDownload] = await chrome.downloads.search({
-          filenameRegex: `${escapeRegExp(relativePath)}$`,
-          orderBy: ['-startTime'],
-        });
-        if (!matchedDownload) {
-          throw new Error('未在浏览器下载记录中找到该录屏文件。');
-        }
-        downloadId = matchedDownload.id;
-        setSession((current) => ({ ...current, downloadId }));
+      const response = await chrome.runtime.sendMessage({
+        type: 'quick-copy/show-recording-history',
+      }) as { ok: boolean; error?: string };
+      if (!response.ok) {
+        throw new Error(response.error || '打开录屏目录失败。');
       }
-      await chrome.downloads.show(downloadId);
     } catch (openError) {
       setError(getErrorMessage(openError));
     } finally {
@@ -223,15 +206,25 @@ export function RecordingOptions() {
               <span>~/Downloads/{session.downloadDirectory || DEFAULT_RECORDING_DOWNLOAD_DIRECTORY}/{session.savedFileName}</span>
               <button
                 disabled={openingFileLocation || !session.savedFileName}
-                onClick={() => void handleOpenFileLocation()}
-                title="在文件管理器中显示该视频"
+                onClick={() => void handleShowHistory()}
+                title="在文件管理器中显示录屏历史"
                 type="button"
               >
-                {openingFileLocation ? '打开中...' : '打开'}
+                {openingFileLocation ? '打开中...' : '查看历史'}
               </button>
             </div>
           ) : <strong>未生成录屏文件</strong>}
           <p>{hasPreview ? '可在此检查复现过程，再将已下载文件上传到缺陷平台。' : '开始并停止一次录制后，视频会出现在这里。'}</p>
+          {!hasSavedRecording ? (
+            <button
+              className="recording-history-button"
+              disabled={openingFileLocation}
+              onClick={() => void handleShowHistory()}
+              type="button"
+            >
+              查看历史
+            </button>
+          ) : null}
           {hasPreview ? (
             <>
               <label className="playback-rate-control">

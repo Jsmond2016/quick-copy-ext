@@ -1,6 +1,5 @@
 const DATABASE_NAME = 'quick-copy-recordings';
 const STORE_NAME = 'recordings';
-
 interface StoredRecording {
   id: string;
   blob: Blob;

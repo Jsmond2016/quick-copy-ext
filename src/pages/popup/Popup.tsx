@@ -401,6 +401,7 @@ export default function Popup() {
         onQuickFillSelectionChange={updateNoteWithQuickFill}
         onQuickMock={() => void handleQuickMock()}
         onOpenRecordingPreview={() => void chrome.runtime.openOptionsPage()}
+        onShowRecordingHistory={() => void recording.showHistory()}
         onPauseRecording={() => void recording.pause()}
         onResumeRecording={() => void recording.resume()}
         onStartRecording={() => void recording.start()}

@@ -22,6 +22,7 @@ interface StopRecordingPayload {
 interface RecordingService {
   get(tabId: number): Promise<RecordingSession>;
   getLatest(): Promise<RecordingSession>;
+  showHistory(): Promise<void>;
   clearPreview(): Promise<void>;
   start(options: StartRecordingOptions): Promise<RecordingSession>;
   startFromContextMenu(tabId: number): Promise<RecordingSession>;
@@ -54,6 +55,10 @@ function buildFileName(): string {
     .map((value) => String(value).padStart(2, '0'))
     .join('');
   return `quick-copy-recording_${date}_${time}.webm`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function createRecordingService({ onSessionChanged }: CreateRecordingServiceOptions = {}): RecordingService {
@@ -240,6 +245,29 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     async getLatest() {
       await readyPromise;
       return session;
+    },
+    async showHistory() {
+      await readyPromise;
+      const recordingSettings = await loadRecordingSettings();
+      let downloadId = session.downloadId;
+      if (typeof downloadId !== 'number') {
+        const relativePath = session.savedFileName
+          ? `${session.downloadDirectory ?? recordingSettings.downloadDirectory}/${session.savedFileName}`
+          : undefined;
+        const [matchedDownload] = await chrome.downloads.search({
+          filenameRegex: relativePath
+            ? `${escapeRegExp(relativePath)}$`
+            : `${escapeRegExp(recordingSettings.downloadDirectory)}/.*\\.webm$`,
+          orderBy: ['-startTime'],
+        });
+        if (!matchedDownload) {
+          await chrome.downloads.showDefaultFolder();
+          return;
+        }
+        downloadId = matchedDownload.id;
+        await update({ ...session, downloadId }, false);
+      }
+      await chrome.downloads.show(downloadId);
     },
     async clearPreview() {
       await readyPromise;

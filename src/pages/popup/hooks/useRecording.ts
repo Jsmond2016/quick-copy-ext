@@ -8,6 +8,7 @@ import {
   stopTabRecording,
   pauseTabRecording,
   resumeTabRecording,
+  showRecordingHistory,
   subscribeToRecordingUpdates,
 } from '@pages/popup/services/runtime';
 
@@ -20,6 +21,7 @@ interface UseRecordingResult {
   start: () => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
+  showHistory: () => Promise<void>;
   stop: () => Promise<void>;
 }
 
@@ -113,5 +115,13 @@ export function useRecording(
     }
   }, [onError, tabId]);
 
-  return { isSupported, pending, session, start, pause, resume, stop };
+  const showHistory = useCallback(async () => {
+    try {
+      await showRecordingHistory();
+    } catch (error) {
+      onError(getErrorMessage(error, '打开录屏目录失败。'));
+    }
+  }, [onError]);
+
+  return { isSupported, pending, session, start, pause, resume, showHistory, stop };
 }

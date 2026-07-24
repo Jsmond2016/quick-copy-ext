@@ -34,6 +34,7 @@ interface RegisterRuntimeMessageListenerOptions {
   recording: {
     get: (tabId: number) => Promise<RecordingSession>;
     getLatest: () => Promise<RecordingSession>;
+    showHistory: () => Promise<void>;
     clearPreview: () => Promise<void>;
     start: (options: { tabId: number; streamId: string }) => Promise<RecordingSession>;
     pause: (tabId: number) => Promise<RecordingSession>;
@@ -159,6 +160,15 @@ export function registerRuntimeMessageListener({
           .then((session) => sendResponse({ ok: true, data: session }))
           .catch((error: unknown) => {
             sendResponse({ ok: false, error: getErrorMessage(error, '读取最近录屏失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/show-recording-history') {
+        void recording.showHistory()
+          .then(() => sendResponse({ ok: true, data: null }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '打开录屏目录失败。') });
           });
         return true;
       }
