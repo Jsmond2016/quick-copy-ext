@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.52](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.51...v1.4.52) (2026-07-24)
+
+
+### Bug Fixes
+
+* **recording:** 修复窗口录制停止失效 ([b7aacb2](https://github.com/Jsmond2016/quick-copy-ext/commit/b7aacb23fd90ddd773e5eda29f223ec271401c10))
+* **recording:** 移除右键历史入口 ([b133f73](https://github.com/Jsmond2016/quick-copy-ext/commit/b133f732d699e1e5190f68be6ba36dbff074e01f))
+* **recording:** 等待浏览器完成录屏下载 ([adff468](https://github.com/Jsmond2016/quick-copy-ext/commit/adff46824d69272005bf6acc747f84b588f87241))
+* **recording:** 调整录制方式默认优先级 ([7ef22d9](https://github.com/Jsmond2016/quick-copy-ext/commit/7ef22d9b651498cab2f6c44beadd859930e2c7e2))
+
+
+### Features
+
+* **recording:** 优化录屏预览入口 ([e87c139](https://github.com/Jsmond2016/quick-copy-ext/commit/e87c13906246b70d4902d0c534e759aa13a48a97))
+* **recording:** 支持定位录屏文件 ([038a430](https://github.com/Jsmond2016/quick-copy-ext/commit/038a4309757a79c4ea016c1655c1d7dd8ab74f5e))
+* **recording:** 支持查看录屏目录 ([2006ac5](https://github.com/Jsmond2016/quick-copy-ext/commit/2006ac50b0b220b943a2af611e7e91a756a7fc41))
+* **recording:** 添加标签页录制与本地预览 ([6481563](https://github.com/Jsmond2016/quick-copy-ext/commit/6481563ff10dc821199668a551f60ac1e1f86e01))
+
 ## [1.4.51](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.50...v1.4.51) (2026-07-23)
 
 
