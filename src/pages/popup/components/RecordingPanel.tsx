@@ -52,10 +52,7 @@ export function RecordingPanel({
   return (
     <section className="panel recording-panel">
       <div className="panel-head">
-        <div>
-          <span className="panel-kicker">复现证据</span>
-          <h2>当前标签页录制</h2>
-        </div>
+        <h2>视频录制</h2>
         {isRecording || isPaused ? (
           <span className="recording-indicator">
             {isPaused ? '暂停' : 'REC'} {formatDuration(session, now)}
@@ -69,7 +66,17 @@ export function RecordingPanel({
       ) : session.status === 'saving' ? (
         <p className="recording-hint">录制已结束，等待浏览器完成保存。</p>
       ) : session.status === 'saved' ? (
-        <p className="recording-hint">录屏已保存：{session.savedFileName}。请在缺陷平台上传附件。</p>
+        <p className="recording-hint">
+          录屏已保存：
+          {session.recordingId ? (
+            <button className="recording-file-link" onClick={onOpenPreview} type="button">
+              {session.savedFileName}
+            </button>
+          ) : (
+            session.savedFileName
+          )}
+          。请在缺陷平台上传附件。
+        </p>
       ) : session.status === 'error' ? (
         <p className="recording-hint recording-error">{session.error || '录制失败，请重试。'}</p>
       ) : (
@@ -91,16 +98,6 @@ export function RecordingPanel({
           type="button"
         >
           {isPaused ? '继续录制' : '暂停录制'}
-        </button>
-      ) : null}
-      {session.status === 'saved' ? (
-        <button
-          className="text-action-button"
-          disabled={!session.recordingId}
-          onClick={onOpenPreview}
-          type="button"
-        >
-          {session.recordingId ? '预览录屏' : '本地预览不可用'}
         </button>
       ) : null}
       {!enabled ? <p className="recording-disabled">当前页面不在监听 Origin 范围内，无法录制。</p> : null}

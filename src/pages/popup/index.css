@@ -141,6 +141,17 @@ input {
   line-height: 1.5;
 }
 
+.recording-file-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-deep);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .recording-error,
 .recording-disabled {
   color: #a13b20;

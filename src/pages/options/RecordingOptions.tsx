@@ -9,7 +9,7 @@ import {
 } from '@src/lib/quick-copy';
 
 const EMPTY_SESSION: RecordingSession = { status: 'idle' };
-const PLAYBACK_RATES = [1, 1.5, 1.8, 2, 2.5, 3, 4] as const;
+const PLAYBACK_RATES = [0.5, 1, 1.5, 1.8, 2, 2.5] as const;
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '读取录屏预览失败。';
