@@ -173,6 +173,7 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
         await update({
           status: 'saved',
           tabId: session.tabId,
+          downloadId,
           savedFileName: session.downloadFileName,
           downloadDirectory: session.downloadDirectory,
           recordingId: session.recordingId,

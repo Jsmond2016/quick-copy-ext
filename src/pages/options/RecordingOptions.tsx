@@ -15,6 +15,10 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '读取录屏预览失败。';
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function getLatestRecordingSession(): Promise<RecordingSession> {
   const response = await chrome.runtime.sendMessage({ type: 'quick-copy/get-latest-recording-session' }) as {
     ok: boolean;
@@ -44,6 +48,7 @@ export function RecordingOptions() {
   const [loading, setLoading] = useState(true);
   const [downloadDirectory, setDownloadDirectory] = useState(DEFAULT_RECORDING_DOWNLOAD_DIRECTORY);
   const [savingDirectory, setSavingDirectory] = useState(false);
+  const [openingFileLocation, setOpeningFileLocation] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -129,6 +134,36 @@ export function RecordingOptions() {
     }
   }
 
+  async function handleOpenFileLocation(): Promise<void> {
+    if (typeof chrome.downloads?.show !== 'function') {
+      setError('当前浏览器不支持定位下载文件。');
+      return;
+    }
+
+    setOpeningFileLocation(true);
+    setError('');
+    try {
+      let downloadId = session.downloadId;
+      if (typeof downloadId !== 'number') {
+        const relativePath = `${session.downloadDirectory || DEFAULT_RECORDING_DOWNLOAD_DIRECTORY}/${session.savedFileName}`;
+        const [matchedDownload] = await chrome.downloads.search({
+          filenameRegex: `${escapeRegExp(relativePath)}$`,
+          orderBy: ['-startTime'],
+        });
+        if (!matchedDownload) {
+          throw new Error('未在浏览器下载记录中找到该录屏文件。');
+        }
+        downloadId = matchedDownload.id;
+        setSession((current) => ({ ...current, downloadId }));
+      }
+      await chrome.downloads.show(downloadId);
+    } catch (openError) {
+      setError(getErrorMessage(openError));
+    } finally {
+      setOpeningFileLocation(false);
+    }
+  }
+
   const hasPreview = Boolean(videoUrl);
   const hasSavedRecording = session.status === 'saved';
 
@@ -183,7 +218,19 @@ export function RecordingOptions() {
 
         <aside className="recording-details">
           <p className="details-label">最近文件</p>
-          <strong>{session.savedFileName || '未生成录屏文件'}</strong>
+          {hasSavedRecording ? (
+            <div className="recording-file-location">
+              <span>~/Downloads/{session.downloadDirectory || DEFAULT_RECORDING_DOWNLOAD_DIRECTORY}/{session.savedFileName}</span>
+              <button
+                disabled={openingFileLocation || !session.savedFileName}
+                onClick={() => void handleOpenFileLocation()}
+                title="在文件管理器中显示该视频"
+                type="button"
+              >
+                {openingFileLocation ? '打开中...' : '打开'}
+              </button>
+            </div>
+          ) : <strong>未生成录屏文件</strong>}
           <p>{hasPreview ? '可在此检查复现过程，再将已下载文件上传到缺陷平台。' : '开始并停止一次录制后，视频会出现在这里。'}</p>
           {hasPreview ? (
             <>

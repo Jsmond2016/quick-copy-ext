@@ -153,6 +153,26 @@ h1 {
 .recording-details strong { overflow-wrap: anywhere; font-size: 15px; font-weight: 600; line-height: 1.5; }
 .recording-details p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
 .recording-details .details-label { color: var(--mint); }
+.recording-file-location {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.recording-file-location span { overflow-wrap: anywhere; }
+.recording-file-location button {
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 0 10px;
+}
+.recording-file-location button:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .clear-preview-button {
   align-self: start;
