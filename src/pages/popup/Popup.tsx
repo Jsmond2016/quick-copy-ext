@@ -405,6 +405,7 @@ export default function Popup() {
         onPauseRecording={() => void recording.pause()}
         onResumeRecording={() => void recording.resume()}
         onStartRecording={() => void recording.start()}
+        onStartWindow={() => void recording.startWindow()}
         onStopRecording={() => void recording.stop()}
         onRemoveTesterAioConfig={removeTesterAioConfig}
         onRemoveEnvironmentGroup={removeEnvironmentGroup}

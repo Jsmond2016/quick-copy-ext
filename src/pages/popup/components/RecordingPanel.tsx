@@ -7,6 +7,7 @@ interface RecordingPanelProps {
   session: RecordingSession;
   supported: boolean;
   onStart: () => void;
+  onStartWindow: () => void;
   onOpenPreview: () => void;
   onShowHistory: () => void;
   onPause: () => void;
@@ -29,6 +30,7 @@ export function RecordingPanel({
   session,
   supported,
   onStart,
+  onStartWindow,
   onOpenPreview,
   onShowHistory,
   onPause,
@@ -38,6 +40,7 @@ export function RecordingPanel({
   const [now, setNow] = useState(Date.now());
   const isRecording = session.status === 'recording';
   const isPaused = session.status === 'paused';
+  const canControlRecording = isRecording || isPaused;
 
   useEffect(() => {
     if (!isRecording) {
@@ -84,17 +87,27 @@ export function RecordingPanel({
       ) : session.status === 'error' ? (
         <p className="recording-hint recording-error">{session.error || '录制失败，请重试。'}</p>
       ) : (
-        <p className="recording-hint">录制当前标签页画面，无音频，最长 5 分钟。</p>
+        <p className="recording-hint">默认录制当前窗口，覆盖其中新打开的标签页；无音频，最长 5 分钟。</p>
       )}
       <button
         className={isRecording || isPaused ? 'danger-button' : 'recording-start-button'}
-        disabled={pending || !enabled || session.status === 'saving'}
-        onClick={isRecording || isPaused ? onStop : onStart}
+        disabled={pending || session.status === 'saving' || (!canControlRecording && !enabled)}
+        onClick={isRecording || isPaused ? onStop : onStartWindow}
         type="button"
       >
         {!pending && !isRecording && !isPaused ? <span aria-hidden="true" className="recording-camera-icon" /> : null}
-        {pending ? '处理中...' : isRecording || isPaused ? '停止并保存' : '开始录制当前标签页'}
+        {pending ? '处理中...' : isRecording || isPaused ? '停止并保存' : '录制当前窗口'}
       </button>
+      {!isRecording && !isPaused ? (
+        <button
+          className="text-action-button"
+          disabled={pending || !enabled || session.status === 'saving'}
+          onClick={onStart}
+          type="button"
+        >
+          仅录制当前标签页
+        </button>
+      ) : null}
       {isRecording || isPaused ? (
         <button
           className="text-action-button"
@@ -105,7 +118,7 @@ export function RecordingPanel({
           {isPaused ? '继续录制' : '暂停录制'}
         </button>
       ) : null}
-      {!enabled ? <p className="recording-disabled">当前页面不在监听 Origin 范围内，无法录制。</p> : null}
+      {!enabled && !canControlRecording ? <p className="recording-disabled">当前页面不在监听 Origin 范围内，无法开始录制。</p> : null}
     </section>
   );
 }

@@ -132,6 +132,16 @@ export async function startTabRecording(tabId: number): Promise<RecordingSession
   return unwrapRecordingSessionResponse(response);
 }
 
+export async function startWindowRecording(tabId: number): Promise<RecordingSession> {
+  if (!isTabRecordingSupported() || typeof chrome.desktopCapture?.chooseDesktopMedia !== 'function') {
+    throw new Error('当前浏览器不支持窗口录制。');
+  }
+
+  const url = chrome.runtime.getURL(`src/pages/recording-picker/index.html?tabId=${tabId}`);
+  await chrome.windows.create({ url, type: 'popup', width: 360, height: 180, focused: true });
+  return { status: 'idle' };
+}
+
 export async function stopTabRecording(tabId: number): Promise<RecordingSession> {
   const response = (await chrome.runtime.sendMessage({
     type: 'quick-copy/stop-recording',

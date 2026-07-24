@@ -60,10 +60,13 @@ export interface PageSummary {
 }
 
 export type RecordingStatus = 'idle' | 'recording' | 'paused' | 'saving' | 'saved' | 'error';
+export type RecordingSource = 'tab' | 'window';
 
 export interface RecordingSession {
   status: RecordingStatus;
   tabId?: number;
+  windowId?: number;
+  source?: RecordingSource;
   startedAt?: number;
   elapsedMs?: number;
   downloadBlobUrl?: string;
@@ -143,11 +146,18 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/get-latest-recording-session' }
   | { type: 'quick-copy/show-recording-history' }
   | { type: 'quick-copy/clear-recording-preview' }
-  | { type: 'quick-copy/start-recording'; tabId: number; streamId: string }
+  | { type: 'quick-copy/start-recording'; tabId: number; streamId: string; source?: RecordingSource }
+  | { type: 'quick-copy/window-recording-started'; tabId: number }
   | { type: 'quick-copy/pause-recording'; tabId: number }
   | { type: 'quick-copy/resume-recording'; tabId: number }
   | { type: 'quick-copy/stop-recording'; tabId: number }
-  | { type: 'quick-copy/offscreen-start-recording'; tabId: number; streamId: string; fileName: string }
+  | {
+    type: 'quick-copy/offscreen-start-recording';
+    tabId: number;
+    streamId: string;
+    fileName: string;
+    source?: RecordingSource;
+  }
   | { type: 'quick-copy/offscreen-stop-recording'; tabId: number }
   | { type: 'quick-copy/offscreen-pause-recording'; tabId: number }
   | { type: 'quick-copy/offscreen-resume-recording'; tabId: number }

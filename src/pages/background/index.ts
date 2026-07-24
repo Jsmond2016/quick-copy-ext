@@ -480,6 +480,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 
   if (changeInfo.status === 'complete' && tab.url) {
     setTabUrl(tabId, tab.url);
+    void recordingService.handleTabUpdated(tabId, tab.windowId);
   }
 });
 

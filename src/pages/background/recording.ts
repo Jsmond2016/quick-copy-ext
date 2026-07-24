@@ -1,6 +1,7 @@
 import {
   buildRecordingDownloadFileName,
   loadRecordingSettings,
+  type RecordingSource,
   type RecordingSession,
 } from '@src/lib/quick-copy';
 
@@ -10,6 +11,7 @@ const OFFSCREEN_DOCUMENT_PATH = 'src/pages/offscreen/recording.html';
 interface StartRecordingOptions {
   tabId: number;
   streamId: string;
+  source?: RecordingSource;
 }
 
 interface StopRecordingPayload {
@@ -25,6 +27,7 @@ interface RecordingService {
   showHistory(): Promise<void>;
   clearPreview(): Promise<void>;
   start(options: StartRecordingOptions): Promise<RecordingSession>;
+  startWindow(tabId: number): Promise<RecordingSession>;
   startFromContextMenu(tabId: number): Promise<RecordingSession>;
   pause(tabId: number): Promise<RecordingSession>;
   resume(tabId: number): Promise<RecordingSession>;
@@ -32,6 +35,7 @@ interface RecordingService {
   handleStopped(payload: StopRecordingPayload): Promise<void>;
   handleFailed(tabId: number, error: string): Promise<void>;
   handleTabRemoved(tabId: number): Promise<void>;
+  handleTabUpdated(tabId: number, windowId?: number): Promise<void>;
 }
 
 interface CreateRecordingServiceOptions {
@@ -109,6 +113,26 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     void chrome.action.setBadgeText({ tabId, text: recording ? 'REC' : '' }).catch(() => undefined);
   }
 
+  async function notifySession(): Promise<void> {
+    const recording = session.status === 'recording' || session.status === 'paused';
+    if (session.source === 'window' && typeof session.windowId === 'number') {
+      const tabs = await chrome.tabs.query({ windowId: session.windowId });
+      await Promise.all(tabs.flatMap((tab) => {
+        if (typeof tab.id !== 'number') {
+          return [];
+        }
+        setBadge(tab.id, recording);
+        return [notify(tab.id)];
+      }));
+      return;
+    }
+
+    if (typeof session.tabId === 'number') {
+      setBadge(session.tabId, recording);
+      await notify(session.tabId);
+    }
+  }
+
   async function ensureOffscreenDocument(): Promise<void> {
     if (await chrome.offscreen.hasDocument()) {
       return;
@@ -142,11 +166,22 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     session = next;
     await persist();
     onSessionChanged?.(session);
-    if (typeof session.tabId === 'number') {
-      setBadge(session.tabId, session.status === 'recording' || session.status === 'paused');
-      if (shouldNotify) {
-        void notify(session.tabId);
-      }
+    if (shouldNotify) {
+      void notifySession().catch(() => undefined);
+    }
+  }
+
+  async function isSessionAvailableInTab(tabId: number): Promise<boolean> {
+    if (session.tabId === tabId) {
+      return true;
+    }
+    if (session.source !== 'window' || typeof session.windowId !== 'number') {
+      return false;
+    }
+    try {
+      return (await chrome.tabs.get(tabId)).windowId === session.windowId;
+    } catch {
+      return false;
     }
   }
 
@@ -176,22 +211,18 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     try {
       if (state === 'complete') {
         await update({
+          ...session,
           status: 'saved',
-          tabId: session.tabId,
           downloadId,
           savedFileName: session.downloadFileName,
-          downloadDirectory: session.downloadDirectory,
-          recordingId: session.recordingId,
         });
       } else {
         await update({
+          ...session,
           status: 'error',
-          tabId: session.tabId,
           error: reason
             ? `录屏下载被中断（${reason}），请检查下载权限或磁盘空间后重试。`
             : '录屏下载被中断，请重试。',
-          downloadDirectory: session.downloadDirectory,
-          recordingId: session.recordingId,
         });
       }
     } finally {
@@ -226,8 +257,9 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     async get(tabId) {
       await readyPromise;
       if (
-        session.tabId === tabId
+        await isSessionAvailableInTab(tabId)
         && (session.status === 'recording' || session.status === 'paused')
+        && session.source !== 'window'
       ) {
         const capturedTabs = await chrome.tabCapture.getCapturedTabs();
         const stillCaptured = capturedTabs.some(
@@ -240,7 +272,7 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
           await update(createIdleSession(), false);
         }
       }
-      return session.tabId === tabId ? session : createIdleSession();
+      return (await isSessionAvailableInTab(tabId)) ? session : createIdleSession();
     },
     async getLatest() {
       await readyPromise;
@@ -276,7 +308,7 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
       }
       await update({ ...session, recordingId: undefined });
     },
-    async start({ tabId, streamId }) {
+    async start({ tabId, streamId, source = 'tab' }) {
       await readyPromise;
       if (session.status === 'recording' || session.status === 'paused' || session.status === 'saving') {
         throw new Error('已有标签页正在录制，请先停止当前录制。');
@@ -284,16 +316,20 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
 
       try {
         const recordingSettings = await loadRecordingSettings();
+        const tab = await chrome.tabs.get(tabId);
         await ensureOffscreenDocument();
         await sendOffscreenMessage({
           type: 'quick-copy/offscreen-start-recording',
           tabId,
           streamId,
           fileName: buildFileName(),
+          source,
         });
         await update({
           status: 'recording',
           tabId,
+          windowId: tab.windowId,
+          source,
           startedAt: Date.now(),
           elapsedMs: 0,
           downloadDirectory: recordingSettings.downloadDirectory,
@@ -305,16 +341,39 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
       }
     },
     async startFromContextMenu(tabId) {
-      const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
-      return this.start({ tabId, streamId });
+      const url = chrome.runtime.getURL(`src/pages/recording-picker/index.html?tabId=${tabId}`);
+      await chrome.windows.create({ url, type: 'popup', width: 360, height: 180, focused: true });
+      return createIdleSession();
+    },
+    async startWindow(tabId) {
+      await readyPromise;
+      if (session.status === 'recording' || session.status === 'paused' || session.status === 'saving') {
+        throw new Error('已有标签页正在录制，请先停止当前录制。');
+      }
+
+      const [recordingSettings, tab] = await Promise.all([loadRecordingSettings(), chrome.tabs.get(tabId)]);
+      await update({
+        status: 'recording',
+        tabId,
+        windowId: tab.windowId,
+        source: 'window',
+        startedAt: Date.now(),
+        elapsedMs: 0,
+        downloadDirectory: recordingSettings.downloadDirectory,
+      });
+      return session;
     },
     async pause(tabId) {
       await readyPromise;
-      if (session.tabId !== tabId || session.status !== 'recording' || !session.startedAt) {
+      if (!(await isSessionAvailableInTab(tabId)) || session.status !== 'recording' || !session.startedAt) {
         throw new Error('当前标签页没有可暂停的录制。');
       }
+      const recordingTabId = session.tabId;
+      if (typeof recordingTabId !== 'number') {
+        throw new Error('录制会话缺少源标签页。');
+      }
 
-      await sendOffscreenMessage({ type: 'quick-copy/offscreen-pause-recording', tabId });
+      await sendOffscreenMessage({ type: 'quick-copy/offscreen-pause-recording', tabId: recordingTabId });
       await update({
         ...session,
         status: 'paused',
@@ -324,11 +383,15 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     },
     async resume(tabId) {
       await readyPromise;
-      if (session.tabId !== tabId || session.status !== 'paused') {
+      if (!(await isSessionAvailableInTab(tabId)) || session.status !== 'paused') {
         throw new Error('当前标签页没有已暂停的录制。');
       }
+      const recordingTabId = session.tabId;
+      if (typeof recordingTabId !== 'number') {
+        throw new Error('录制会话缺少源标签页。');
+      }
 
-      await sendOffscreenMessage({ type: 'quick-copy/offscreen-resume-recording', tabId });
+      await sendOffscreenMessage({ type: 'quick-copy/offscreen-resume-recording', tabId: recordingTabId });
       const elapsedMs = session.elapsedMs ?? 0;
       await update({
         ...session,
@@ -340,8 +403,12 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
     },
     async stop(tabId) {
       await readyPromise;
-      if (session.tabId !== tabId || (session.status !== 'recording' && session.status !== 'paused')) {
+      if (!(await isSessionAvailableInTab(tabId)) || (session.status !== 'recording' && session.status !== 'paused')) {
         throw new Error('当前标签页没有正在进行的录制。');
+      }
+      const recordingTabId = session.tabId;
+      if (typeof recordingTabId !== 'number') {
+        throw new Error('录制会话缺少源标签页。');
       }
 
       const elapsedMs = session.status === 'recording' && session.startedAt
@@ -349,11 +416,11 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
         : session.elapsedMs ?? 0;
       await update({ ...session, status: 'saving', elapsedMs });
       try {
-        await sendOffscreenMessage({ type: 'quick-copy/offscreen-stop-recording', tabId });
+        await sendOffscreenMessage({ type: 'quick-copy/offscreen-stop-recording', tabId: recordingTabId });
       } catch (error) {
         await update({
+          ...session,
           status: 'error',
-          tabId,
           error: getErrorMessage(error, '停止录制失败。'),
         });
         throw error;
@@ -381,7 +448,7 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
         });
         await syncDownloadState(downloadId);
       } catch (error) {
-        await update({ status: 'error', tabId, error: getErrorMessage(error, '保存录屏失败。') });
+        await update({ ...session, status: 'error', error: getErrorMessage(error, '保存录屏失败。') });
         await releaseDownloadResources(blobUrl);
       }
     },
@@ -391,7 +458,7 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
         return;
       }
       const blobUrl = session.downloadBlobUrl;
-      await update({ status: 'error', tabId, error });
+      await update({ ...session, status: 'error', error });
       await releaseDownloadResources(blobUrl);
     },
     async handleTabRemoved(tabId) {
@@ -403,10 +470,25 @@ export function createRecordingService({ onSessionChanged }: CreateRecordingServ
         return;
       }
 
+      if (session.source === 'window') {
+        return;
+      }
+
       try {
         await sendOffscreenMessage({ type: 'quick-copy/offscreen-stop-recording', tabId });
       } catch {
         await update(createIdleSession(), false);
+      }
+    },
+    async handleTabUpdated(tabId, windowId) {
+      await readyPromise;
+      if (
+        session.source === 'window'
+        && session.windowId === windowId
+        && (session.status === 'recording' || session.status === 'paused')
+      ) {
+        setBadge(tabId, true);
+        void notify(tabId);
       }
     },
   };

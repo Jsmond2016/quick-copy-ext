@@ -13,6 +13,7 @@ const chromePermissions = Array.from(new Set([
   ...basePermissions,
   'downloads',
   'contextMenus',
+  'desktopCapture',
   'offscreen',
   'scripting',
   'tabCapture',
@@ -52,6 +53,7 @@ export default mergeConfig(
         input: {
           options: resolve(__dirname, 'src/pages/options/index.html'),
           recording: resolve(__dirname, 'src/pages/offscreen/recording.html'),
+          recordingPicker: resolve(__dirname, 'src/pages/recording-picker/index.html'),
         },
       },
     },

@@ -1,10 +1,12 @@
 import { saveRecordingPreview } from '@src/lib/quick-copy';
+import type { RecordingSource } from '@src/lib/quick-copy';
 
 interface StartRecordingMessage {
   type: 'quick-copy/offscreen-start-recording';
   tabId: number;
   streamId: string;
   fileName: string;
+  source?: RecordingSource;
 }
 
 interface StopRecordingMessage {
@@ -54,12 +56,12 @@ function getRecorderOptions(): MediaRecorderOptions | undefined {
   return mimeType ? { mimeType, videoBitsPerSecond: 6_000_000 } : { videoBitsPerSecond: 6_000_000 };
 }
 
-async function createTabStream(streamId: string): Promise<MediaStream> {
+async function createStream(streamId: string, source: RecordingSource): Promise<MediaStream> {
   const constraints = {
     audio: false,
     video: {
       mandatory: {
-        chromeMediaSource: 'tab',
+        chromeMediaSource: source === 'window' ? 'desktop' : 'tab',
         chromeMediaSourceId: streamId,
         maxWidth: 1920,
         maxHeight: 1080,
@@ -100,7 +102,7 @@ async function startRecording(message: StartRecordingMessage): Promise<void> {
     throw new Error('录制器已被占用。');
   }
 
-  const stream = await createTabStream(message.streamId);
+  const stream = await createStream(message.streamId, message.source ?? 'tab');
   const recorder = new MediaRecorder(stream, getRecorderOptions());
   const recording: ActiveRecording = {
     tabId: message.tabId,

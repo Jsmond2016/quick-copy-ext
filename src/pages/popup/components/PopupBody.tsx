@@ -55,6 +55,7 @@ interface PopupBodyProps {
   onPauseRecording: () => void;
   onResumeRecording: () => void;
   onStartRecording: () => void;
+  onStartWindow: () => void;
   onStopRecording: () => void;
   onRemoveTesterAioConfig: (index: number) => void;
   onResetSettings: () => void;
@@ -126,6 +127,7 @@ export function PopupBody({
   onPauseRecording,
   onResumeRecording,
   onStartRecording,
+  onStartWindow,
   onStopRecording,
   onRemoveTesterAioConfig,
   onResetSettings,
@@ -175,6 +177,7 @@ export function PopupBody({
             session={recording}
             supported={recordingSupported}
             onStart={onStartRecording}
+            onStartWindow={onStartWindow}
             onOpenPreview={onOpenRecordingPreview}
             onShowHistory={onShowRecordingHistory}
             onPause={onPauseRecording}
@@ -214,6 +217,7 @@ export function PopupBody({
           session={recording}
           supported={recordingSupported}
           onStart={onStartRecording}
+          onStartWindow={onStartWindow}
           onOpenPreview={onOpenRecordingPreview}
           onShowHistory={onShowRecordingHistory}
           onPause={onPauseRecording}

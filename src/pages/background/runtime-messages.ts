@@ -6,6 +6,7 @@ import type {
   NetworkRequestRecord,
   PageErrorRecord,
   RecordingSession,
+  RecordingSource,
   RuntimeEventMessage,
   RuntimeRequestMessage,
   RuntimeResponseMessage,
@@ -36,7 +37,8 @@ interface RegisterRuntimeMessageListenerOptions {
     getLatest: () => Promise<RecordingSession>;
     showHistory: () => Promise<void>;
     clearPreview: () => Promise<void>;
-    start: (options: { tabId: number; streamId: string }) => Promise<RecordingSession>;
+    start: (options: { tabId: number; streamId: string; source?: RecordingSource }) => Promise<RecordingSession>;
+    startWindow: (tabId: number) => Promise<RecordingSession>;
     pause: (tabId: number) => Promise<RecordingSession>;
     resume: (tabId: number) => Promise<RecordingSession>;
     stop: (tabId: number) => Promise<RecordingSession>;
@@ -183,10 +185,19 @@ export function registerRuntimeMessageListener({
       }
 
       if (message.type === 'quick-copy/start-recording') {
-        void recording.start({ tabId: message.tabId, streamId: message.streamId })
+        void recording.start({ tabId: message.tabId, streamId: message.streamId, source: message.source })
           .then((session) => sendResponse({ ok: true, data: session }))
           .catch((error: unknown) => {
             sendResponse({ ok: false, error: getErrorMessage(error, '开始录制失败。') });
+          });
+        return true;
+      }
+
+      if (message.type === 'quick-copy/window-recording-started') {
+        void recording.startWindow(message.tabId)
+          .then((session) => sendResponse({ ok: true, data: session }))
+          .catch((error: unknown) => {
+            sendResponse({ ok: false, error: getErrorMessage(error, '开始窗口录制失败。') });
           });
         return true;
       }

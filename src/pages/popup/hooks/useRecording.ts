@@ -5,6 +5,7 @@ import {
   getRecordingSession,
   isTabRecordingSupported,
   startTabRecording,
+  startWindowRecording,
   stopTabRecording,
   pauseTabRecording,
   resumeTabRecording,
@@ -19,6 +20,7 @@ interface UseRecordingResult {
   pending: boolean;
   session: RecordingSession;
   start: () => Promise<void>;
+  startWindow: () => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
   showHistory: () => Promise<void>;
@@ -91,6 +93,22 @@ export function useRecording(
     }
   }, [onError, tabId]);
 
+  const startWindow = useCallback(async () => {
+    if (tabId === null) {
+      onError('未获取到当前标签页，无法开始录制。');
+      return;
+    }
+
+    setPending(true);
+    try {
+      setSession(await startWindowRecording(tabId));
+    } catch (error) {
+      onError(getErrorMessage(error, '开始窗口录制失败。'));
+    } finally {
+      setPending(false);
+    }
+  }, [onError, tabId]);
+
   const pause = useCallback(async () => {
     if (tabId === null) return;
     setPending(true);
@@ -123,5 +141,5 @@ export function useRecording(
     }
   }, [onError]);
 
-  return { isSupported, pending, session, start, pause, resume, showHistory, stop };
+  return { isSupported, pending, session, start, startWindow, pause, resume, showHistory, stop };
 }
