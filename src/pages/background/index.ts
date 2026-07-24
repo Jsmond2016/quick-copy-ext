@@ -303,7 +303,6 @@ recordingContextMenu = registerRecordingContextMenu({
   getLatest: () => recordingService.getLatest(),
   pause: (tabId) => recordingService.pause(tabId),
   resume: (tabId) => recordingService.resume(tabId),
-  showHistory: () => recordingService.showHistory(),
   start: (tabId) => recordingService.startFromContextMenu(tabId),
   stop: (tabId) => recordingService.stop(tabId),
 });
