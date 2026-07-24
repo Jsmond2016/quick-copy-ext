@@ -117,6 +117,67 @@ input {
   backdrop-filter: blur(10px);
 }
 
+.recording-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.recording-indicator {
+  align-self: center;
+  border-radius: 4px;
+  background: #b42318;
+  color: #fff;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 5px 7px;
+}
+
+.recording-hint,
+.recording-disabled {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.recording-error,
+.recording-disabled {
+  color: #a13b20;
+}
+
+.danger-button {
+  min-height: 38px;
+  border: 1px solid #b42318;
+  border-radius: 6px;
+  background: #b42318;
+  color: #fff;
+  cursor: pointer;
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+.text-action-button {
+  justify-self: start;
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--brand-deep);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.text-action-button:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  text-decoration: none;
+}
+
 .hero-card {
   position: relative;
   overflow: hidden;

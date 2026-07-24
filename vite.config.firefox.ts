@@ -24,7 +24,12 @@ export default mergeConfig(
     ],
     build: {
       ...baseBuildOptions,
-      outDir
+      outDir,
+      rollupOptions: {
+        input: {
+          options: resolve(__dirname, 'src/pages/options/index.html'),
+        },
+      },
     },
     publicDir: resolve(__dirname, 'public'),
   })

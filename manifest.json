@@ -11,6 +11,7 @@
   "icons": {
     "128": "icon-128.png"
   },
+  "options_page": "src/pages/options/index.html",
   "permissions": [
     "activeTab",
     "tabs",

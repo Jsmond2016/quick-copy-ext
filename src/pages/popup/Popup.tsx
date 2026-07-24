@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useBoolean, useMount, useRequest, useUpdateEffect } from 'ahooks';
 import pkg from '../../../package.json';
 import {
@@ -21,6 +21,7 @@ import { DEFAULT_APIFOX_STATUS } from '@pages/popup/constants';
 import { useApifox } from '@pages/popup/hooks/useApifox';
 import { usePopupFeedbackActions } from '@pages/popup/hooks/usePopupFeedbackActions';
 import { usePageErrors } from '@pages/popup/hooks/usePageErrors';
+import { useRecording } from '@pages/popup/hooks/useRecording';
 import { usePopupSettingsState } from '@pages/popup/hooks/usePopupSettingsState';
 import { useTabRequests } from '@pages/popup/hooks/useTabRequests';
 import { useSelection } from '@pages/popup/hooks/useSelection';
@@ -101,6 +102,14 @@ export default function Popup() {
     [page.url, settings.monitoredOrigins],
   );
   const quickFillOptions = settings.quickFillTemplates;
+  const handleRecordingError = useCallback((message: string) => {
+    setErrorText(message);
+    setToast({ type: 'error', text: message });
+  }, [setErrorText, setToast]);
+  const handleRecordingSaved = useCallback((fileName: string) => {
+    setToast({ type: 'success', text: `录屏已保存：${fileName}` });
+  }, [setToast]);
+  const recording = useRecording(tabId, handleRecordingError, handleRecordingSaved);
   const selectedTesterAioConfig = useMemo(
     () => settings.testerAioConfigs.find((item) => item.id === selectedTesterAioConfigId) ?? null,
     [selectedTesterAioConfigId, settings.testerAioConfigs],
@@ -127,6 +136,7 @@ export default function Popup() {
     apifoxStatus,
     attachApifoxUrls,
     includeRequestParams,
+    recordingSession: recording.session,
     load,
     note,
     page,
@@ -354,6 +364,9 @@ export default function Popup() {
         pageMonitoringEnabled={pageMonitoringEnabled}
         quickFillOptions={quickFillOptions}
         quickMocking={quickMocking}
+        recording={recording.session}
+        recordingPending={recording.pending}
+        recordingSupported={recording.isSupported}
         requests={requests}
         savingSettings={savingSettings}
         selectedIds={selectedIds}
@@ -387,6 +400,11 @@ export default function Popup() {
         onNoteChange={setNote}
         onQuickFillSelectionChange={updateNoteWithQuickFill}
         onQuickMock={() => void handleQuickMock()}
+        onOpenRecordingPreview={() => void chrome.runtime.openOptionsPage()}
+        onPauseRecording={() => void recording.pause()}
+        onResumeRecording={() => void recording.resume()}
+        onStartRecording={() => void recording.start()}
+        onStopRecording={() => void recording.stop()}
         onRemoveTesterAioConfig={removeTesterAioConfig}
         onRemoveEnvironmentGroup={removeEnvironmentGroup}
         onResetSettings={() => void handleReset()}

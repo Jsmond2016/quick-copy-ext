@@ -183,13 +183,15 @@ export function buildWebOnlyText(payload: {
   page: PageSummary;
   feedbackTitle: string;
   note: string;
+  screenshotLabel?: string;
   customFields: string[];
 }): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || '-';
+  const normalizedScreenshotLabel = payload.screenshotLabel?.trim() || '-';
   const sections: string[] = [
     `- 问题：${normalizedNote}`,
-    `- 截图：-`,
+    `- 截图：${normalizedScreenshotLabel}`,
     '',
     `=== ${normalizedTitle}`,
     '',

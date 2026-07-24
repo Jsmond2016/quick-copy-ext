@@ -7,6 +7,8 @@ import type {
   NetworkRequestRecord,
   PageErrorRecord,
   PageErrorsResponse,
+  RecordingSession,
+  RecordingSessionResponse,
   RuntimeEventMessage,
   RuntimeResponseMessage,
 } from '@src/lib/quick-copy';
@@ -92,6 +94,66 @@ export async function clearTabPageErrors(tabId: number): Promise<void> {
   })) as PageErrorsResponse;
 
   unwrapPageErrorsResponse(response);
+}
+
+function unwrapRecordingSessionResponse(response: RecordingSessionResponse): RecordingSession {
+  if (!response.ok) {
+    throw new Error(response.error);
+  }
+  return response.data;
+}
+
+export function isTabRecordingSupported(): boolean {
+  return typeof chrome.tabCapture?.getMediaStreamId === 'function'
+    && typeof chrome.offscreen?.createDocument === 'function'
+    && typeof chrome.downloads?.download === 'function';
+}
+
+export async function getRecordingSession(tabId: number): Promise<RecordingSession> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/get-recording-session',
+    tabId,
+  })) as RecordingSessionResponse;
+  return unwrapRecordingSessionResponse(response);
+}
+
+export async function startTabRecording(tabId: number): Promise<RecordingSession> {
+  if (!isTabRecordingSupported()) {
+    throw new Error('当前浏览器不支持标签页录制。');
+  }
+
+  // This API must run directly from the Popup click handler to retain user activation.
+  const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/start-recording',
+    tabId,
+    streamId,
+  })) as RecordingSessionResponse;
+  return unwrapRecordingSessionResponse(response);
+}
+
+export async function stopTabRecording(tabId: number): Promise<RecordingSession> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/stop-recording',
+    tabId,
+  })) as RecordingSessionResponse;
+  return unwrapRecordingSessionResponse(response);
+}
+
+export async function pauseTabRecording(tabId: number): Promise<RecordingSession> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/pause-recording',
+    tabId,
+  })) as RecordingSessionResponse;
+  return unwrapRecordingSessionResponse(response);
+}
+
+export async function resumeTabRecording(tabId: number): Promise<RecordingSession> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'quick-copy/resume-recording',
+    tabId,
+  })) as RecordingSessionResponse;
+  return unwrapRecordingSessionResponse(response);
 }
 
 export async function getApifoxStatus(): Promise<ApifoxCacheStatus> {
@@ -255,4 +317,10 @@ export function subscribeToPageErrorUpdates(
   listener: (tabId: number) => void,
 ): () => void {
   return subscribeToTabUpdates('quick-copy/page-errors-updated', listener);
+}
+
+export function subscribeToRecordingUpdates(
+  listener: (tabId: number) => void,
+): () => void {
+  return subscribeToTabUpdates('quick-copy/recording-updated', listener);
 }

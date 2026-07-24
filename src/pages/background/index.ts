@@ -12,6 +12,11 @@ import {
 } from '@src/lib/quick-copy';
 import { getApifoxMatches as buildApifoxMatches } from '@pages/background/apifox-matches';
 import { createPageErrorStore } from '@pages/background/page-errors';
+import { createRecordingService } from '@pages/background/recording';
+import {
+  registerRecordingContextMenu,
+  type RecordingContextMenuController,
+} from '@pages/background/recording-context-menu';
 import { registerRequestTrackingListeners } from '@pages/background/request-events';
 import { applyCapturedResponse as applyCapturedResponseToRequest } from '@pages/background/response-capture';
 import { registerRuntimeMessageListener } from '@pages/background/runtime-messages';
@@ -290,6 +295,17 @@ function shouldTrackRequest(tabId: number, initiator?: string) {
 
 const pageErrorStore = createPageErrorStore((tabId, senderUrl) =>
   pageErrorCaptureEnabled && shouldTrackTabUrl(senderUrl ?? tabUrlMap.get(tabId)));
+let recordingContextMenu: RecordingContextMenuController | undefined;
+const recordingService = createRecordingService({
+  onSessionChanged: (session) => recordingContextMenu?.update(session),
+});
+recordingContextMenu = registerRecordingContextMenu({
+  getLatest: () => recordingService.getLatest(),
+  pause: (tabId) => recordingService.pause(tabId),
+  resume: (tabId) => recordingService.resume(tabId),
+  start: (tabId) => recordingService.startFromContextMenu(tabId),
+  stop: (tabId) => recordingService.stop(tabId),
+});
 
 async function refreshMonitoredOrigins() {
   const settings = await loadSettings();
@@ -453,6 +469,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabUrlMap.delete(tabId);
   clearTabRequests(tabId);
   void pageErrorStore.clear(tabId, false);
+  void recordingService.handleTabRemoved(tabId);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -501,5 +518,6 @@ registerRuntimeMessageListener({
   refreshApifoxData,
   reportPageError: pageErrorStore.report,
   isPageMonitoringEnabled,
+  recording: recordingService,
   startPageSession: (tabId) => pageErrorStore.clear(tabId, false),
 });

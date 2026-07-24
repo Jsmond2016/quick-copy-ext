@@ -1,0 +1,316 @@
+import {
+  buildRecordingDownloadFileName,
+  loadRecordingSettings,
+  type RecordingSession,
+} from '@src/lib/quick-copy';
+
+const RECORDING_SESSION_CACHE_KEY = 'quick-copy-recording-session';
+const OFFSCREEN_DOCUMENT_PATH = 'src/pages/offscreen/recording.html';
+
+interface StartRecordingOptions {
+  tabId: number;
+  streamId: string;
+}
+
+interface StopRecordingPayload {
+  tabId: number;
+  blobUrl: string;
+  fileName: string;
+  recordingId?: string;
+}
+
+interface RecordingService {
+  get(tabId: number): Promise<RecordingSession>;
+  getLatest(): Promise<RecordingSession>;
+  clearPreview(): Promise<void>;
+  start(options: StartRecordingOptions): Promise<RecordingSession>;
+  startFromContextMenu(tabId: number): Promise<RecordingSession>;
+  pause(tabId: number): Promise<RecordingSession>;
+  resume(tabId: number): Promise<RecordingSession>;
+  stop(tabId: number): Promise<RecordingSession>;
+  handleStopped(payload: StopRecordingPayload): Promise<void>;
+  handleFailed(tabId: number, error: string): Promise<void>;
+  handleTabRemoved(tabId: number): Promise<void>;
+}
+
+interface CreateRecordingServiceOptions {
+  onSessionChanged?: (session: RecordingSession) => void;
+}
+
+function createIdleSession(): RecordingSession {
+  return { status: 'idle' };
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function buildFileName(): string {
+  const now = new Date();
+  const date = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+    .map((value) => String(value).padStart(2, '0'))
+    .join('');
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map((value) => String(value).padStart(2, '0'))
+    .join('');
+  return `quick-copy-recording_${date}_${time}.webm`;
+}
+
+export function createRecordingService({ onSessionChanged }: CreateRecordingServiceOptions = {}): RecordingService {
+  let session: RecordingSession = createIdleSession();
+  const readyPromise = chrome.storage.session.get(RECORDING_SESSION_CACHE_KEY)
+    .then((stored) => {
+      const cached = stored[RECORDING_SESSION_CACHE_KEY] as RecordingSession | undefined;
+      if (!cached || typeof cached !== 'object') {
+        return;
+      }
+
+      session = cached;
+    })
+    .catch(() => undefined);
+
+  async function persist(): Promise<void> {
+    await chrome.storage.session.set({ [RECORDING_SESSION_CACHE_KEY]: session });
+  }
+
+  async function ensureContentScript(tabId: number): Promise<void> {
+    const scriptFile = chrome.runtime.getManifest().content_scripts
+      ?.flatMap((contentScript) => contentScript.js ?? [])
+      .at(0);
+    if (!scriptFile) {
+      throw new Error('未找到页面录制控件脚本。');
+    }
+
+    await chrome.scripting.executeScript({ target: { tabId }, files: [scriptFile] });
+  }
+
+  async function notify(tabId: number): Promise<void> {
+    const message = { type: 'quick-copy/recording-updated' as const, tabId, session };
+    void chrome.runtime.sendMessage(message).catch(() => undefined);
+    try {
+      await chrome.tabs.sendMessage(tabId, message);
+    } catch {
+      try {
+        await ensureContentScript(tabId);
+        await chrome.tabs.sendMessage(tabId, message);
+      } catch {
+        // 某些受限页面无法注入内容脚本，录制仍可由扩展图标 Badge 提示。
+      }
+    }
+  }
+
+  function setBadge(tabId: number, recording: boolean): void {
+    void chrome.action.setBadgeBackgroundColor({ tabId, color: '#b42318' }).catch(() => undefined);
+    void chrome.action.setBadgeText({ tabId, text: recording ? 'REC' : '' }).catch(() => undefined);
+  }
+
+  async function ensureOffscreenDocument(): Promise<void> {
+    if (await chrome.offscreen.hasDocument()) {
+      return;
+    }
+
+    await chrome.offscreen.createDocument({
+      url: OFFSCREEN_DOCUMENT_PATH,
+      reasons: [chrome.offscreen.Reason.USER_MEDIA, chrome.offscreen.Reason.BLOBS],
+      justification: '录制用户主动选择的当前标签页，并在停止后生成本地视频文件。',
+    });
+  }
+
+  async function closeOffscreenDocument(): Promise<void> {
+    if (await chrome.offscreen.hasDocument()) {
+      await chrome.offscreen.closeDocument();
+    }
+  }
+
+  async function sendOffscreenMessage(message: Record<string, unknown>): Promise<void> {
+    try {
+      const response = await chrome.runtime.sendMessage(message) as { ok?: boolean; error?: string } | undefined;
+      if (!response?.ok) {
+        throw new Error(response?.error || '录制器未就绪，请重试。');
+      }
+    } catch (error) {
+      throw new Error(getErrorMessage(error, '录制器未就绪，请重试。'));
+    }
+  }
+
+  async function update(next: RecordingSession, shouldNotify = true): Promise<void> {
+    session = next;
+    await persist();
+    onSessionChanged?.(session);
+    if (typeof session.tabId === 'number') {
+      setBadge(session.tabId, session.status === 'recording' || session.status === 'paused');
+      if (shouldNotify) {
+        void notify(session.tabId);
+      }
+    }
+  }
+
+  return {
+    async get(tabId) {
+      await readyPromise;
+      if (
+        session.tabId === tabId
+        && (session.status === 'recording' || session.status === 'paused' || session.status === 'saving')
+      ) {
+        const capturedTabs = await chrome.tabCapture.getCapturedTabs();
+        const stillCaptured = capturedTabs.some(
+          (capturedTab) => (
+            capturedTab.tabId === tabId
+            && (capturedTab.status === 'active' || capturedTab.status === 'pending')
+          ),
+        );
+        if (!stillCaptured) {
+          await update(createIdleSession(), false);
+        }
+      }
+      return session.tabId === tabId ? session : createIdleSession();
+    },
+    async getLatest() {
+      await readyPromise;
+      return session;
+    },
+    async clearPreview() {
+      await readyPromise;
+      if (!session.recordingId) {
+        return;
+      }
+      await update({ ...session, recordingId: undefined });
+    },
+    async start({ tabId, streamId }) {
+      await readyPromise;
+      if (session.status === 'recording' || session.status === 'paused' || session.status === 'saving') {
+        throw new Error('已有标签页正在录制，请先停止当前录制。');
+      }
+
+      try {
+        const recordingSettings = await loadRecordingSettings();
+        await ensureOffscreenDocument();
+        await sendOffscreenMessage({
+          type: 'quick-copy/offscreen-start-recording',
+          tabId,
+          streamId,
+          fileName: buildFileName(),
+        });
+        await update({
+          status: 'recording',
+          tabId,
+          startedAt: Date.now(),
+          elapsedMs: 0,
+          downloadDirectory: recordingSettings.downloadDirectory,
+        });
+        return session;
+      } catch (error) {
+        await update({ status: 'error', tabId, error: getErrorMessage(error, '开始录制失败。') });
+        throw error;
+      }
+    },
+    async startFromContextMenu(tabId) {
+      const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+      return this.start({ tabId, streamId });
+    },
+    async pause(tabId) {
+      await readyPromise;
+      if (session.tabId !== tabId || session.status !== 'recording' || !session.startedAt) {
+        throw new Error('当前标签页没有可暂停的录制。');
+      }
+
+      await sendOffscreenMessage({ type: 'quick-copy/offscreen-pause-recording', tabId });
+      await update({
+        ...session,
+        status: 'paused',
+        elapsedMs: Math.max(0, Date.now() - session.startedAt),
+      });
+      return session;
+    },
+    async resume(tabId) {
+      await readyPromise;
+      if (session.tabId !== tabId || session.status !== 'paused') {
+        throw new Error('当前标签页没有已暂停的录制。');
+      }
+
+      await sendOffscreenMessage({ type: 'quick-copy/offscreen-resume-recording', tabId });
+      const elapsedMs = session.elapsedMs ?? 0;
+      await update({
+        ...session,
+        status: 'recording',
+        elapsedMs,
+        startedAt: Date.now() - elapsedMs,
+      });
+      return session;
+    },
+    async stop(tabId) {
+      await readyPromise;
+      if (session.tabId !== tabId || (session.status !== 'recording' && session.status !== 'paused')) {
+        throw new Error('当前标签页没有正在进行的录制。');
+      }
+
+      const elapsedMs = session.status === 'recording' && session.startedAt
+        ? Math.max(0, Date.now() - session.startedAt)
+        : session.elapsedMs ?? 0;
+      await update({ ...session, status: 'saving', elapsedMs });
+      try {
+        await sendOffscreenMessage({ type: 'quick-copy/offscreen-stop-recording', tabId });
+      } catch (error) {
+        await update({
+          status: 'error',
+          tabId,
+          error: getErrorMessage(error, '停止录制失败。'),
+        });
+        throw error;
+      }
+      return session;
+    },
+    async handleStopped({ tabId, blobUrl, fileName, recordingId }) {
+      await readyPromise;
+      if (session.tabId !== tabId) {
+        return;
+      }
+
+      try {
+        const downloadFileName = buildRecordingDownloadFileName(session.downloadDirectory ?? '', fileName);
+        await chrome.downloads.download({ url: blobUrl, filename: downloadFileName, saveAs: false });
+        await update({
+          status: 'saved',
+          tabId,
+          savedFileName: fileName,
+          downloadDirectory: session.downloadDirectory,
+          recordingId,
+        });
+      } catch (error) {
+        await update({ status: 'error', tabId, error: getErrorMessage(error, '保存录屏失败。') });
+      } finally {
+        try {
+          await chrome.runtime.sendMessage({
+            type: 'quick-copy/offscreen-release-recording',
+            blobUrl,
+          });
+        } finally {
+          await closeOffscreenDocument().catch(() => undefined);
+        }
+      }
+    },
+    async handleFailed(tabId, error) {
+      await readyPromise;
+      if (session.tabId !== tabId) {
+        return;
+      }
+      await update({ status: 'error', tabId, error });
+      await closeOffscreenDocument().catch(() => undefined);
+    },
+    async handleTabRemoved(tabId) {
+      await readyPromise;
+      if (
+        session.tabId !== tabId
+        || (session.status !== 'recording' && session.status !== 'paused' && session.status !== 'saving')
+      ) {
+        return;
+      }
+
+      try {
+        await sendOffscreenMessage({ type: 'quick-copy/offscreen-stop-recording', tabId });
+      } catch {
+        await update(createIdleSession(), false);
+      }
+    },
+  };
+}

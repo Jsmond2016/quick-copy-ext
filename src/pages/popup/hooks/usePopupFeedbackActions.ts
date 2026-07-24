@@ -8,6 +8,7 @@ import {
   NetworkRequestRecord,
   PageSummary,
   QuickCopySettings,
+  RecordingSession,
   withRequestAbnormalState,
 } from '@src/lib/quick-copy';
 import { getErrorMessage, getTabRequests, sendBatchQuickMockToExtension } from '@pages/popup/services/runtime';
@@ -39,6 +40,7 @@ interface UsePopupFeedbackActionsOptions {
   settings: QuickCopySettings;
   tabId: number | null;
   includeRequestParams: boolean;
+  recordingSession: RecordingSession;
   refreshApifox: (
     exportUrl: string,
     authToken: string,
@@ -66,6 +68,7 @@ export function usePopupFeedbackActions({
   page,
   requests,
   refreshApifox,
+  recordingSession,
   selectedIds,
   selectedRequests,
   selectedTesterAioConfig,
@@ -78,6 +81,10 @@ export function usePopupFeedbackActions({
 }: UsePopupFeedbackActionsOptions): UsePopupFeedbackActionsResult {
   const [copying, { setTrue: startCopying, setFalse: stopCopying }] = useBoolean(false);
   const [quickMocking, { setTrue: startQuickMocking, setFalse: stopQuickMocking }] = useBoolean(false);
+
+  const recordingLabel = recordingSession.status === 'saved'
+    ? `录屏已保存（${recordingSession.savedFileName ?? 'WebM 文件'}），请在缺陷平台上传附件`
+    : '-';
 
   async function buildCopyText(): Promise<BuildCopyTextResult> {
     const latestRequests =
@@ -99,7 +106,7 @@ export function usePopupFeedbackActions({
         requests: requestsWithApifox,
         feedbackTitle: hasAbnormalRequest ? '存在接口状态或返回异常' : settings.feedbackTitle,
         note,
-        screenshotLabel: '-',
+        screenshotLabel: recordingLabel,
         customFields: settings.customFields,
         includeRequestParams,
       }),
@@ -116,6 +123,7 @@ export function usePopupFeedbackActions({
           page,
           feedbackTitle: settings.feedbackTitle,
           note,
+          screenshotLabel: recordingLabel,
           customFields: settings.customFields,
         });
         await navigator.clipboard.writeText(text);

@@ -59,6 +59,19 @@ export interface PageSummary {
   url: string;
 }
 
+export type RecordingStatus = 'idle' | 'recording' | 'paused' | 'saving' | 'saved' | 'error';
+
+export interface RecordingSession {
+  status: RecordingStatus;
+  tabId?: number;
+  startedAt?: number;
+  elapsedMs?: number;
+  savedFileName?: string;
+  downloadDirectory?: string;
+  recordingId?: string;
+  error?: string;
+}
+
 export interface PopupPayload {
   page: PageSummary;
   requests: NetworkRequestRecord[];
@@ -121,11 +134,33 @@ export type RuntimeRequestMessage =
   | { type: 'quick-copy/page-session-started' }
   | { type: 'quick-copy/open-popup' }
   | { type: 'quick-copy/get-tab-page-errors'; tabId: number }
-  | { type: 'quick-copy/clear-tab-page-errors'; tabId: number };
+  | { type: 'quick-copy/clear-tab-page-errors'; tabId: number }
+  | { type: 'quick-copy/get-recording-session'; tabId: number }
+  | { type: 'quick-copy/get-current-tab-recording-session' }
+  | { type: 'quick-copy/get-latest-recording-session' }
+  | { type: 'quick-copy/clear-recording-preview' }
+  | { type: 'quick-copy/start-recording'; tabId: number; streamId: string }
+  | { type: 'quick-copy/pause-recording'; tabId: number }
+  | { type: 'quick-copy/resume-recording'; tabId: number }
+  | { type: 'quick-copy/stop-recording'; tabId: number }
+  | { type: 'quick-copy/offscreen-start-recording'; tabId: number; streamId: string; fileName: string }
+  | { type: 'quick-copy/offscreen-stop-recording'; tabId: number }
+  | { type: 'quick-copy/offscreen-pause-recording'; tabId: number }
+  | { type: 'quick-copy/offscreen-resume-recording'; tabId: number }
+  | {
+    type: 'quick-copy/offscreen-recording-stopped';
+    tabId: number;
+    blobUrl: string;
+    fileName: string;
+    recordingId?: string;
+  }
+  | { type: 'quick-copy/offscreen-recording-failed'; tabId: number; error: string }
+  | { type: 'quick-copy/offscreen-release-recording'; blobUrl: string };
 
 export type RuntimeEventMessage =
   | { type: 'quick-copy/tab-requests-updated'; tabId: number }
-  | { type: 'quick-copy/page-errors-updated'; tabId: number };
+  | { type: 'quick-copy/page-errors-updated'; tabId: number }
+  | { type: 'quick-copy/recording-updated'; tabId: number; session: RecordingSession };
 
 export type RuntimeResponseMessage =
   | { ok: true; data: NetworkRequestRecord[] }
@@ -141,6 +176,10 @@ export type ReportPageErrorResponse =
 
 export type PageMonitoringStateResponse =
   | { ok: true; data: { enabled: boolean } }
+  | { ok: false; error: string };
+
+export type RecordingSessionResponse =
+  | { ok: true; data: RecordingSession }
   | { ok: false; error: string };
 
 export interface ApifoxCacheStatus {

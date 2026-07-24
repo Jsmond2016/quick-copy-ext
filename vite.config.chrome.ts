@@ -9,7 +9,15 @@ const typedBaseManifest = baseManifest as ManifestV3Export & {
   permissions?: string[];
 };
 const { action: baseAction, permissions: basePermissions = [], ...chromeManifestBase } = typedBaseManifest;
-const chromePermissions = Array.from(new Set([...basePermissions]));
+const chromePermissions = Array.from(new Set([
+  ...basePermissions,
+  'downloads',
+  'contextMenus',
+  'offscreen',
+  'scripting',
+  'tabCapture',
+  'unlimitedStorage',
+]));
 
 export default mergeConfig(
   baseConfig,
@@ -39,7 +47,13 @@ export default mergeConfig(
     ],
     build: {
       ...baseBuildOptions,
-      outDir
+      outDir,
+      rollupOptions: {
+        input: {
+          options: resolve(__dirname, 'src/pages/options/index.html'),
+          recording: resolve(__dirname, 'src/pages/offscreen/recording.html'),
+        },
+      },
     },
   })
 )
