@@ -10,6 +10,9 @@ interface PopupHeroProps {
   mode: QuickCopyMode;
   environments: EnvironmentConfig[];
   onRefreshApifox: () => void;
+  onScreenshot: () => void;
+  screenshotPending: boolean;
+  screenshotSupported: boolean;
   onToggleSettings: () => void;
 }
 
@@ -23,6 +26,9 @@ export function PopupHero({
   mode,
   environments,
   onRefreshApifox,
+  onScreenshot,
+  screenshotPending,
+  screenshotSupported,
   onToggleSettings,
 }: PopupHeroProps) {
   const apifoxProjectId = getApifoxProjectId(apifoxExportUrl);
@@ -65,6 +71,15 @@ export function PopupHero({
             <span className="apifox-badge-dot" />
             {apifoxLabel}
           </div>
+          {screenshotSupported ? <button
+            aria-label="截图并标注当前页面"
+            className="icon-button"
+            disabled={screenshotPending || !page.url.startsWith('http')}
+            onClick={onScreenshot}
+            type="button"
+          >
+            {screenshotPending ? '处理中' : '截图'}
+          </button> : null}
           <button
             aria-label="刷新 Apifox 接口信息"
             className="icon-button icon-only"

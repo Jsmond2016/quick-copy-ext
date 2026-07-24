@@ -7,6 +7,7 @@ import type {
   PageErrorRecord,
   RecordingSession,
   RecordingSource,
+  ScreenshotSource,
   RuntimeEventMessage,
   RuntimeRequestMessage,
   RuntimeResponseMessage,
@@ -45,6 +46,10 @@ interface RegisterRuntimeMessageListenerOptions {
     handleStopped: (payload: { tabId: number; blobUrl: string; fileName: string }) => Promise<void>;
     handleFailed: (tabId: number, error: string) => Promise<void>;
   };
+  screenshot: {
+    dispose: (sessionId: string) => Promise<void>;
+    start: (tabId: number, source: ScreenshotSource) => Promise<void>;
+  };
   startPageSession: (tabId: number) => Promise<void>;
 }
 
@@ -67,6 +72,7 @@ export function registerRuntimeMessageListener({
   reportPageError,
   isPageMonitoringEnabled,
   recording,
+  screenshot,
   startPageSession,
 }: RegisterRuntimeMessageListenerOptions): void {
   chrome.runtime.onMessage.addListener(
@@ -89,8 +95,23 @@ export function registerRuntimeMessageListener({
         || message.type === 'quick-copy/offscreen-pause-recording'
         || message.type === 'quick-copy/offscreen-resume-recording'
         || message.type === 'quick-copy/offscreen-release-recording'
+        || message.type === 'quick-copy/open-screenshot-editor'
       ) {
         return false;
+      }
+
+      if (message.type === 'quick-copy/start-screenshot') {
+        void screenshot.start(message.tabId, message.source)
+          .then(() => sendResponse({ ok: true, data: null }))
+          .catch((error: unknown) => sendResponse({ ok: false, error: getErrorMessage(error, '开始截图失败。') }));
+        return true;
+      }
+
+      if (message.type === 'quick-copy/close-screenshot-editor') {
+        void screenshot.dispose(message.sessionId)
+          .then(() => sendResponse({ ok: true, data: null }))
+          .catch((error: unknown) => sendResponse({ ok: false, error: getErrorMessage(error, '关闭截图编辑器失败。') }));
+        return true;
       }
 
       if (message.type === 'quick-copy/get-tab-requests') {

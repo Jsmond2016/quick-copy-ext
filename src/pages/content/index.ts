@@ -10,6 +10,7 @@ import type {
 } from '@src/lib/quick-copy';
 import errorNoticeStyles from './error-notice.css?inline';
 import recordingOverlayStyles from './recording-overlay.css?inline';
+import { closeScreenshotEditor, openScreenshotEditor } from './screenshot-editor';
 
 const INJECTED_SCRIPT_ID = 'quick-copy-ext-network-hook';
 const PAGE_MESSAGE_SOURCE = 'quick-copy-ext-page-hook';
@@ -470,9 +471,17 @@ window.addEventListener('message', (event: MessageEvent<PageHookMessage>) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message: RuntimeEventMessage) => {
+chrome.runtime.onMessage.addListener((message: RuntimeEventMessage | RuntimeRequestMessage) => {
   if (message.type === 'quick-copy/recording-updated') {
     showRecordingOverlay(message.session);
+    return;
+  }
+  if (message.type === 'quick-copy/open-screenshot-editor') {
+    openScreenshotEditor(message.sessionId, message.imageDataUrl);
+    return;
+  }
+  if (message.type === 'quick-copy/close-screenshot-editor') {
+    closeScreenshotEditor(message.sessionId);
   }
 });
 

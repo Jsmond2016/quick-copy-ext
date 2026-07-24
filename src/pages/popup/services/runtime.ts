@@ -58,6 +58,25 @@ export async function getActiveTab() {
   return tab;
 }
 
+export function isScreenshotSupported(): boolean {
+  return typeof chrome.tabs.captureVisibleTab === 'function'
+    && typeof chrome.offscreen?.createDocument === 'function';
+}
+
+export async function startScreenshot(tabId: number): Promise<void> {
+  if (!isScreenshotSupported()) {
+    throw new Error('当前浏览器不支持截图标注。');
+  }
+  const response = await chrome.runtime.sendMessage({
+    type: 'quick-copy/start-screenshot',
+    tabId,
+    source: 'popup',
+  }) as { ok?: boolean; error?: string };
+  if (!response?.ok) {
+    throw new Error(response?.error || '开始截图失败。');
+  }
+}
+
 export async function getTabRequests(tabId: number): Promise<NetworkRequestRecord[]> {
   const response = (await chrome.runtime.sendMessage({
     type: 'quick-copy/get-tab-requests',

@@ -13,6 +13,7 @@ import {
 import { getApifoxMatches as buildApifoxMatches } from '@pages/background/apifox-matches';
 import { createPageErrorStore } from '@pages/background/page-errors';
 import { createRecordingService } from '@pages/background/recording';
+import { createScreenshotService, isScreenshotSupported } from '@pages/background/screenshot';
 import {
   registerRecordingContextMenu,
   type RecordingContextMenuController,
@@ -299,6 +300,7 @@ let recordingContextMenu: RecordingContextMenuController | undefined;
 const recordingService = createRecordingService({
   onSessionChanged: (session) => recordingContextMenu?.update(session),
 });
+const screenshotService = createScreenshotService();
 recordingContextMenu = registerRecordingContextMenu({
   getLatest: () => recordingService.getLatest(),
   pause: (tabId) => recordingService.pause(tabId),
@@ -306,6 +308,9 @@ recordingContextMenu = registerRecordingContextMenu({
   start: (tabId) => recordingService.startFromContextMenu(tabId),
   startWindow: (tabId) => recordingService.startWindowFromContextMenu(tabId),
   stop: (tabId) => recordingService.stop(tabId),
+  screenshot: isScreenshotSupported()
+    ? (tabId) => screenshotService.start(tabId, 'context-menu')
+    : undefined,
 });
 
 async function refreshMonitoredOrigins() {
@@ -471,11 +476,13 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   clearTabRequests(tabId);
   void pageErrorStore.clear(tabId, false);
   void recordingService.handleTabRemoved(tabId);
+  void screenshotService.handleTabRemoved(tabId);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url) {
     setTabUrl(tabId, changeInfo.url);
+    void screenshotService.handleTabUpdated(tabId);
     return;
   }
 
@@ -483,6 +490,16 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     setTabUrl(tabId, tab.url);
     void recordingService.handleTabUpdated(tabId, tab.windowId);
   }
+});
+
+chrome.commands.onCommand.addListener((command) => {
+  if (command !== 'quick-copy/capture-screenshot' || !isScreenshotSupported()) return;
+  void chrome.tabs.query({ active: true, currentWindow: true })
+    .then(([tab]) => {
+      if (typeof tab?.id !== 'number') throw new Error('未找到当前标签页。');
+      return screenshotService.start(tab.id, 'command');
+    })
+    .catch(() => undefined);
 });
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
@@ -521,5 +538,6 @@ registerRuntimeMessageListener({
   reportPageError: pageErrorStore.report,
   isPageMonitoringEnabled,
   recording: recordingService,
+  screenshot: screenshotService,
   startPageSession: (tabId) => pageErrorStore.clear(tabId, false),
 });

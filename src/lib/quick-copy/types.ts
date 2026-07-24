@@ -78,6 +78,14 @@ export interface RecordingSession {
   error?: string;
 }
 
+export type ScreenshotSource = 'popup' | 'context-menu' | 'command';
+
+export interface ScreenshotSession {
+  id: string;
+  tabId: number;
+  windowId: number;
+}
+
 export interface PopupPayload {
   page: PageSummary;
   requests: NetworkRequestRecord[];
@@ -169,7 +177,10 @@ export type RuntimeRequestMessage =
     recordingId?: string;
   }
   | { type: 'quick-copy/offscreen-recording-failed'; tabId: number; error: string }
-  | { type: 'quick-copy/offscreen-release-recording'; blobUrl: string };
+  | { type: 'quick-copy/offscreen-release-recording'; blobUrl: string }
+  | { type: 'quick-copy/start-screenshot'; tabId: number; source: ScreenshotSource }
+  | { type: 'quick-copy/open-screenshot-editor'; sessionId: string; imageDataUrl: string }
+  | { type: 'quick-copy/close-screenshot-editor'; sessionId: string };
 
 export type RuntimeEventMessage =
   | { type: 'quick-copy/tab-requests-updated'; tabId: number }

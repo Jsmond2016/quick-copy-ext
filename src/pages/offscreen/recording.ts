@@ -208,5 +208,6 @@ chrome.runtime.onMessage.addListener((message: OffscreenMessage, _sender, sendRe
     return false;
   }
 
+
   return false;
 });

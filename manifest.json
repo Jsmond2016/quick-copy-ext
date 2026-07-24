@@ -16,8 +16,18 @@
     "activeTab",
     "tabs",
     "webRequest",
-    "storage"
+    "storage",
+    "clipboardWrite"
   ],
+  "commands": {
+    "quick-copy/capture-screenshot": {
+      "suggested_key": {
+        "default": "Ctrl+1",
+        "mac": "Alt+1"
+      },
+      "description": "截图并标注当前页面"
+    }
+  },
   "host_permissions": [
     "<all_urls>"
   ],

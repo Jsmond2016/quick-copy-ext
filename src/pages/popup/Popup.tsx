@@ -26,7 +26,13 @@ import { usePopupSettingsState } from '@pages/popup/hooks/usePopupSettingsState'
 import { useTabRequests } from '@pages/popup/hooks/useTabRequests';
 import { useSelection } from '@pages/popup/hooks/useSelection';
 import { useToast } from '@pages/popup/hooks/useToast';
-import { clearApifoxData, getErrorMessage, getApifoxStatus } from '@pages/popup/services/runtime';
+import {
+  clearApifoxData,
+  getErrorMessage,
+  getApifoxStatus,
+  isScreenshotSupported,
+  startScreenshot,
+} from '@pages/popup/services/runtime';
 import { getSettingsSavedMessage, hasApifoxConfigChanged } from '@pages/popup/utils/apifox-settings';
 import {
   buildSettingsFromForm,
@@ -43,6 +49,7 @@ export default function Popup() {
   const [includeRequestParams, { toggle: toggleIncludeRequestParams }] = useBoolean(true);
   const [useQuickFill, { toggle: toggleUseQuickFill, setFalse: disableQuickFill, set: setUseQuickFill }] = useBoolean(false);
   const [selectedQuickFillValues, setSelectedQuickFillValues] = useState<string[]>([]);
+  const [screenshotPending, setScreenshotPending] = useState(false);
   const {
     addEnvironmentGroup,
     addTesterAioConfig,
@@ -218,6 +225,22 @@ export default function Popup() {
     setNote(values.join('\n\n'));
   }
 
+  async function handleScreenshot(): Promise<void> {
+    if (tabId === null) {
+      setToast({ type: 'error', text: '未获取到当前标签页，无法截图。' });
+      return;
+    }
+    setScreenshotPending(true);
+    try {
+      await startScreenshot(tabId);
+      window.close();
+    } catch (error) {
+      setToast({ type: 'error', text: getErrorMessage(error, '开始截图失败。') });
+    } finally {
+      setScreenshotPending(false);
+    }
+  }
+
   async function handleSaveSettings(overrideForm?: SettingsFormState) {
     startSavingSettings();
     setErrorText('');
@@ -350,6 +373,9 @@ export default function Popup() {
           }
           void handleRefreshApifox();
         }}
+        onScreenshot={() => void handleScreenshot()}
+        screenshotPending={screenshotPending}
+        screenshotSupported={isScreenshotSupported()}
         onToggleSettings={toggleShowSettings}
       />
 

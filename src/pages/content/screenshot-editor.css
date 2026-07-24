@@ -1,0 +1,16 @@
+:host { all: initial; color-scheme: dark; font-family: "Segoe UI", "PingFang SC", sans-serif; }
+.root { position: fixed; inset: 0; z-index: 2147483647; display: grid; grid-template-rows: auto 1fr; background: rgba(9, 12, 16, .82); color: #eef2f6; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.14); background: #182027; }
+.group { display: inline-flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,.14); }
+button { min-width: 30px; min-height: 30px; padding: 0 8px; border: 1px solid rgba(255,255,255,.24); border-radius: 4px; background: #26323c; color: inherit; cursor: pointer; font: 12px/1 inherit; }
+button:hover, button.active { border-color: #7dd3fc; background: #075985; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.color { width: 24px; min-width: 24px; padding: 0; border-radius: 50%; background: var(--color); }
+.color.active { outline: 2px solid #fff; outline-offset: 2px; }
+.spacer { flex: 1; }
+.cancel { background: transparent; }
+.finish { border-color: #0f766e; background: #0f766e; font-weight: 600; }
+.stage { display: grid; min-width: 0; min-height: 0; place-items: center; padding: 18px; overflow: hidden; }
+canvas { max-width: 100%; max-height: 100%; box-shadow: 0 18px 60px rgba(0,0,0,.55); touch-action: none; cursor: crosshair; }
+.status { min-width: 130px; color: #cbd5e1; font-size: 12px; }
+@media (max-width: 700px) { .toolbar { gap: 5px; padding: 8px; } .group { padding-right: 4px; } button { padding: 0 6px; } .stage { padding: 8px; } }
