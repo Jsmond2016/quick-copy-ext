@@ -94,7 +94,7 @@ export interface PopupPayload {
 export interface CopyPayload extends PopupPayload {
   feedbackTitle: string;
   note: string;
-  screenshotLabel: string;
+  screenshotLabel?: string;
   customFields: string[];
   includeRequestParams: boolean;
 }

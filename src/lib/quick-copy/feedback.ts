@@ -220,7 +220,7 @@ export function buildWebOnlyText(payload: {
 export function buildFeedbackText(payload: CopyPayload): string {
   const normalizedTitle = payload.feedbackTitle.trim() || '页面接口信息如下';
   const normalizedNote = payload.note.trim() || '-';
-  const normalizedScreenshotLabel = payload.screenshotLabel.trim() || '-';
+  const normalizedScreenshotLabel = payload.screenshotLabel?.trim() || '-';
   const abnormalRequestsTitle =
     payload.requests.length > 1 ? `接口信息-${payload.requests.length}条接口` : '接口信息';
   const sections: string[] = [
