@@ -26,7 +26,8 @@ export const baseManifest = {
 
 export const baseBuildOptions: BuildOptions = {
   sourcemap: isDev,
-  emptyOutDir: !isDev
+  emptyOutDir: !isDev,
+  modulePreload: false
 }
 
 export default defineConfig({
