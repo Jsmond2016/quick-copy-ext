@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.55](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.54...v1.4.55) (2026-08-12)
+
+
+### Bug Fixes
+
+* **build:** 禁用 Vite module preload 避免扩展跨 world 报错 ([b5d58f2](https://github.com/Jsmond2016/quick-copy-ext/commit/b5d58f25fe93ab69dffa901f1194e3dac786e857))
+
 ## [1.4.54](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.53...v1.4.54) (2026-08-12)
 
 
