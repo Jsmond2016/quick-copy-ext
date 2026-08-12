@@ -14,6 +14,12 @@
   box-sizing: border-box;
 }
 
+html {
+  width: 480px;
+  min-width: 480px;
+  max-width: 480px;
+}
+
 body {
   width: 480px;
   min-height: 640px;
