@@ -143,7 +143,6 @@ export default function Popup() {
     apifoxStatus,
     attachApifoxUrls,
     includeRequestParams,
-    recordingSession: recording.session,
     load,
     note,
     page,
