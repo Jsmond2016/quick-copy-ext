@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.4.54](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.53...v1.4.54) (2026-08-12)
+
+
+### Bug Fixes
+
+* **popup:** 修复新版 Chrome 下弹窗宽度被撑满 ([f1ee4eb](https://github.com/Jsmond2016/quick-copy-ext/commit/f1ee4ebe8242968d084e7027b02d194acd7e91a6))
+* **popup:** 移除复制内容中的录屏提示 ([f062553](https://github.com/Jsmond2016/quick-copy-ext/commit/f062553ce7542f6fd77b934bc0cc422b17af5ba7))
+
 ## [1.4.53](https://github.com/Jsmond2016/quick-copy-ext/compare/v1.4.52...v1.4.53) (2026-07-24)
 
 

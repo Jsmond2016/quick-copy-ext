@@ -1,7 +1,7 @@
 {
   "name": "quick-copy-ext",
-  "version": "1.4.53",
-  "releaseDate": "2026.07.24",
+  "version": "1.4.54",
+  "releaseDate": "2026.08.12",
   "description": "A Chrome extension for capturing page and API request details for bug feedback.",
   "license": "MIT",
   "repository": {
