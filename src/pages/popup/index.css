@@ -921,11 +921,17 @@ input {
   color: var(--muted);
 }
 
-.scroll-nav-fab {
+.scroll-nav-fabs {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scroll-nav-fab {
   width: 34px;
   height: 34px;
   border-radius: 50%;

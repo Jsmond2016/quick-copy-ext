@@ -1,19 +1,29 @@
 import { useScrollNav } from "@pages/popup/hooks/useScrollNav"
 
 export function ScrollNavFab() {
-  const { scrollDir, scrollTo } = useScrollNav()
+  const { scrollDirections, scrollTo } = useScrollNav()
 
-  if (!scrollDir) return null
+  if (scrollDirections.length === 0) return null
 
   return (
-    <button
-      className="scroll-nav-fab"
-      type="button"
-      onClick={scrollTo}
-      title={scrollDir === "down" ? "跳到底部" : "跳到顶部"}
-      aria-label={scrollDir === "down" ? "跳到底部" : "跳到顶部"}
-    >
-      {scrollDir === "down" ? "↓" : "↑"}
-    </button>
+    <nav className="scroll-nav-fabs" aria-label="页面滚动导航">
+      {scrollDirections.map((direction) => {
+        const isDown = direction === "down"
+        const label = isDown ? "跳到底部" : "跳到顶部"
+
+        return (
+          <button
+            key={direction}
+            className="scroll-nav-fab"
+            type="button"
+            onClick={() => scrollTo(direction)}
+            title={label}
+            aria-label={label}
+          >
+            {isDown ? "↓" : "↑"}
+          </button>
+        )
+      })}
+    </nav>
   )
 }
