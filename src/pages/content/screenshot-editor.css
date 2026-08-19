@@ -2,11 +2,15 @@
 .root { position: fixed; inset: 0; z-index: 2147483647; display: grid; grid-template-rows: auto 1fr; background: rgba(9, 12, 16, .82); color: #eef2f6; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.14); background: #182027; }
 .group { display: inline-flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,.14); }
+.group[hidden] { display: none; }
 button { min-width: 30px; min-height: 30px; padding: 0 8px; border: 1px solid rgba(255,255,255,.24); border-radius: 4px; background: #26323c; color: inherit; cursor: pointer; font: 12px/1 inherit; }
 button:hover, button.active { border-color: #7dd3fc; background: #075985; }
 button:disabled { cursor: not-allowed; opacity: .55; }
-.color { width: 24px; min-width: 24px; padding: 0; border-radius: 50%; background: var(--color); }
+.color { width: 24px; min-width: 24px; height: 24px; min-height: 24px; padding: 0; aspect-ratio: 1; border-radius: 50%; background: var(--color); }
 .color.active { outline: 2px solid #fff; outline-offset: 2px; }
+.control-label { color: #cbd5e1; font-size: 11px; white-space: nowrap; }
+.line-width-input, .number-input { width: 58px; min-width: 58px; height: 30px; min-height: 30px; padding: 0 6px; border: 1px solid rgba(255,255,255,.24); border-radius: 4px; background: #26323c; color: inherit; font: 12px/1 inherit; }
+.line-width-input { width: 52px; min-width: 52px; }
 .spacer { flex: 1; }
 .cancel { background: transparent; }
 .finish { border-color: #0f766e; background: #0f766e; font-weight: 600; }

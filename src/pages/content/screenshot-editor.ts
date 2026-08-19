@@ -13,7 +13,8 @@ type Shape =
 
 const EDITOR_ID = 'quick-copy-ext-screenshot-editor';
 const COLORS = ['#e5484d', '#f76808', '#f5d90a', '#30a46c', '#0091ff', '#11181c', '#ffffff'];
-const WIDTHS = [2, 4, 6, 8, 10, 12];
+const MIN_LINE_WIDTH = 1;
+const MAX_LINE_WIDTH = 12;
 
 function normalizeRect(from: Point, to: Point): Rect {
   return { x: Math.min(from.x, to.x), y: Math.min(from.y, to.y), width: Math.abs(to.x - from.x), height: Math.abs(to.y - from.y) };
@@ -220,6 +221,7 @@ export function openScreenshotEditor(sessionId: string, imageDataUrl: string): v
   let resizing: { anchor?: Point; handle: ResizeHandle; moved: boolean; snapshot: { crop: Rect; shapes: Shape[] } } | undefined;
   let renderScale = 1;
   let copying = false;
+  let nextNumber = 1;
 
   const status = document.createElement('span');
   status.className = 'status';
@@ -229,11 +231,22 @@ export function openScreenshotEditor(sessionId: string, imageDataUrl: string): v
   colors.className = 'group';
   const widths = document.createElement('div');
   widths.className = 'group';
+  const numberGroup = document.createElement('div');
+  numberGroup.className = 'group';
+  numberGroup.hidden = true;
+  const widthLabel = document.createElement('span');
+  widthLabel.className = 'control-label';
+  widthLabel.textContent = '线宽';
+  widths.append(widthLabel);
+  const numberLabel = document.createElement('span');
+  numberLabel.className = 'control-label';
+  numberLabel.textContent = '数字';
+  numberGroup.append(numberLabel);
   const spacer = document.createElement('div');
   spacer.className = 'spacer';
   const actions = document.createElement('div');
   actions.className = 'group';
-  toolbar.append(tools, colors, widths, status, spacer, actions);
+  toolbar.append(tools, colors, widths, numberGroup, status, spacer, actions);
 
   function button(text: string, title: string, onClick: () => void): HTMLButtonElement {
     const item = document.createElement('button');
@@ -246,8 +259,24 @@ export function openScreenshotEditor(sessionId: string, imageDataUrl: string): v
   });
   const colorButtons = new Map<string, HTMLButtonElement>();
   COLORS.forEach((value) => { const item = button('', `颜色 ${value}`, () => setColor(value)); item.className = 'color'; item.style.setProperty('--color', value); colorButtons.set(value, item); colors.append(item); });
-  const widthButtons = new Map<number, HTMLButtonElement>();
-  WIDTHS.forEach((value) => { const item = button(`${value}`, `${value} 像素线宽`, () => setLineWidth(value)); widthButtons.set(value, item); widths.append(item); });
+  const widthInput = document.createElement('input');
+  widthInput.type = 'number';
+  widthInput.min = String(MIN_LINE_WIDTH);
+  widthInput.max = String(MAX_LINE_WIDTH);
+  widthInput.step = '1';
+  widthInput.className = 'line-width-input';
+  widthInput.title = `线宽（${MIN_LINE_WIDTH}-${MAX_LINE_WIDTH} 像素）`;
+  widthInput.setAttribute('aria-label', '线宽');
+  widths.append(widthInput);
+  const numberInput = document.createElement('input');
+  numberInput.type = 'number';
+  numberInput.min = '1';
+  numberInput.step = '1';
+  numberInput.value = String(nextNumber);
+  numberInput.className = 'number-input';
+  numberInput.title = '下一个数字标注值';
+  numberInput.setAttribute('aria-label', '下一个数字标注值');
+  numberGroup.append(numberInput);
   const undoButton = button('撤销', '撤销', () => undo());
   const redoButton = button('反撤销', '反撤销', () => redoAction());
   const clearButton = button('清空', '清空全部标注并恢复初始裁剪范围', () => clearEdits());
@@ -261,9 +290,10 @@ export function openScreenshotEditor(sessionId: string, imageDataUrl: string): v
   function clearEdits(): void { if (shapes.length === 0 && crop.x === 0 && crop.y === 0 && crop.width === image.width && crop.height === image.height) return; crop = { x: 0, y: 0, width: image.width, height: image.height }; shapes = []; history = []; redo = []; selectedIndex = undefined; status.textContent = '已清空全部编辑'; render(); updateControls(); }
   function selectedShape(): Shape | undefined { return selectedIndex === undefined ? undefined : shapes[selectedIndex]; }
   function setColor(value: string): void { const selected = selectedShape(); color = value; if (selected && selected.color !== value) { saveHistory(); selected.color = value; render(); } updateControls(); }
-  function setLineWidth(value: number): void { const selected = selectedShape(); lineWidth = value; if (selected && selected.width !== value) { saveHistory(); selected.width = value; render(); } updateControls(); }
+  function setLineWidth(value: number): void { const selected = selectedShape(); const nextWidth = Math.max(MIN_LINE_WIDTH, Math.min(MAX_LINE_WIDTH, Math.round(value))); lineWidth = nextWidth; if (selected && selected.width !== nextWidth) { saveHistory(); selected.width = nextWidth; render(); } updateControls(); }
+  function setNextNumber(value: number): void { if (!Number.isFinite(value)) return; nextNumber = Math.max(1, Math.round(value)); numberInput.value = String(nextNumber); }
   function deleteSelected(): void { if (selectedIndex === undefined) return; saveHistory(); shapes.splice(selectedIndex, 1); selectedIndex = undefined; status.textContent = '已删除标注'; render(); updateControls(); }
-  function updateControls(): void { const selected = selectedShape(); const activeColor = selected?.color ?? color; const activeWidth = selected?.width ?? lineWidth; const isInitial = shapes.length === 0 && crop.x === 0 && crop.y === 0 && crop.width === image.width && crop.height === image.height; toolButtons.forEach((item, value) => item.classList.toggle('active', value === tool)); colorButtons.forEach((item, value) => item.classList.toggle('active', value === activeColor)); widthButtons.forEach((item, value) => item.classList.toggle('active', value === activeWidth)); undoButton.disabled = history.length === 0; undoButton.title = history.length === 0 ? '暂无可撤销操作' : '撤销'; redoButton.disabled = redo.length === 0; redoButton.title = redo.length === 0 ? '暂无可反撤销操作' : '反撤销'; clearButton.disabled = isInitial; }
+  function updateControls(): void { const selected = selectedShape(); const activeColor = selected?.color ?? color; const activeWidth = selected?.width ?? lineWidth; const isInitial = shapes.length === 0 && crop.x === 0 && crop.y === 0 && crop.width === image.width && crop.height === image.height; toolButtons.forEach((item, value) => item.classList.toggle('active', value === tool)); colorButtons.forEach((item, value) => item.classList.toggle('active', value === activeColor)); widthInput.value = String(activeWidth); numberInput.value = String(nextNumber); numberGroup.hidden = tool !== 'number'; undoButton.disabled = history.length === 0; undoButton.title = history.length === 0 ? '暂无可撤销操作' : '撤销'; redoButton.disabled = redo.length === 0; redoButton.title = redo.length === 0 ? '暂无可反撤销操作' : '反撤销'; clearButton.disabled = isInitial; }
   function point(event: MouseEvent): Point { const rect = canvas.getBoundingClientRect(); return { x: Math.max(0, Math.min(image.width, (event.clientX - rect.left) / renderScale)), y: Math.max(0, Math.min(image.height, (event.clientY - rect.top) / renderScale)) }; }
   function render(): void {
     const maxWidth = Math.max(240, stage.clientWidth - 36); const maxHeight = Math.max(180, stage.clientHeight - 36);
@@ -305,11 +335,13 @@ export function openScreenshotEditor(sessionId: string, imageDataUrl: string): v
     ]);
     try { await clipboardWrite; status.textContent = '截图已复制'; window.setTimeout(close, 300); } catch (error) { status.textContent = error instanceof Error ? `复制截图失败：${error.message}` : '复制截图失败，请重试。'; copying = false; finishButton.disabled = false; }
   }
-  canvas.addEventListener('pointerdown', (event) => { const start = point(event); const hitIndex = [...shapes].map((shape, index) => ({ shape, index })).reverse().find(({ shape }) => isShapeHit(shape, start))?.index; if (hitIndex !== undefined) { selectedIndex = hitIndex; const selected = shapes[hitIndex]; const handle = getResizeHandle(selected, start, 9 / renderScale); const snapshot = { crop: { ...crop }, shapes: cloneShapes(shapes) }; if (handle) resizing = { anchor: selected.type === 'rectangle' ? getOppositeCorner(selected.rect, handle) : undefined, handle, moved: false, snapshot }; else moving = { lastPoint: start, moved: false, snapshot }; drawing = undefined; canvas.setPointerCapture(event.pointerId); status.textContent = handle ? '拖动控制点可调整标注' : '已选中标注，可拖动或调颜色和线宽'; render(); updateControls(); return; } selectedIndex = undefined; drawing = start; canvas.setPointerCapture(event.pointerId); if (tool === 'number') { saveHistory(); shapes.push({ type: 'number', color, width: lineWidth, point: start, value: Math.max(0, ...shapes.filter((shape): shape is Extract<Shape, { type: 'number' }> => shape.type === 'number').map((shape) => shape.value)) + 1 }); selectedIndex = shapes.length - 1; drawing = undefined; render(); updateControls(); return; } if (tool === 'text') { const text = window.prompt('输入标注文本'); if (text?.trim()) { saveHistory(); shapes.push({ type: 'text', color, width: lineWidth, point: start, text: text.trim() }); selectedIndex = shapes.length - 1; render(); updateControls(); } drawing = undefined; return; } if (tool === 'pen') draft = { type: 'pen', color, width: lineWidth, points: [start] }; });
+  numberInput.addEventListener('change', () => { setNextNumber(Number(numberInput.value)); });
+  widthInput.addEventListener('change', () => { setLineWidth(Number(widthInput.value)); });
+  canvas.addEventListener('pointerdown', (event) => { const start = point(event); const hitIndex = [...shapes].map((shape, index) => ({ shape, index })).reverse().find(({ shape }) => isShapeHit(shape, start))?.index; if (hitIndex !== undefined) { selectedIndex = hitIndex; const selected = shapes[hitIndex]; const handle = getResizeHandle(selected, start, 9 / renderScale); const snapshot = { crop: { ...crop }, shapes: cloneShapes(shapes) }; if (handle) resizing = { anchor: selected.type === 'rectangle' ? getOppositeCorner(selected.rect, handle) : undefined, handle, moved: false, snapshot }; else moving = { lastPoint: start, moved: false, snapshot }; drawing = undefined; canvas.setPointerCapture(event.pointerId); status.textContent = handle ? '拖动控制点可调整标注' : '已选中标注，可拖动或调颜色和线宽'; render(); updateControls(); return; } selectedIndex = undefined; drawing = start; canvas.setPointerCapture(event.pointerId); if (tool === 'number') { setNextNumber(Number(numberInput.value)); saveHistory(); const value = nextNumber; shapes.push({ type: 'number', color, width: lineWidth, point: start, value }); nextNumber += 1; selectedIndex = shapes.length - 1; drawing = undefined; render(); updateControls(); return; } if (tool === 'text') { const text = window.prompt('输入标注文本'); if (text?.trim()) { saveHistory(); shapes.push({ type: 'text', color, width: lineWidth, point: start, text: text.trim() }); selectedIndex = shapes.length - 1; render(); updateControls(); } drawing = undefined; return; } if (tool === 'pen') draft = { type: 'pen', color, width: lineWidth, points: [start] }; });
   canvas.addEventListener('pointermove', (event) => { const end = point(event); if (resizing && selectedIndex !== undefined) { const selected = shapes[selectedIndex]; if (selected.type === 'rectangle' && resizing.anchor) selected.rect = normalizeRect(resizing.anchor, end); if (selected.type === 'arrow') { if (resizing.handle === 'from') selected.from = end; if (resizing.handle === 'to') selected.to = end; } resizing.moved = true; render(); return; } if (moving && selectedIndex !== undefined) { const deltaX = end.x - moving.lastPoint.x; const deltaY = end.y - moving.lastPoint.y; if (deltaX !== 0 || deltaY !== 0) { moveShape(shapes[selectedIndex], deltaX, deltaY); moving.lastPoint = end; moving.moved = true; render(); } return; } if (!drawing) return; if (tool === 'crop') { draft = undefined; const next = normalizeRect(drawing, end); render(); const ctx = canvas.getContext('2d'); if (ctx) { ctx.save(); ctx.scale(renderScale, renderScale); ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 1 / renderScale; ctx.strokeRect(next.x, next.y, next.width, next.height); ctx.restore(); } return; } if (tool === 'rectangle') draft = { type: 'rectangle', color, width: lineWidth, rect: normalizeRect(drawing, end) }; if (tool === 'arrow') draft = { type: 'arrow', color, width: lineWidth, from: drawing, to: end }; if (tool === 'pen' && draft?.type === 'pen') draft.points.push(end); render(); });
   canvas.addEventListener('pointerup', (event) => { if (resizing) { if (resizing.moved) { history.push(resizing.snapshot); redo = []; status.textContent = '已调整标注'; } resizing = undefined; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); updateControls(); return; } if (moving) { if (moving.moved) { history.push(moving.snapshot); redo = []; status.textContent = '已移动标注'; } moving = undefined; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); updateControls(); return; } if (!drawing) return; const end = point(event); if (tool === 'crop') { const next = normalizeRect(drawing, end); if (next.width > 2 && next.height > 2) { saveHistory(); crop = next; } } else if (draft) { saveHistory(); shapes.push(draft); selectedIndex = shapes.length - 1; } draft = undefined; drawing = undefined; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); render(); updateControls(); });
   canvas.addEventListener('dblclick', (event) => { const clickPoint = point(event); const hitIndex = [...shapes].map((shape, index) => ({ shape, index })).reverse().find(({ shape }) => isShapeHit(shape, clickPoint))?.index; if (hitIndex === undefined || shapes[hitIndex].type !== 'text') return; const selected = shapes[hitIndex] as Extract<Shape, { type: 'text' }>; const nextText = window.prompt('编辑标注文本', selected.text); if (!nextText?.trim() || nextText.trim() === selected.text) return; saveHistory(); selected.text = nextText.trim(); selectedIndex = hitIndex; status.textContent = '已更新文本'; render(); updateControls(); });
-  canvas.addEventListener('wheel', (event) => { const selected = selectedShape(); if (!selected) return; event.preventDefault(); const currentIndex = WIDTHS.indexOf(selected.width); const nextIndex = Math.max(0, Math.min(WIDTHS.length - 1, currentIndex + (event.deltaY < 0 ? 1 : -1))); if (nextIndex === currentIndex) return; setLineWidth(WIDTHS[nextIndex]); status.textContent = `线宽：${WIDTHS[nextIndex]} px`; }, { passive: false });
+  canvas.addEventListener('wheel', (event) => { const selected = selectedShape(); if (!selected) return; event.preventDefault(); const nextWidth = selected.width + (event.deltaY < 0 ? 1 : -1); if (nextWidth === selected.width) return; setLineWidth(nextWidth); }, { passive: false });
   window.addEventListener('resize', render); root.addEventListener('keydown', (event) => { if (event.key === 'Escape') close(); if (event.key === 'Enter') void finish(); if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); deleteSelected(); } if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); event.shiftKey ? redoAction() : undo(); } if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'y') { event.preventDefault(); redoAction(); } });
   image.onload = () => { crop = { x: 0, y: 0, width: image.width, height: image.height }; updateControls(); render(); root.tabIndex = -1; root.focus(); };
   image.onerror = () => { status.textContent = '截图数据加载失败。'; };
